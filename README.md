@@ -1,2 +1,3 @@
-# erc-validator
-JavaScript library and CLI tool for ERC validation
+# ERC checker
+
+JavaScript library and CLI tool for ERC metadata, execution, and result checking
