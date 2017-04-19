@@ -31,7 +31,7 @@ module.exports = {
 		exec("diff " + fileA + " " + fileB, (error, stdout, stderr) = > {
 				if (error) {
 					console.error(`exec error: ${error}`);
-					// checker.compareHTML(fileA, fileB);
+					checker.compareHTML(fileA, fileB);
 					return;
 				}
 				console.log('The compared files, ' + fileA + ' and ' + fileB + ' do not differ. \nCongrats!');
