@@ -2,7 +2,7 @@
   "name": "erc-validator",
   "version": "1.0.0",
   "description": "CLI tool to validate an ERC (following the o2r specification)",
-  "main": "proto_cli_tool.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -30,6 +30,7 @@
   },
   "homepage": "https://github.com/Timmimim/erc-validator#readme",
   "dependencies": {
-    "commander": "^2.9.0"
+    "commander": "^2.9.0",
+    "levenshtein": "^1.0.5"
   }
 }
