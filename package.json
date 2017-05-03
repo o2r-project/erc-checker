@@ -1,5 +1,5 @@
 {
-  "name": "erc-validator",
+  "name": "erc-checker",
   "version": "1.0.0",
   "description": "CLI tool to validate an ERC (following the o2r specification)",
   "main": "index.js",
@@ -23,7 +23,7 @@
   "author": "Timm Kühnel",
   "license": "Apache-2.0",
   "bin": {
-    "erc-validator": "./proto_cli_tool.js"
+    "erc-checker": "./index.js"
   },
   "bugs": {
     "url": "https://github.com/Timmimim/erc-validator/issues"
@@ -31,6 +31,7 @@
   "homepage": "https://github.com/Timmimim/erc-validator#readme",
   "dependencies": {
     "commander": "^2.9.0",
-    "levenshtein": "^1.0.5"
+    "levenshtein": "^1.0.5",
+    "promise": "^7.1.1"
   }
 }
