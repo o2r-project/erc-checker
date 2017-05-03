@@ -44,4 +44,4 @@ rewriting_checker_w_promises.js
 img_magick.js
 
 # any (tmp) HTML files, there is no HTML interface yet
-*.html
+/*.html
