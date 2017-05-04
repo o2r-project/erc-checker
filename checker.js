@@ -39,6 +39,9 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 				var base64ImagesReproducedWithWidth = getContentsOfImageTags(reproducedStringSpacedBetweenImages);
 				var base64ImagesOriginal = [], base64ImagesReproduced = [];
 
+				var differingImagesCount = 0;
+				var differingImagePositions = [];
+
 				var finalHTMLoutputCompared = "";
 
 				function checkIfEncodedImagesAreExtracted() {
@@ -158,6 +161,9 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 
 						if (stderr != null) {
 
+							differingImagePositions[differingImagesCount] = k;
+							differingImagesCount += 1;
+
 							var originalImgWidth, originalImgHeight, reproducedImgWidth, reproducedImgHeight;
 							var gotImageSizes = false;
 
@@ -228,9 +234,9 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 
 				function checkIfAllImagesAreDoneComparing() {
 					var countFound = 0;
-					for ( var numImage = 0; numImage < base64ImagesOriginal.length; numImage++ ) {
+					for ( var numImage = 0; numImage < differingImagesCount; numImage++ ) {
 						try {
-							var checkIfFileExists = fs.statSync(path.join(process.cwd(), "tmp_comp_base64_" + numImage + ".txt"));
+							var checkIfFileExists = fs.statSync(path.join(process.cwd(), "tmp_comp_base64_" + differingImagePositions[numImage] + ".txt"));
 						}
 						catch (e) {
 							countFound -= 1;
@@ -239,7 +245,7 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 							countFound += 1;
 						}
 					}
-					if (countFound == base64ImagesOriginal.length) {
+					if (countFound == differingImagesCount) {
 						reassembleHTMLfromComparedImagesAndText();
 					}
 					else {
