@@ -51,3 +51,6 @@ original_papers/
 
 # any (tmp) HTML files, there is no HTML interface yet
 /*.html
+
+# any backup files created by gedit editor
+*~
