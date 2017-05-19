@@ -26,20 +26,20 @@ program
 
 		try {
 			if (path.isAbsolute(originalHTML)) {
-				var originalFileExisting = fs.statSync(originalHTML);
+				originalFileExisting = fs.statSync(originalHTML);
 			} else {
-				var originalFileExisting = fs.statSync(path.join(process.cwd(), originalHTML));
+				originalFileExisting = fs.statSync(path.join(process.cwd(), originalHTML));
 				pathOriginalHTML = path.join(process.cwd(), originalHTML);
 			}
 		}
 		catch (e) {
 			console.log("The path to your Original HTML file is invalid. Please check if the file exists.");
 			brokenPath = true;
-			return;
+			return 404;
 		}
 		try {
 			if (!path.isAbsolute(originalHTML)) {
-				var reproducedFileExisting = fs.statSync(path.join(process.cwd(), reproducedHTML));
+				reproducedFileExisting = fs.statSync(path.join(process.cwd(), reproducedHTML));
 				pathReproducedHTML = path.join(process.cwd(), reproducedHTML);
 			} else {
 				var reproducedFileExisting = fs.statSync(reproducedHTML);
@@ -48,7 +48,7 @@ program
 		catch (e) {
 			console.log("The path to your Reproduced HTML file is invalid. Please check if the file exists.");
 			brokenPath = true;
-			return;
+			return 404;
 		}
 		finally {
 			if (!brokenPath) {
@@ -59,11 +59,12 @@ program
 
 						console.log(stdout);
 
-						checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName);
+						return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName);
 
 					}
 					else {
 						console.log('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ. \nCongrats!');
+						return 200;
 					}
 				});
 			}
@@ -73,14 +74,56 @@ program
 
 module.exports = {
 	ercChecker: function (originalHTML, reproducedHTML, outputPath) {
-		console.log(originalHTML + " - " + reproducedHTML);
-		exec("diff " + originalHTML + " " + reproducedHTML, function (error, stdout, stderr) {
-				if (error) {
-					console.error('exec error: ${error}');
-					checker.compareHTML(originalHTML, reproducedHTML, outputPath);
-					return;
-				}
-				console.log('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ. \nCongrats!');
-		});
+		var pathOriginalHTML = originalHTML,
+			pathReproducedHTML = reproducedHTML,
+			brokenPath = false;
+
+		var outputName = outputPath;
+
+		try {
+			if (path.isAbsolute(originalHTML)) {
+				originalFileExisting = fs.statSync(originalHTML);
+			} else {
+				originalFileExisting = fs.statSync(path.join(process.cwd(), originalHTML));
+				pathOriginalHTML = path.join(process.cwd(), originalHTML);
+			}
+		}
+		catch (e) {
+			console.log("The path to your Original HTML file is invalid. Please check if the file exists.");
+			brokenPath = true;
+			return 404;
+		}
+		try {
+			if (!path.isAbsolute(originalHTML)) {
+				reproducedFileExisting = fs.statSync(path.join(process.cwd(), reproducedHTML));
+				pathReproducedHTML = path.join(process.cwd(), reproducedHTML);
+			} else {
+				reproducedFileExisting = fs.statSync(reproducedHTML);
+			}
+		}
+		catch (e) {
+			console.log("The path to your Reproduced HTML file is invalid. Please check if the file exists.");
+			brokenPath = true;
+			return 404;
+		}
+		finally {
+			if (!brokenPath) {
+				console.log(originalHTML + " - " + reproducedHTML);
+				exec("diff " + originalHTML + " " + reproducedHTML + " -q", function (error, stdout, stderr) {
+
+					if (stdout) {
+
+						console.log(stdout);
+
+						return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName);
+
+					}
+					else {
+						console.log('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ. \nCongrats!');
+						return 200;
+					}
+				});
+			}
+		}
 	}
 };

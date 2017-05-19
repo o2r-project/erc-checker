@@ -40,8 +40,8 @@ The tool will create in it's own base directory two directories:
 
 This script uses the following unix cl tools : `tar`, `find`, `cp`.
 
-###### _Author_: Timm Kühnel
-###### _with_:   o2r - Opening Reproductive Research
-
-###### _date created_: Fr. 12.05.2017
-###### _Version_: 1.0.0
+|  _Author_: | Timm Kühnel |
+| -----------------|-------------|
+|  _with_: | o2r - Opening Reproductive Research |
+| _date created_: | Fr. 12.05.2017 |
+| _Version_:| 1.0.0 |
