@@ -1,6 +1,6 @@
 #!/bin/bash
 
-printf "\nScript geht los los los os os os...\n\n"
+printf "Beginning extraction. \n\n"
 
 erc_ID="$1"
 path_to_image="${2%/}/data/image.tar"
