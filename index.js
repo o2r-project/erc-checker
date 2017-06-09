@@ -1,12 +1,31 @@
 #!/usr/bin/env node
+/**
+ * (C) Copyright 2017 o2r-project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 
 //require("compareHTML_linebyline");
-var checker = require('./checker');
+const checker = require('./checker');
 const exec = require('child_process').exec;
 
-var fs = require("fs");
-var path = require("path");
-var program = require('commander');
+const debug = require('debug')('index:checkRequestHandling');
+
+const fs = require("fs");
+const path = require("path");
+const program = require('commander');
 
 program
 	.arguments('<originalHTML>', 'Relative location of the Original HTML file to be compared.')
@@ -33,9 +52,8 @@ program
 			}
 		}
 		catch (e) {
-			console.log("The path to your Original HTML file is invalid. Please check if the file exists.");
-			brokenPath = true;
-			return 404;
+			debug("The path to your Original HTML file is invalid. Please check if the file exists.", e.message);
+			return 1;
 		}
 		try {
 			if (!path.isAbsolute(originalHTML)) {
@@ -46,28 +64,24 @@ program
 			}
 		}
 		catch (e) {
-			console.log("The path to your Reproduced HTML file is invalid. Please check if the file exists.");
-			brokenPath = true;
-			return 404;
+			debug("The path to your Reproduced HTML file is invalid. Please check if the file exists.", e.message);
+			return 1;
 		}
 		finally {
-			if (!brokenPath) {
-				console.log(originalHTML + " - " + reproducedHTML);
-				exec("diff " + originalHTML + " " + reproducedHTML + " -q", function (error, stdout, stderr) {
+			debug("Files to be compared (w/ path): 	" + originalHTML + " - " + reproducedHTML);
+			exec("diff " + originalHTML + " " + reproducedHTML + " -q", function (error, stdout, stderr) {
 
-					if (stdout) {
+				if (stdout) {
 
-						console.log(stdout);
+					debug(stdout, "Differences were found; Calling compareHTML to create a HTML file highlighting these differences.");
+					return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName);
 
-						return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName);
-
-					}
-					else {
-						console.log('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ. \nCongrats!');
-						return 200;
-					}
-				});
-			}
+				}
+				else {
+					debug('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ. \nCongrats!');
+					return 0;
+				}
+			});
 		}
 	})
 	.parse(process.argv);
@@ -89,9 +103,8 @@ module.exports = {
 			}
 		}
 		catch (e) {
-			console.log("The path to your Original HTML file is invalid. Please check if the file exists.");
-			brokenPath = true;
-			return 404;
+			debug("The path to your Original HTML file is invalid. Please check if the file exists.", e.message);
+			return 1;
 		}
 		try {
 			if (!path.isAbsolute(originalHTML)) {
@@ -102,28 +115,23 @@ module.exports = {
 			}
 		}
 		catch (e) {
-			console.log("The path to your Reproduced HTML file is invalid. Please check if the file exists.");
-			brokenPath = true;
-			return 404;
+			debug("The path to your Reproduced HTML file is invalid. Please check if the file exists.", e.message);
+			return 1;
 		}
 		finally {
-			if (!brokenPath) {
-				console.log(originalHTML + " - " + reproducedHTML);
-				exec("diff " + originalHTML + " " + reproducedHTML + " -q", function (error, stdout, stderr) {
+			debug(originalHTML + " - " + reproducedHTML);
+			exec("diff " + originalHTML + " " + reproducedHTML + " -q", function (error, stdout, stderr) {
+				if (stdout) {
 
-					if (stdout) {
+					debug(stdout, "Differences were found; \nCalling compareHTML to create a HTML file highlighting these differences.");
+					return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName);
 
-						console.log(stdout);
-
-						return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName);
-
-					}
-					else {
-						console.log('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ. \nCongrats!');
-						return 200;
-					}
-				});
-			}
+				}
+				else {
+					debug('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ. \nCongrats!');
+					return 0;
+				}
+			});
 		}
 	}
 };

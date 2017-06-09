@@ -1,10 +1,27 @@
 /**
- * Created by timmimim on 19.04.17.
+ * (C) Copyright 2017 o2r-project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
 
-var fs = require('fs');
-var path = require('path');
-var exec = require('child_process').exec;
+const fs = require('fs');
+const path = require('path');
+const exec = require('child_process').exec;
+const debug = require('debug')('checker:general');
+const debugSlice = require('debug')('checker:slice');
+const debugComp = require('debug')('checker:compare');
+const debugRe = require('debug')('checker:reassemble');
 
 var iterate;
 
@@ -25,12 +42,12 @@ var boolArrayImageDiffOrdered = [];
 function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputName) {
 	fs.readFile(originalPaperHTML, 'utf-8', function (err, dataOriginal) {
 		if (err) {
-			console.log("  Unable to read the first (original) file as String. Something has gone wrong. \n \n  Maybe check your input path.");
+			debug("Unable to read the first (original) file as String. Something has gone wrong. \n \n  Maybe check your input path.", err.message);
 			// throw new TypeError("File not readable as Text");
 		}
 		else {
 			fs.readFile(reproducedPaperHTML, 'utf-8', function (err, dataReproduced) {
-				console.log("File read successfully!");
+				debug("File read successfully!");
 
 				var originalStringSpacedBetweenImages = dataOriginal.replace(/<img/g, " \n<img");
 				var reproducedStringSpacedBetweenImages = dataReproduced.replace(/<img/g, " \n<img");
@@ -48,8 +65,8 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 					if (base64ImagesOriginalWithWidth != null && base64ImagesReproducedWithWidth != null) {
 
 						if (base64ImagesReproducedWithWidth.length != base64ImagesOriginalWithWidth.length) {
-							console.log("Unequal number of images on input papers. Aborting comparison. \n" + base64ImagesReproducedWithWidth.length + " " + base64ImagesOriginalWithWidth.length);
-							return;
+							debugSlice("Unequal number of images on input papers. Aborting comparison. \n" + base64ImagesReproducedWithWidth.length + " " + base64ImagesOriginalWithWidth.length);
+							return 1;
 						}
 
 						for (var i = 0; i < base64ImagesOriginalWithWidth.length; i++) {
@@ -72,7 +89,7 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 				
 				function writeBase64Files() {
 					if (base64ImagesOriginal.length != base64ImagesReproduced.length) {
-						throw new Error ([0, "The input HTML files do not contain the same number of images.\n\nPlease check your files again, especially the original file."]);
+						throw new Error ([1, "The input HTML files do not contain the same number of images.\n\nPlease check your files again, especially the original file."]);
 					}
 					for (var i = 0; i < base64ImagesOriginal.length; i++){
 						var filenameA = 'tmp_base64_Original_' + i + '.txt';
@@ -84,7 +101,7 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 						fs.writeFileSync(path.join(process.cwd(), filenameB), base64ImagesReproduced[j].substr(24, base64ImagesReproduced[j].length));
 						exec("base64 -d " + filenameB + " > tmp_img_Reproduced_" + j + ".png");
 					}
-					console.log("Lengths:  A: " + base64ImagesOriginal.length + ",  B: " + base64ImagesReproduced.length);
+					debugSlice("Lengths:  A: " + base64ImagesOriginal.length + ",  B: " + base64ImagesReproduced.length);
 
 					for (var k = 0; k < base64ImagesOriginal.length; k++) {
 						compareImagesQuickNaive(k);
@@ -94,20 +111,20 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 				
 				function reassembleHTMLfromComparedImagesAndText() {
 
-					console.log("Reached Reassembly-Point")
+					debugRe("Reached Reassembly-Point")
 					for (iterate = 0; iterate < arrayReproducedHTMLexcludingImages.length-1; iterate++) {
 
 						finalHTMLoutputCompared += arrayReproducedHTMLexcludingImages[iterate];
 
 
 						if (boolArrayImageDiffOrdered[iterate]) {
-							console.log("found diff image");
+							debugRe("found diff image");
 
 							var base64DiffImage = fs.readFileSync(path.join(process.cwd(), "tmp_comp_base64_" + iterate + ".txt"), 'utf-8');
-							console.log("diff image read");
+							debugRe("diff image read");
 							finalHTMLoutputCompared += "<p><img src=\"data:image/png;base64," + base64DiffImage;
 							finalHTMLoutputCompared += base64ImagesReproducedWithWidth[iterate].substr(base64ImagesReproducedWithWidth[iterate].length-16, base64ImagesReproducedWithWidth[iterate].length-7);
-							console.log("diff image integrated");
+							debugRe("diff image integrated");
 
 						}
 						else {
@@ -119,28 +136,28 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 							finalHTMLoutputCompared += arrayReproducedHTMLexcludingImages[arrayOriginalHTMLexcludingImages.length-1];
 							if(outputName){
 								fs.writeFileSync(path.join(process.cwd(), '/' + outputName.toString() + '.html'), finalHTMLoutputCompared);
-								console.log(path.join(process.cwd() + "/" + outputName.toString() + ".html  ist der Speicherort."));
+								debugRe(path.join(process.cwd() + "/" + outputName.toString() + ".html  ist der Speicherort."));
 
 								fs.stat(path.join(process.cwd(), '/' + outputName.toString() + '.html'), function(err, stat) {
 									if (err) {
-										console.log("Writing diff HTML file failed. Sorry about that..\n" + err);
+										debug("Writing diff HTML file failed." + err.message);
 									}
 									else {
-										console.log("Diff HTML created successfully!");
+										debug("Diff HTML created successfully!");
 										exec("rm tmp*.*");
 									}
 								});
 							}
 							else {
 								fs.writeFileSync(path.join(process.cwd(), '/outputHTMLCompared.html'), finalHTMLoutputCompared);
-								console.log(path.join(process.cwd() + "/outputHTMLCompared.html  ist der Speicherort."));
+								debugRe(path.join(process.cwd() + "/outputHTMLCompared.html  ist der Speicherort."));
 
 								fs.stat(path.join(process.cwd(), '/outputHTMLCompared.html'), function(err, stat) {
 									if (err) {
-										console.log("Writing diff HTML file failed. Sorry about that..\n" + err);
+										debug("Writing diff HTML file failed." + err.message);
 									}
 									else {
-										console.log("Diff HTML created successfully!");
+										debug("Diff HTML created successfully!");
 										exec("rm tmp*.*");
 									}
 								});
@@ -157,9 +174,11 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 				function compareImagesQuickNaive(k) {
 					exec("diff tmp_img_Original_" + k + ".png tmp_img_Reproduced_" + k + ".png -s", function (stderr, stdout) {
 
-						console.log("Diff Image #" + k + ": " + stderr);
+
 
 						if (stderr != null) {
+
+							debugComp("Diff Image #" + k + ": " + stderr);
 
 							differingImagePositions[differingImagesCount] = k;
 							differingImagesCount += 1;
@@ -199,11 +218,11 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 
 									setTimeout( function () {
 										exec("compare tmp_img_Original_" + k + ".png tmp_img_Reproduced_" + k + ".png tmp_comp_imgOrigRep_" + k +".png", function (stdout, stderr, err) {
-											console.log("Image #" + k + " wird verglichen.");
-											console.log("Visually compared Image #" + k + "; child_process exit message:\n"+ stdout + "" + stderr + "" + err);
+											debugComp("Image #" + k + " wird verglichen.");
+											debugComp("Visually compared Image #" + k + "; child_process exit message:\n"+ stdout + "" + stderr + "" + err);
 
 											exec("base64 tmp_comp_imgOrigRep_" + k +".png > tmp_comp_base64_" + k + ".txt", function (stdout, stderr, err) {
-												console.log("Writing base64-File for Image #" + k  + ": " + stdout + "" + stderr + "" + err);
+												debugComp("Writing base64-File for Image #" + k  + ": " + stdout + "" + stderr + "" + err);
 												if (k == base64ImagesOriginal.length-1) {
 													checkIfAllImagesAreDoneComparing();
 												}
@@ -226,8 +245,8 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 								}, 5);
 							}
 						}
-						if (stderr) {
-							console.log("Image #" + k +":  " + stdout);
+						if (stdout) {
+							debugComp("Image #" + k +":  " + stdout);
 						}
 					})
 				}
@@ -261,8 +280,6 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 		}
 
 	});
-
-	console.log("logger\n\n");
 }
 
 
