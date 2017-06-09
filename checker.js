@@ -42,11 +42,16 @@ var boolArrayImageDiffOrdered = [];
 function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputName) {
 	fs.readFile(originalPaperHTML, 'utf-8', function (err, dataOriginal) {
 		if (err) {
-			debug("Unable to read the first (original) file as String. Something has gone wrong. \n \n  Maybe check your input path.", err.message);
-			// throw new TypeError("File not readable as Text");
+			debug("Unable to read the first (original) file as String. Something has gone wrong. \n\nMaybe check your input path.", err.message);
+			return 1;
 		}
 		else {
 			fs.readFile(reproducedPaperHTML, 'utf-8', function (err, dataReproduced) {
+				if (err) {
+					debug("Unable to read the second (reproduced) file as String. Something has gone wrong. \n\nMaybe check your input path.", err.message);
+					return 1;
+				}
+
 				debug("File read successfully!");
 
 				var originalStringSpacedBetweenImages = dataOriginal.replace(/<img/g, " \n<img");

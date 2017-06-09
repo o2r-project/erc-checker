@@ -53,7 +53,7 @@ program
 		}
 		catch (e) {
 			debug("The path to your Original HTML file is invalid. Please check if the file exists.", e.message);
-			return 1;
+			brokenPath = true;
 		}
 		try {
 			if (!path.isAbsolute(originalHTML)) {
@@ -65,9 +65,12 @@ program
 		}
 		catch (e) {
 			debug("The path to your Reproduced HTML file is invalid. Please check if the file exists.", e.message);
-			return 1;
+			brokenPath = true;
+			//return 1;
 		}
 		finally {
+			if (brokenPath) {return 1}
+
 			debug("Files to be compared (w/ path): 	" + originalHTML + " - " + reproducedHTML);
 			exec("diff " + originalHTML + " " + reproducedHTML + " -q", function (error, stdout, stderr) {
 
