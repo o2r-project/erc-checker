@@ -1,7 +1,10 @@
 # 	Bash Script to extract a certain file from an ERC    
 ##   following the ERC specification of the o2r project
 
-
+### Dependencies:
+* tar 	- The GNU version of the tar archiving utility in Unix/Linux
+* find 	- Unix/Linux tool to search for files in a directory hierarchy 
+* cp 	- Unix/Linux tool to copy one or more files to another location
 
 **_Syntax:_**
 
@@ -9,7 +12,8 @@
 
 There is no --help option implemented currently.
 
-Parameters:
+
+### Parameters:
 
 *  **$1** : specifies the ID / unique name of an ERC as a String
    * i.e.:  "NameofERC" / "id"
@@ -39,8 +43,7 @@ The tool will create, _in the current working directory from which it is called_
 
 * **_original\_papers_**:   The extracted Paper / target file will be saved into this directory,
 	              within a directory named after the passed ERC name / id.
-
-This script uses the following unix cl tools : `tar`, `find`, `cp`.
+		      
 
 ## License
 o2r checker is licensed under Apache License, Version 2.0, see file LICENSE.
