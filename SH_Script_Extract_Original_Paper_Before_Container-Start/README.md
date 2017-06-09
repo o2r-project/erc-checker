@@ -1,10 +1,6 @@
+# 	Bash Script to extract a certain file from an ERC    
+##   following the ERC specification of the o2r project
 
-
-\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#
-
-## 	Bash Script to extract a certain file from an ERC    
-######   following the ERC specification of the o2r project
-\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\# 
 
 
 **_Syntax:_**
@@ -39,6 +35,12 @@ The tool will create in it's own base directory two directories:
 	              within a directory named after the passed ERC name / id.
 
 This script uses the following unix cl tools : `tar`, `find`, `cp`.
+
+## License
+o2r checker is licensed under Apache License, Version 2.0, see file LICENSE.
+
+Copyright (C) 2016 - o2r project.
+
 
 |  _Author_: | Timm Kühnel |
 | -----------------|-------------|
