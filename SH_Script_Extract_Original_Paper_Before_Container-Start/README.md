@@ -17,8 +17,10 @@ Parameters:
 *  **$2** : pass the location of the ERC within your file system
    * IF the path includes spaces, it needs to be passed as a String!
    * i.e.:  "path/to/\ ERC/"
-   * file path may be absolute, or relative to the location of the bash script
-   * i.e.: "~/path/to/image.tar"  OR "../../../path/to/image.tar"
+   * file path may be absolute, or relative to the current working directory from which the bash script is called.
+   	* Absolute: "~/path/to/image.tar" 
+	* Calling script from its own directory: e.g. "../../../path/to/image.tar"
+	* Calling script from another directory: Go back as far a necessary from current working directory, then navigate to "path/to/image.tar"
 
 *  **$3** (optional) : 	If the Paper / target file is called anything else than main.html, 
 	the file name may be passed here. 
