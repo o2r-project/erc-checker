@@ -29,7 +29,7 @@ Parameters:
 
 
 
-The tool will create in it's own base directory two directories:
+The tool will create, _in the current working directory from which it is called_, two directories:
 
 * **_temporaryContent_**:  The targeted ERC's image.tar file will be extracted  into 
 	              this directory temporarily;
