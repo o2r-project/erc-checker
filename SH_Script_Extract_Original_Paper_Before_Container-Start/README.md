@@ -5,7 +5,9 @@
 
 **_Syntax:_**
 
-`./recover_original_paper_from_image.sh $1 $2 [$3]`
+`./extract_original_paper_from_ERC.sh $1 $2 [$3]`
+
+There is no --help option implemented currently.
 
 Parameters:
 
