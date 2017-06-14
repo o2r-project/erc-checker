@@ -72,7 +72,7 @@ program
 			if (brokenPath) {return 1}
 
 			debug("Files to be compared (w/ path): 	" + originalHTML + " - " + reproducedHTML);
-			exec("diff " + originalHTML + " " + reproducedHTML + " -q", function (error, stdout, stderr) {
+			exec("diff " + originalHTML.replace(/ /g, '\\ ') + " " + reproducedHTML.replace(/ /g, '\\ ') + " -q", function (error, stdout, stderr) {
 
 				if (stdout) {
 
@@ -81,6 +81,7 @@ program
 
 				}
 				else {
+					debug(stdout, stderr, error);
 					debug('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ. \nCongrats!');
 					return 0;
 				}
@@ -122,7 +123,6 @@ module.exports = {
 			return 1;
 		}
 		finally {
-			debug(originalHTML + " - " + reproducedHTML);
 			exec("diff " + originalHTML + " " + reproducedHTML + " -q", function (error, stdout, stderr) {
 				if (stdout) {
 
