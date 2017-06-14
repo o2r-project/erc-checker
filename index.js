@@ -22,6 +22,7 @@ const checker = require('./checker');
 const exec = require('child_process').exec;
 
 const debug = require('debug')('index:checkRequestHandling');
+const colors = require('colors');
 
 const fs = require("fs");
 const path = require("path");
@@ -52,7 +53,7 @@ program
 			}
 		}
 		catch (e) {
-			debug("The path to your Original HTML file is invalid. Please check if the file exists.", e.message);
+			debug("The path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
 			brokenPath = true;
 		}
 		try {
@@ -64,7 +65,8 @@ program
 			}
 		}
 		catch (e) {
-			debug("The path to your Reproduced HTML file is invalid. Please check if the file exists.", e.message);
+			debug("The path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
+			console.log("");
 			brokenPath = true;
 			//return 1;
 		}
@@ -82,7 +84,8 @@ program
 				}
 				else {
 					debug(stdout, stderr, error);
-					debug('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ. \nCongrats!');
+					debug('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ. \nCongrats!'.green);
+					console.log("");
 					return 0;
 				}
 			});
@@ -107,7 +110,8 @@ module.exports = {
 			}
 		}
 		catch (e) {
-			debug("The path to your Original HTML file is invalid. Please check if the file exists.", e.message);
+			debug("The path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
+			console.log("");
 			return 1;
 		}
 		try {
@@ -119,7 +123,8 @@ module.exports = {
 			}
 		}
 		catch (e) {
-			debug("The path to your Reproduced HTML file is invalid. Please check if the file exists.", e.message);
+			debug("The path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
+			console.log("");
 			return 1;
 		}
 		finally {
@@ -131,7 +136,8 @@ module.exports = {
 
 				}
 				else {
-					debug('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ. \nCongrats!');
+					debug('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ. \nCongrats!'.greed);
+					console.log("");
 					return 0;
 				}
 			});

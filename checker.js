@@ -22,6 +22,7 @@ const debug = require('debug')('checker:general');
 const debugSlice = require('debug')('checker:slice');
 const debugComp = require('debug')('checker:compare');
 const debugRe = require('debug')('checker:reassemble');
+const colors = require('colors');
 
 var iterate;
 
@@ -42,13 +43,13 @@ var boolArrayImageDiffOrdered = [];
 function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputName) {
 	fs.readFile(originalPaperHTML, 'utf-8', function (err, dataOriginal) {
 		if (err) {
-			debug("Unable to read the first (original) file as String. Something has gone wrong. \n\nMaybe check your input path.", err.message);
+			debug("Unable to read the first (original) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
 			return 1;
 		}
 		else {
 			fs.readFile(reproducedPaperHTML, 'utf-8', function (err, dataReproduced) {
 				if (err) {
-					debug("Unable to read the second (reproduced) file as String. Something has gone wrong. \n\nMaybe check your input path.", err.message);
+					debug("Unable to read the second (reproduced) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
 					return 1;
 				}
 
@@ -70,7 +71,7 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 					if (base64ImagesOriginalWithWidth != null && base64ImagesReproducedWithWidth != null) {
 
 						if (base64ImagesReproducedWithWidth.length != base64ImagesOriginalWithWidth.length) {
-							debugSlice("Unequal number of images on input papers. Aborting comparison. \n" + base64ImagesReproducedWithWidth.length + " " + base64ImagesOriginalWithWidth.length);
+							debugSlice("Unequal number of images on input papers. Aborting comparison.".red + "\n" + base64ImagesReproducedWithWidth.length + " " + base64ImagesOriginalWithWidth.length);
 							return 1;
 						}
 
@@ -94,7 +95,7 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 				
 				function writeBase64Files() {
 					if (base64ImagesOriginal.length != base64ImagesReproduced.length) {
-						throw new Error ([1, "The input HTML files do not contain the same number of images.\n\nPlease check your files again, especially the original file."]);
+						throw new Error ([1, "The input HTML files do not contain the same number of images.".red + "\nPlease check your files again, especially the original file."]);
 					}
 					for (var i = 0; i < base64ImagesOriginal.length; i++){
 						var filenameA = 'tmp_base64_Original_' + i + '.txt';
@@ -116,7 +117,7 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 				
 				function reassembleHTMLfromComparedImagesAndText() {
 
-					debugRe("Reached Reassembly-Point")
+					debugRe("Reached Reassembly-Point");
 					for (iterate = 0; iterate < arrayReproducedHTMLexcludingImages.length-1; iterate++) {
 
 						finalHTMLoutputCompared += arrayReproducedHTMLexcludingImages[iterate];
@@ -145,10 +146,11 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 
 								fs.stat(path.join(process.cwd(), '/' + outputName.toString() + '.html'), function(err, stat) {
 									if (err) {
-										debug("Writing diff HTML file failed." + err.message);
+										debug("Writing diff HTML file failed.".red + err.message);
 									}
 									else {
-										debug("Diff HTML created successfully!");
+										debug("Diff HTML created successfully!".green);
+										console.log("");
 										exec("rm tmp*.*");
 									}
 								});
@@ -159,10 +161,11 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 
 								fs.stat(path.join(process.cwd(), '/outputHTMLCompared.html'), function(err, stat) {
 									if (err) {
-										debug("Writing diff HTML file failed." + err.message);
+										debug("Writing diff HTML file failed.".red + err.message);
 									}
 									else {
-										debug("Diff HTML created successfully!");
+										debug("Diff HTML created successfully!".green);
+										console.log("");
 										exec("rm tmp*.*");
 									}
 								});
