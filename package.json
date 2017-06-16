@@ -4,6 +4,8 @@
   "description": "CLI tool to validate an ERC (following the o2r specification)",
   "main": "index.js",
   "scripts": {
+    "start": "DEBUG='index:*,checker:general,checker:ERROR' node index.js",
+    "debug": "DEBUG=* node index.js",
     "test": "mocha"
   },
   "repository": {
