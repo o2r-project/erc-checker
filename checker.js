@@ -22,6 +22,7 @@ const debug = require('debug')('checker:general');
 const debugSlice = require('debug')('checker:slice');
 const debugComp = require('debug')('checker:compare');
 const debugRe = require('debug')('checker:reassemble');
+const debugERROR = require('debug')('checker:ERROR');
 const colors = require('colors');
 
 var iterate;
@@ -33,6 +34,7 @@ var regexSplitCuttingImages = /<img src="data:image\/png;base64,.*" \/>/g;
 
 /* TODO: splice HTML into head and body, only then extract base64-images from body and then compare remaining snippets textually;
    TODO: for now: leave Head with first body-segment, split HTML String at every Image, cutting out images and save to array "splitHTMLexcludingImages"*/
+
 //var head = /regex/
 var arrayOriginalHTMLexcludingImages;
 var arrayReproducedHTMLexcludingImages;
@@ -43,17 +45,19 @@ var boolArrayImageDiffOrdered = [];
 function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputName) {
 	fs.readFile(originalPaperHTML, 'utf-8', function (err, dataOriginal) {
 		if (err) {
-			debug("Unable to read the first (original) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
+			//debug("Unable to read the first (original) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
+			debugERROR("FileReader for original paper: Unable to read the first (original) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
 			return 1;
 		}
 		else {
 			fs.readFile(reproducedPaperHTML, 'utf-8', function (err, dataReproduced) {
 				if (err) {
-					debug("Unable to read the second (reproduced) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
+					//debug("Unable to read the second (reproduced) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
+					debugERROR("FileReader for reproduced paper: Unable to read the second (reproduced) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
 					return 1;
 				}
 
-				debug("File read successfully!");
+				debug("Files read successfully!");
 
 				var originalStringSpacedBetweenImages = dataOriginal.replace(/<img/g, " \n<img");
 				var reproducedStringSpacedBetweenImages = dataReproduced.replace(/<img/g, " \n<img");
@@ -71,7 +75,8 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 					if (base64ImagesOriginalWithWidth != null && base64ImagesReproducedWithWidth != null) {
 
 						if (base64ImagesReproducedWithWidth.length != base64ImagesOriginalWithWidth.length) {
-							debugSlice("Unequal number of images on input papers. Aborting comparison.".red + "\n" + base64ImagesReproducedWithWidth.length + " " + base64ImagesOriginalWithWidth.length);
+							//debugSlice("Unequal number of images on input papers. Aborting comparison.".red + "\n" + base64ImagesReproducedWithWidth.length + " " + base64ImagesOriginalWithWidth.length);
+							debugERROR("Base64 img extracted: Unequal number of images on input papers. Aborting comparison.".red + "\n" + base64ImagesReproducedWithWidth.length + " != " + base64ImagesOriginalWithWidth.length);
 							return 1;
 						}
 
@@ -95,7 +100,8 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 				
 				function writeBase64Files() {
 					if (base64ImagesOriginal.length != base64ImagesReproduced.length) {
-						throw new Error ([1, "The input HTML files do not contain the same number of images.".red + "\nPlease check your files again, especially the original file."]);
+						//debugSlice("The input HTML files do not contain the same number of images.".red + "\nPlease check your files again, especially the original file.");
+						debugERROR("Writing Base64: The input HTML files do not contain the same number of images.".red + "\nPlease check your files again, especially the original file.");
 					}
 					for (var i = 0; i < base64ImagesOriginal.length; i++){
 						var filenameA = 'tmp_base64_Original_' + i + '.txt';
@@ -146,7 +152,8 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 
 								fs.stat(path.join(process.cwd(), '/' + outputName.toString() + '.html'), function(err, stat) {
 									if (err) {
-										debug("Writing diff HTML file failed.".red + err.message);
+										//debug("Writing diff HTML file failed.".red + err.message);
+										debugERROR("Checking if compHTML written: Writing diff HTML file failed.".red + err.message);
 									}
 									else {
 										debug("Diff HTML created successfully!".green);
@@ -161,7 +168,8 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 
 								fs.stat(path.join(process.cwd(), '/outputHTMLCompared.html'), function(err, stat) {
 									if (err) {
-										debug("Writing diff HTML file failed.".red + err.message);
+										//debug("Writing diff HTML file failed.".red + err.message);
+										debugERROR("Checking if compHTML written: Writing diff HTML file failed.".red + err.message);
 									}
 									else {
 										debug("Diff HTML created successfully!".green);
