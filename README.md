@@ -91,10 +91,10 @@ The erc-checker's `index.js` exports an object called `ercChecker`. This object 
 const checker = require('path/to/erc-checker/index').ercChecker;  // import the ercChecker module
 
 let pathToFileA = "path/to/fileA.html",
-    pathToFileB = "path/to"fileB.html",
-    outputPath = "optional/output/path/and/new/[filename]";  // output will be named [filename].html
-      
-checker(pathToFileA, pathToFileB [, outputPath]);  // create an HTML diff-file, optionally at [outputPath] 
+    pathToFileB = "path/to/fileB.html",
+    outputPath = "optional/output/path/and/new/[filename]";   // output will be named [filename].html
+
+checker(pathToFileA, pathToFileB [, outputPath]);   // create an HTML diff-file, optionally at [outputPath] 
 ```
 
 Currently, the ercChecker module will send valid status codes in response 
@@ -118,13 +118,15 @@ E.g. if your project uses the module, start it as such:
 
 
 Available DEBUG loggers are:
-* index:checkRequestHandling  &nbsp; (default)
-* index:ERROR  &nbsp; (default)
-* checker:general  &nbsp; (default)
+* index:checkRequestHandling  *
+* index:ERROR  *
+* checker:general *
 * checker:slice
 * checker:compare
 * checker:reassemble
-* checker:ERROR  &nbsp; (default)
+* checker:ERROR  *
+
+\* default when used as CLI
 
 ----------------------------------------------------
 
