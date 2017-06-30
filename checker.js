@@ -18,11 +18,11 @@
 const fs = require('fs');
 const path = require('path');
 const exec = require('child_process').exec;
-const debug = require('debug')('checker:general\t');
-const debugSlice = require('debug')('checker:slice\t\t');
-const debugComp = require('debug')('checker:compare\t');
-const debugRe = require('debug')('checker:reassemble\t');
-const debugERROR = require('debug')('checker:ERROR\t\t');
+const debug = require('debug')('checker:general');
+const debugSlice = require('debug')('checker:slice');
+const debugComp = require('debug')('checker:compare');
+const debugRe = require('debug')('checker:reassemble');
+const debugERROR = require('debug')('checker:ERROR');
 const colors = require('colors');
 const Promise = require('promise');
 
@@ -46,19 +46,17 @@ var boolArrayImageDiffOrdered = [];
 function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputName) {
 	fs.readFile(originalPaperHTML, 'utf-8', function (err, dataOriginal) {
 		if (err) {
-			//debug("Unable to read the first (original) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
-			debugERROR("FileReader for original paper: Unable to read the first (original) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
+			debugERROR("\t\tFileReader for original paper: Unable to read the first (original) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
 			return 1;
 		}
 		else {
 			fs.readFile(reproducedPaperHTML, 'utf-8', function (err, dataReproduced) {
 				if (err) {
-					//debug("Unable to read the second (reproduced) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
-					debugERROR("FileReader for reproduced paper: Unable to read the second (reproduced) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
+					debugERROR("\t\tFileReader for reproduced paper: Unable to read the second (reproduced) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
 					return 1;
 				}
 
-				debug("Files read successfully!");
+				debug("\tFiles read successfully!");
 
 				var originalStringSpacedBetweenImages = dataOriginal.replace(/<img/g, " \n<img");
 				var reproducedStringSpacedBetweenImages = dataReproduced.replace(/<img/g, " \n<img");
@@ -76,8 +74,8 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 					if (base64ImagesOriginalWithWidth != null && base64ImagesReproducedWithWidth != null) {
 
 						if (base64ImagesReproducedWithWidth.length != base64ImagesOriginalWithWidth.length) {
-							debugERROR(base64ImagesReproducedWithWidth.length + " != " + base64ImagesOriginalWithWidth.length +"".red);
-							debugERROR("Base64 img extracted: Unequal number of images on input papers. Aborting comparison.".red + "\n");
+							debugERROR("\t\t" + base64ImagesReproducedWithWidth.length + " != " + base64ImagesOriginalWithWidth.length +"".red);
+							debugERROR("\t\tBase64 img extracted: Unequal number of images on input papers. Aborting comparison.".red + "\n");
 							return 1;
 						}
 
@@ -87,8 +85,8 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 						}
 
 						setTimeout( function () {
-							debugSlice("HTML files successfully sliced into two Arrays of Strings.".cyan);
-							debugSlice("Lengths:  Original: " + base64ImagesOriginal.length + ",  Reproduced: " + base64ImagesReproduced.length);
+							debugSlice("\t\tHTML files successfully sliced into two Arrays of Strings.".cyan);
+							debugSlice("\t\tLengths:  Original: " + base64ImagesOriginal.length + ",  Reproduced: " + base64ImagesReproduced.length);
 							writeBase64Files();
 						},10);
 
@@ -104,11 +102,11 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 				function writeBase64Files() {
 					if (base64ImagesOriginal.length != base64ImagesReproduced.length) {
 
-						debugSlice("Lengths:  Original: " + base64ImagesOriginal.length + ",  Reproduced: " + base64ImagesReproduced.length);
-						debugERROR("Writing Base64: The input HTML files do not contain the same number of images.".red + "\nPlease check your files again, especially the original file.");
+						debugSlice("\t\tLengths:  Original: " + base64ImagesOriginal.length + ",  Reproduced: " + base64ImagesReproduced.length);
+						debugERROR("\t\tWriting Base64: The input HTML files do not contain the same number of images.".red + "\nPlease check your files again, especially the original file.");
 					}
 					else {
-						debugSlice("base64 files are being written for all Image Strings.");
+						debugSlice("\t\tbase64 files are being written for all Image Strings.");
 						for (var i = 0; i < base64ImagesOriginal.length; i++) {
 							var filenameA = 'tmp_base64_Original_' + i + '.txt';
 							fs.writeFileSync(path.join(process.cwd(), filenameA), base64ImagesOriginal[i].substr(24, base64ImagesOriginal[i].length));
@@ -120,7 +118,7 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 							exec("base64 -d " + filenameB + " > tmp_img_Reproduced_" + j + ".png");
 						}
 
-						debugComp("Starting comparison".magenta);
+						debugComp("\tStarting comparison".magenta);
 						for (var k = 0; k < base64ImagesOriginal.length; k++) {
 							compareImagesQuickNaive(k);
 						}
@@ -129,20 +127,20 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 				
 				function reassembleHTMLfromComparedImagesAndText() {
 
-					debugRe("Reached Reassembly-Point".yellow);
+					debugRe("\tReached Reassembly-Point".yellow);
 					for (iterate = 0; iterate < arrayReproducedHTMLexcludingImages.length-1; iterate++) {
 
 						finalHTMLoutputCompared += arrayReproducedHTMLexcludingImages[iterate];
 
 
 						if (boolArrayImageDiffOrdered[iterate]) {
-							debugRe("found diff image");
+							debugRe("\tfound diff image #" + iterate);
 
 							var base64DiffImage = fs.readFileSync(path.join(process.cwd(), "tmp_comp_base64_" + iterate + ".txt"), 'utf-8');
-							debugRe("diff image read");
+							debugRe("\tdiff image #"+iterate+" read");
 							finalHTMLoutputCompared += "<p><img src=\"data:image/png;base64," + base64DiffImage;
 							finalHTMLoutputCompared += base64ImagesReproducedWithWidth[iterate].substr(base64ImagesReproducedWithWidth[iterate].length-16, base64ImagesReproducedWithWidth[iterate].length-7);
-							debugRe("diff image integrated");
+							debugRe("\tdiff image #"+iterate+" integrated");
 
 						}
 						else {
@@ -152,16 +150,16 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 
 						if (iterate == arrayReproducedHTMLexcludingImages.length-2) {
 							finalHTMLoutputCompared += arrayReproducedHTMLexcludingImages[arrayOriginalHTMLexcludingImages.length-1];
-							debugRe("HTML stringified and reassembled.".yellow);
+							debugRe("\tHTML stringified and reassembled.".yellow);
 							if(outputName){
 								fs.writeFile(path.join(process.cwd(), '/' + outputName.toString() + '.html'), finalHTMLoutputCompared, function (err, stdout, stderr) {
 									if (err) {
-										debugERROR("Writing diff HTML file failed.".red + err.message);
+										debugERROR("\t\tWriting diff HTML file failed.".red + err.message);
 										return 1;
 									}
 									else {
-										debugRe(path.join("saved @ " + process.cwd() + "/" + outputName.toString() + ".html"));
-										debug("Diff HTML created successfully!".green);
+										debugRe("\t"+ path.join("saved @ " + process.cwd() + "/" + outputName.toString() + ".html"));
+										debug("\tDiff HTML created successfully!".green);
 										console.log("");
 										exec("rm tmp*.*");
 									}
@@ -172,12 +170,12 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 							else {
 								fs.writeFile(path.join(process.cwd(), '/outputHTMLCompared.html'), finalHTMLoutputCompared, function (err, stdout, stderr) {
 									if (err) {
-										debugERROR("Writing diff HTML file failed.".red + err.message);
+										debugERROR("\t\tWriting diff HTML file failed.".red + err.message);
 										return 1;
 									}
 									else {
-										debugRe(path.join("saved @ " + process.cwd() + "/outputHTMLCompared.html"));
-										debug("Diff HTML created successfully!".green);
+										debugRe("\t" + path.join("saved @ " + process.cwd() + "/outputHTMLCompared.html"));
+										debug("\tDiff HTML created successfully!".green);
 										console.log("");
 										exec("rm tmp*.*");
 									}
@@ -195,8 +193,6 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 
 
 						if (stderr != null) {
-
-							debugComp("Diff Image #" + k + ": " + stderr);
 
 							differingImagePositions[differingImagesCount] = k;
 							differingImagesCount += 1;
@@ -247,7 +243,7 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 								});
 							});
 
-							Promise.all(get_Original_k_width, get_Original_k_height, get_Reproduced_k_width, get_Reproduced_k_height).then(null, function (reason) { debugERROR(reason.red) }).then(resizeImages()).catch(debugERROR.bind(console));
+							Promise.all(get_Original_k_width, get_Original_k_height, get_Reproduced_k_width, get_Reproduced_k_height).then(null, function (reason) { debugERROR("\t\t"+ reason.red) }).then(resizeImages()).catch(debugERROR.bind(console));
 
 							function resizeImages() {
 								if((originalImgHeight+originalImgWidth) <= (reproducedImgHeight+reproducedImgWidth)) {
@@ -259,10 +255,10 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 
 								setTimeout( function () {
 									exec("compare tmp_img_Original_" + k + ".png tmp_img_Reproduced_" + k + ".png tmp_comp_imgOrigRep_" + k +".png", function (stdout, stderr, err) {
-										debugComp("Visually compared Image #" + k + "; "+ stdout + "" + stderr + "" + err);
+										debugComp("\tVisually compared Image #" + k + "; "+ stdout + "" + stderr + "" + err);
 
 										exec("base64 tmp_comp_imgOrigRep_" + k +".png > tmp_comp_base64_" + k + ".txt", function (stdout, stderr, err) {
-											debugComp("Writing base64 file for Image #" + k  + ": " + stdout + "" + stderr + "" + err);
+											debugComp("\tWriting base64 file for Image #" + k  + ": " + stdout + "" + stderr + "" + err);
 											if (k == base64ImagesOriginal.length-1) {
 												checkIfAllImagesAreDoneComparing();
 											}
@@ -277,13 +273,13 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 							boolArrayImageDiffOrdered[k] = false;
 							if( k == base64ImagesOriginal.length-1) {
 								setTimeout( function () {
-									debugComp("Finished comparison.".magenta)
+									debugComp("\tFinished comparison.".magenta)
 									reassembleHTMLfromComparedImagesAndText();
 								}, 5);
 							}
 						}
 						if (stdout) {
-							debugComp("Image #" + k +":  " + stdout);
+							debugComp("\tImage #" + k +":  " + stdout);
 						}
 					})
 				}
@@ -303,7 +299,7 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 					}
 					if (countFound == differingImagesCount) {
 
-						debugComp("Finished comparison.".magenta)
+						debugComp("\tFinished comparison.".magenta)
 						reassembleHTMLfromComparedImagesAndText();
 					}
 					else {
@@ -314,7 +310,6 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 			}
 				
 				checkIfEncodedImagesAreExtracted();
-				// checkIfAllSplittingAndComparisonDone();
 			});
 		}
 

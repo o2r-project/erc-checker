@@ -16,14 +16,14 @@
  *
  */
 
-if(process.env.DEBUG === undefined) process.env['DEBUG']='index:requestHandling,checker:general, checker:ERROR';
+if(process.env.DEBUG === undefined) process.env['DEBUG']='index:requestHandling,index:ERROR,checker:general,checker:ERROR';
 
 
 const checker = require('./checker');
 const exec = require('child_process').exec;
 
-var debug = require('debug')('index:requestHandling\t');
-var debugERROR = require('debug')('index:ERROR\t\t');
+var debug = require('debug')('index:requestHandling');
+var debugERROR = require('debug')('index:ERROR');
 const colors = require('colors');
 
 const fs = require("fs");
@@ -55,13 +55,10 @@ program
 	})
 
 	.action(function (originalHTML, reproducedHTML, program) {
-
-/*
-		if (program.quiet != undefined)
+		if (program.quiet)
 		{
-			//debug = debugERROR = require('debug')('quiet');
+			debug = debugERROR = require('debug')('quiet');
 		}
-*/
 
 		var pathOriginalHTML = originalHTML,
 			pathReproducedHTML = reproducedHTML,
@@ -78,7 +75,7 @@ program
 			}
 		}
 		catch (e) {
-			debugERROR("The path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
+			debugERROR("\t\tThe path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
 			brokenPath = true;
 		}
 		try {
@@ -90,24 +87,24 @@ program
 			}
 		}
 		catch (e) {
-			debugERROR("The path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
+			debugERROR("\t\tThe path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
 			console.log("");
 			brokenPath = true;
 		}
 		finally {
 			if (brokenPath) {return 1}
 
-			debug("Files to be compared (w/ path): 	" + originalHTML + " - " + reproducedHTML);
+			debug("\tFiles to be compared (w/ path): 	" + originalHTML + " - " + reproducedHTML);
 			exec("diff " + originalHTML.replace(/ /g, '\\ ') + " " + reproducedHTML.replace(/ /g, '\\ ') + " -q", function (error, stdout, stderr) {
 
 				if (stdout) {
 
-					debug("Differences were found; Calling compareHTML to create a HTML file highlighting these differences.");
+					debug("\tDifferences were found; Calling compareHTML to create a HTML file highlighting these differences.");
 					return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName);
 
 				}
 				else {
-					debug('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ.'.green + '\n' +'Congrats!'.green);
+					debug('\tThe compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ.'.green + '\n' +'Congrats!'.green);
 					console.log("");
 					return 0;
 				}
@@ -133,7 +130,7 @@ var ercChecker = function (originalHTML, reproducedHTML, outputPath) {
 		}
 	}
 	catch (e) {
-		debugERROR("The path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
+		debugERROR("\t\tThe path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
 		console.log("");
 		brokenPath = true;
 	}
@@ -146,7 +143,7 @@ var ercChecker = function (originalHTML, reproducedHTML, outputPath) {
 		}
 	}
 	catch (e) {
-		debugERROR("The path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
+		debugERROR("\t\tThe path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
 		console.log("");
 		brokenPath = true;
 	}
@@ -156,12 +153,13 @@ var ercChecker = function (originalHTML, reproducedHTML, outputPath) {
 		exec("diff " + originalHTML.replace(/ /g, '\\ ') + " " + reproducedHTML.replace(/ /g, '\\ ') + " -q", function (error, stdout, stderr) {
 			if (stdout) {
 
-				debug(stdout, "Differences were found; \nCalling compareHTML to create a HTML file highlighting these differences.");
+				debug("\tDifferences were found; \nCalling compareHTML to create a HTML file highlighting these differences.");
 				checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName);
 				return waiting = false;
 			}
 			else {
-				debug('The compared files, ' + originalHTML.replace(/ /g, '\\ ') + ' and ' + reproducedHTML + ' do not differ. \nCongrats!'.green);
+				debug('\tThe compared files, ' + originalHTML.replace(/ /g, '\\ ') + ' and ' + reproducedHTML + ' do not differ.'.green);
+				debug('\tCongrats!'.green);
 				console.log("");
 				return waiting = false;
 			}
