@@ -16,14 +16,14 @@
  *
  */
 
-if(process.env.DEBUG === undefined) process.env['DEBUG']='index:checkRequestHandling,checker:general, checker:ERROR';
+if(process.env.DEBUG === undefined) process.env['DEBUG']='index:requestHandling,checker:general, checker:ERROR';
 
 
 const checker = require('./checker');
 const exec = require('child_process').exec;
 
-var debug = require('debug')('index:checkRequestHandling');
-var debugERROR = require('debug')('index:ERROR');
+var debug = require('debug')('index:requestHandling\t');
+var debugERROR = require('debug')('index:ERROR\t\t');
 const colors = require('colors');
 
 const fs = require("fs");
@@ -51,7 +51,7 @@ program
 		console.log("\tDEBUG=* erc-checker [option] <path_original> <path_reproduced> -o <output>");
 		console.log();
 		console.log("   Available DEBUG loggers are:".yellow);
-		console.log("\t- index:checkRequestHandling\t(default)\n\t- index:ERROR\t\t\t(default)\n\t- checker:general\t\t(default)\n\t- checker:slice\n\t- checker:compare\n\t- checker:reassemble\n\t- checker:ERROR\t\t\t(default)\n\n");
+		console.log("\t- index:requestHandling\t(default)\n\t- index:ERROR\t\t\t(default)\n\t- checker:general\t\t(default)\n\t- checker:slice\n\t- checker:compare\n\t- checker:reassemble\n\t- checker:ERROR\t\t\t(default)\n\n");
 	})
 
 	.action(function (originalHTML, reproducedHTML, program) {
@@ -78,7 +78,7 @@ program
 			}
 		}
 		catch (e) {
-			debug("The path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
+			debugERROR("The path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
 			brokenPath = true;
 		}
 		try {
@@ -90,7 +90,7 @@ program
 			}
 		}
 		catch (e) {
-			debug("The path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
+			debugERROR("The path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
 			console.log("");
 			brokenPath = true;
 		}
@@ -102,13 +102,12 @@ program
 
 				if (stdout) {
 
-					debug(stdout, "Differences were found; Calling compareHTML to create a HTML file highlighting these differences.");
+					debug("Differences were found; Calling compareHTML to create a HTML file highlighting these differences.");
 					return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName);
 
 				}
 				else {
-					debug(stdout, stderr, error);
-					debug('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ. \nCongrats!'.green);
+					debug('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ.'.green + '\n' +'Congrats!'.green);
 					console.log("");
 					return 0;
 				}
@@ -134,7 +133,7 @@ var ercChecker = function (originalHTML, reproducedHTML, outputPath) {
 		}
 	}
 	catch (e) {
-		debug("The path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
+		debugERROR("The path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
 		console.log("");
 		brokenPath = true;
 	}
@@ -147,7 +146,7 @@ var ercChecker = function (originalHTML, reproducedHTML, outputPath) {
 		}
 	}
 	catch (e) {
-		debug("The path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
+		debugERROR("The path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
 		console.log("");
 		brokenPath = true;
 	}

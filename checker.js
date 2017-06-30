@@ -18,12 +18,13 @@
 const fs = require('fs');
 const path = require('path');
 const exec = require('child_process').exec;
-const debug = require('debug')('checker:general');
-const debugSlice = require('debug')('checker:slice');
-const debugComp = require('debug')('checker:compare');
-const debugRe = require('debug')('checker:reassemble');
-const debugERROR = require('debug')('checker:ERROR');
+const debug = require('debug')('checker:general\t');
+const debugSlice = require('debug')('checker:slice\t\t');
+const debugComp = require('debug')('checker:compare\t');
+const debugRe = require('debug')('checker:reassemble\t');
+const debugERROR = require('debug')('checker:ERROR\t\t');
 const colors = require('colors');
+const Promise = require('promise');
 
 var iterate;
 
@@ -75,8 +76,8 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 					if (base64ImagesOriginalWithWidth != null && base64ImagesReproducedWithWidth != null) {
 
 						if (base64ImagesReproducedWithWidth.length != base64ImagesOriginalWithWidth.length) {
-							//debugSlice("Unequal number of images on input papers. Aborting comparison.".red + "\n" + base64ImagesReproducedWithWidth.length + " " + base64ImagesOriginalWithWidth.length);
-							debugERROR("Base64 img extracted: Unequal number of images on input papers. Aborting comparison.".red + "\n" + base64ImagesReproducedWithWidth.length + " != " + base64ImagesOriginalWithWidth.length);
+							debugERROR(base64ImagesReproducedWithWidth.length + " != " + base64ImagesOriginalWithWidth.length +"".red);
+							debugERROR("Base64 img extracted: Unequal number of images on input papers. Aborting comparison.".red + "\n");
 							return 1;
 						}
 
@@ -86,6 +87,8 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 						}
 
 						setTimeout( function () {
+							debugSlice("HTML files successfully sliced into two Arrays of Strings.".cyan);
+							debugSlice("Lengths:  Original: " + base64ImagesOriginal.length + ",  Reproduced: " + base64ImagesReproduced.length);
 							writeBase64Files();
 						},10);
 
@@ -100,30 +103,33 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 				
 				function writeBase64Files() {
 					if (base64ImagesOriginal.length != base64ImagesReproduced.length) {
-						//debugSlice("The input HTML files do not contain the same number of images.".red + "\nPlease check your files again, especially the original file.");
+
+						debugSlice("Lengths:  Original: " + base64ImagesOriginal.length + ",  Reproduced: " + base64ImagesReproduced.length);
 						debugERROR("Writing Base64: The input HTML files do not contain the same number of images.".red + "\nPlease check your files again, especially the original file.");
 					}
-					for (var i = 0; i < base64ImagesOriginal.length; i++){
-						var filenameA = 'tmp_base64_Original_' + i + '.txt';
-						fs.writeFileSync(path.join(process.cwd(), filenameA), base64ImagesOriginal[i].substr(24, base64ImagesOriginal[i].length));
-						exec("base64 -d " + filenameA + " > tmp_img_Original_" + i + ".png");
-					}
-					for (var j = 0; j < base64ImagesReproduced.length; j++){
-						var filenameB = 'tmp_base64_Reproduced_' + j + '.txt';
-						fs.writeFileSync(path.join(process.cwd(), filenameB), base64ImagesReproduced[j].substr(24, base64ImagesReproduced[j].length));
-						exec("base64 -d " + filenameB + " > tmp_img_Reproduced_" + j + ".png");
-					}
-					debugSlice("Lengths:  A: " + base64ImagesOriginal.length + ",  B: " + base64ImagesReproduced.length);
+					else {
+						debugSlice("base64 files are being written for all Image Strings.");
+						for (var i = 0; i < base64ImagesOriginal.length; i++) {
+							var filenameA = 'tmp_base64_Original_' + i + '.txt';
+							fs.writeFileSync(path.join(process.cwd(), filenameA), base64ImagesOriginal[i].substr(24, base64ImagesOriginal[i].length));
+							exec("base64 -d " + filenameA + " > tmp_img_Original_" + i + ".png");
+						}
+						for (var j = 0; j < base64ImagesReproduced.length; j++) {
+							var filenameB = 'tmp_base64_Reproduced_' + j + '.txt';
+							fs.writeFileSync(path.join(process.cwd(), filenameB), base64ImagesReproduced[j].substr(24, base64ImagesReproduced[j].length));
+							exec("base64 -d " + filenameB + " > tmp_img_Reproduced_" + j + ".png");
+						}
 
-					for (var k = 0; k < base64ImagesOriginal.length; k++) {
-						compareImagesQuickNaive(k);
+						debugComp("Starting comparison".magenta);
+						for (var k = 0; k < base64ImagesOriginal.length; k++) {
+							compareImagesQuickNaive(k);
+						}
 					}
-
 				}
 				
 				function reassembleHTMLfromComparedImagesAndText() {
 
-					debugRe("Reached Reassembly-Point");
+					debugRe("Reached Reassembly-Point".yellow);
 					for (iterate = 0; iterate < arrayReproducedHTMLexcludingImages.length-1; iterate++) {
 
 						finalHTMLoutputCompared += arrayReproducedHTMLexcludingImages[iterate];
@@ -146,40 +152,37 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 
 						if (iterate == arrayReproducedHTMLexcludingImages.length-2) {
 							finalHTMLoutputCompared += arrayReproducedHTMLexcludingImages[arrayOriginalHTMLexcludingImages.length-1];
+							debugRe("HTML stringified and reassembled.".yellow);
 							if(outputName){
-								fs.writeFileSync(path.join(process.cwd(), '/' + outputName.toString() + '.html'), finalHTMLoutputCompared);
-								debugRe(path.join(process.cwd() + "/" + outputName.toString() + ".html  ist der Speicherort."));
-
-								fs.stat(path.join(process.cwd(), '/' + outputName.toString() + '.html'), function(err, stat) {
+								fs.writeFile(path.join(process.cwd(), '/' + outputName.toString() + '.html'), finalHTMLoutputCompared, function (err, stdout, stderr) {
 									if (err) {
-										//debug("Writing diff HTML file failed.".red + err.message);
-										debugERROR("Checking if compHTML written: Writing diff HTML file failed.".red + err.message);
+										debugERROR("Writing diff HTML file failed.".red + err.message);
+										return 1;
 									}
 									else {
+										debugRe(path.join("saved @ " + process.cwd() + "/" + outputName.toString() + ".html"));
 										debug("Diff HTML created successfully!".green);
 										console.log("");
 										exec("rm tmp*.*");
 									}
 								});
+
+
 							}
 							else {
-								fs.writeFileSync(path.join(process.cwd(), '/outputHTMLCompared.html'), finalHTMLoutputCompared);
-								debugRe(path.join(process.cwd() + "/outputHTMLCompared.html  ist der Speicherort."));
-
-								fs.stat(path.join(process.cwd(), '/outputHTMLCompared.html'), function(err, stat) {
+								fs.writeFile(path.join(process.cwd(), '/outputHTMLCompared.html'), finalHTMLoutputCompared, function (err, stdout, stderr) {
 									if (err) {
-										//debug("Writing diff HTML file failed.".red + err.message);
-										debugERROR("Checking if compHTML written: Writing diff HTML file failed.".red + err.message);
+										debugERROR("Writing diff HTML file failed.".red + err.message);
+										return 1;
 									}
 									else {
+										debugRe(path.join("saved @ " + process.cwd() + "/outputHTMLCompared.html"));
 										debug("Diff HTML created successfully!".green);
 										console.log("");
 										exec("rm tmp*.*");
 									}
 								});
 							}
-
-
 
 						}
 
@@ -189,7 +192,6 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 
 				function compareImagesQuickNaive(k) {
 					exec("diff tmp_img_Original_" + k + ".png tmp_img_Reproduced_" + k + ".png -s", function (stderr, stdout) {
-
 
 
 						if (stderr != null) {
@@ -204,59 +206,78 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 
 							boolArrayImageDiffOrdered[k] = true;
 
-							exec("convert tmp_img_Original_" + k + ".png -ping -format %w info:", function (stderr, stdout, err) {
-								originalImgHeight = stdout;
-
-								exec("convert tmp_img_Original_" + k + ".png -ping -format %hinfo:", function (stderr, stdout, err) {
-									originalImgWidth = stdout;
-
-									exec("convert tmp_img_Reproduced_" + k + ".png -ping -format %w info:", function (stderr, stdout, err) {
+							var get_Original_k_width = new Promise ( function (resolve, reject) {
+								exec("convert tmp_img_Original_" + k + ".png -ping -format %w info:", function (err, stdout, stderr) {
+									if (err) {
+										reject("Getting width of original image #" + k + " failed: " + err + "".red);
+									} else {
+										originalImgWidth = stdout;
+										resolve();
+									}
+								});
+							});
+							var get_Original_k_height = new Promise ( function (resolve, reject) {
+								exec("convert tmp_img_Original_" + k + ".png -ping -format %h info:", function (err, stdout, stderr) {
+									if (err) {
+										reject("Getting height of original image #" + k + " failed: " + err + "".red);
+									} else {
+										originalImgHeight = stdout;
+										resolve();
+									}
+								});
+							});
+							var get_Reproduced_k_width = new Promise ( function (resolve, reject) {
+								exec("convert tmp_img_Reproduced_" + k + ".png -ping -format %w info:", function (err, stdout, stderr) {
+									if (err) {
+										reject("Getting width of reproduced image #" + k + " failed: " + err + "".red);
+									} else {
+										reproducedImgWidth = stdout;
+										resolve();
+									}
+								});
+							});
+							var get_Reproduced_k_height = new Promise ( function (resolve, reject) {
+								exec("convert tmp_img_Reproduced_" + k + ".png -ping -format %h info:", function (err, stdout, stderr) {
+									if (err) {
+										reject("Getting height of reproduced image #" + k + " failed: " + err + "");
+									} else {
 										reproducedImgHeight = stdout;
-
-										exec("convert tmp_img_Reproduced_" + k + ".png -ping -format %h info:", function (stderr, stdout, err) {
-											reproducedImgWidth = stdout;
-											gotImageSizes = true;
-										});
-									});
+										resolve();
+									}
 								});
 							});
 
-							function waitForImageSizes() {
+							Promise.all(get_Original_k_width, get_Original_k_height, get_Reproduced_k_width, get_Reproduced_k_height).then(null, function (reason) { debugERROR(reason.red) }).then(resizeImages()).catch(debugERROR.bind(console));
 
-								if (gotImageSizes) {
-
-									if((originalImgHeight+originalImgWidth) <= (reproducedImgHeight+reproducedImgWidth)) {
-										exec("convert tmp_img_Original_" + k + ".png -resize " + reproducedImgWidth + "x" + reproducedImgWidth + "! -quality 100 tmp_img_Original_" + k + ".png")
-									}
-									else {
-										exec("convert tmp_img_Reproduced_" + k + ".png -resize " + originalImgHeight + "x" + originalImgWidth + "! -quality 100 tmp_img_Reproduced_" + k + ".png")
-									}
-
-									setTimeout( function () {
-										exec("compare tmp_img_Original_" + k + ".png tmp_img_Reproduced_" + k + ".png tmp_comp_imgOrigRep_" + k +".png", function (stdout, stderr, err) {
-											debugComp("Image #" + k + " wird verglichen.");
-											debugComp("Visually compared Image #" + k + "; child_process exit message:\n"+ stdout + "" + stderr + "" + err);
-
-											exec("base64 tmp_comp_imgOrigRep_" + k +".png > tmp_comp_base64_" + k + ".txt", function (stdout, stderr, err) {
-												debugComp("Writing base64-File for Image #" + k  + ": " + stdout + "" + stderr + "" + err);
-												if (k == base64ImagesOriginal.length-1) {
-													checkIfAllImagesAreDoneComparing();
-												}
-											});
-										})
-									},5);
+							function resizeImages() {
+								if((originalImgHeight+originalImgWidth) <= (reproducedImgHeight+reproducedImgWidth)) {
+									exec("convert tmp_img_Original_" + k + ".png -resize " + reproducedImgWidth + "x" + reproducedImgWidth + "! -quality 100 tmp_img_Original_" + k + ".png")
 								}
 								else {
-									setTimeout( function () { waitForImageSizes() }, 5 );
+									exec("convert tmp_img_Reproduced_" + k + ".png -resize " + originalImgHeight + "x" + originalImgWidth + "! -quality 100 tmp_img_Reproduced_" + k + ".png")
 								}
+
+								setTimeout( function () {
+									exec("compare tmp_img_Original_" + k + ".png tmp_img_Reproduced_" + k + ".png tmp_comp_imgOrigRep_" + k +".png", function (stdout, stderr, err) {
+										debugComp("Visually compared Image #" + k + "; "+ stdout + "" + stderr + "" + err);
+
+										exec("base64 tmp_comp_imgOrigRep_" + k +".png > tmp_comp_base64_" + k + ".txt", function (stdout, stderr, err) {
+											debugComp("Writing base64 file for Image #" + k  + ": " + stdout + "" + stderr + "" + err);
+											if (k == base64ImagesOriginal.length-1) {
+												checkIfAllImagesAreDoneComparing();
+											}
+										});
+									})
+								},5);
 							}
-							waitForImageSizes();
+
 						}
 
 						else {
 							boolArrayImageDiffOrdered[k] = false;
 							if( k == base64ImagesOriginal.length-1) {
 								setTimeout( function () {
+									debugComp("Finished comparison.".magenta)
 									reassembleHTMLfromComparedImagesAndText();
 								}, 5);
 							}
@@ -281,6 +302,8 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 						}
 					}
 					if (countFound == differingImagesCount) {
+
+						debugComp("Finished comparison.".magenta)
 						reassembleHTMLfromComparedImagesAndText();
 					}
 					else {
