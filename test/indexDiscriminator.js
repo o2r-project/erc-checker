@@ -38,15 +38,15 @@ describe('Testing erc-checker', function () {
 
 		it('called with only one invalid path', function () {
 			let testStringA = "path/to/nothing.html",
-				testStringB = "test/TestPapers 1/testPaper_1_shortened_a.html";
+				testStringB = "test/TestPapers_1/testPaper_1_shortened_a.html";
 			debug("Test run with invalid path Strings: \n".cyan, testStringA.cyan, ",",  testStringB.cyan);
 			expect(checker(testStringA, testStringB)).to.not.equal(0);
 			debug(checker(testStringA, testStringB));
 		});
 
 		it('comparing papers with equal images reaches diff tool', function () {
-			let testStringA = "test/TestPapers 1/testPaper_1_shortened_a.html",
-				testStringB = "test/TestPapers 1/testPaper_1_shortened_b.html";
+			let testStringA = "test/TestPapers_1/testPaper_1_shortened_a.html",
+				testStringB = "test/TestPapers_1/testPaper_1_shortened_b.html";
 			debug("Test run with invalid path Strings: \n".cyan, testStringA.cyan, ",",  testStringB.cyan);
 			expect(checker(testStringA, testStringB)).to.equal(0);
 			debug(checker(testStringA, testStringB));
