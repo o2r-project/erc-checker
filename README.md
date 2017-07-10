@@ -44,10 +44,11 @@ If both HTML papers contain an equal number of images, erc-checker writes a new 
 ### Command Line Interface
 
 #### Installation
-1.    Navigate to the erc-checker base directory
-2.    run `npm install -g` (you will need to be root) 
+1. Navigate to the erc-checker base directory
+2. Run `npm install -g` (you will need to be root) to use the checker tool from CLI, or just run `npm install`
 
-#### Usage 
+#### Usage
+
 ``` bash
 erc-checker [options] <originalHTML> <reproducedHTML> [-o <output>]
 ```
@@ -56,7 +57,9 @@ erc-checker [options] <originalHTML> <reproducedHTML> [-o <output>]
 <originalHTML>		Relative or absolute location of the Original HTML file to be compared.
 <reproducedHTML>	Relative or absolute location of the Reproduced HTML file to be compared.
 ```
+
 ##### Options:
+
 ``` bash
 -h, --help                  output usage information
                                
@@ -68,6 +71,7 @@ erc-checker [options] <originalHTML> <reproducedHTML> [-o <output>]
 ```
 
 ##### Debug
+
 To _debug_ this tool, set a environment variable **DEBUG**.
    
 Example:
@@ -104,6 +108,7 @@ However, in the current version, there is no status code returned on successful 
 This will be fixed in the future.
 
 ##### Debug
+
 To receive command line outputs from the erc-checker's node module, please set the environment variable DEBUG first.  
 E.g. if your project uses the module, start it as such:
  ``` bash
@@ -116,8 +121,8 @@ E.g. if your project uses the module, start it as such:
 
 ## Debug Loggers
 
-
 Available DEBUG loggers are:
+
 * index:checkRequestHandling  *
 * index:ERROR  *
 * checker:general *
@@ -131,6 +136,7 @@ Available DEBUG loggers are:
 ----------------------------------------------------
 
 ## License
+
 o2r checker is licensed under Apache License, Version 2.0, see file LICENSE.
 
 Copyright (C) 2016 - o2r project. 
