@@ -44,6 +44,18 @@ var boolArrayImageDiffOrdered = [];
 
 
 function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputName) {
+
+	// promises ALL:
+	// - read file 1
+	// - read file 2
+	// ALL:
+	// - compare image 1
+	// - compare image 2
+	// - compare image 3
+	// THEN:
+	// - 
+	// - ...
+
 	fs.readFile(originalPaperHTML, 'utf-8', function (err, dataOriginal) {
 		if (err) {
 			debugERROR("\t\tFileReader for original paper: Unable to read the first (original) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
@@ -97,7 +109,6 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 						setTimeout( function() { checkIfEncodedImagesAreExtracted() }, 20);
 					}
 				}
-
 				
 				function writeBase64Files() {
 					if (base64ImagesOriginal.length != base64ImagesReproduced.length) {
