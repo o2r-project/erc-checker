@@ -44,6 +44,18 @@ var boolArrayImageDiffOrdered = [];
 
 
 function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputName) {
+
+	// promises ALL:
+	// - read file 1
+	// - read file 2
+	// ALL:
+	// - compare image 1
+	// - compare image 2
+	// - compare image 3
+	// THEN:
+	// - 
+	// - ...
+
 	fs.readFile(originalPaperHTML, 'utf-8', function (err, dataOriginal) {
 		if (err) {
 			debugERROR("\t\tFileReader for original paper: Unable to read the first (original) file as String. Something has gone wrong.\nMaybe check your input path.".red, err.message);
@@ -97,7 +109,6 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 						setTimeout( function() { checkIfEncodedImagesAreExtracted() }, 20);
 					}
 				}
-
 				
 				function writeBase64Files() {
 					if (base64ImagesOriginal.length != base64ImagesReproduced.length) {
@@ -189,87 +200,11 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 				}
 
 				function compareImagesQuickNaive(k) {
+					debugComp("comparing %s", k);
+
 					exec("diff tmp_img_Original_" + k + ".png tmp_img_Reproduced_" + k + ".png -s", function (stderr, stdout) {
-
-
-						if (stderr != null) {
-
-							differingImagePositions[differingImagesCount] = k;
-							differingImagesCount += 1;
-
-							var originalImgWidth, originalImgHeight, reproducedImgWidth, reproducedImgHeight;
-							var gotImageSizes = false;
-
-							boolArrayImageDiffOrdered[k] = true;
-
-							var get_Original_k_width = new Promise ( function (resolve, reject) {
-								exec("convert tmp_img_Original_" + k + ".png -ping -format %w info:", function (err, stdout, stderr) {
-									if (err) {
-										reject("Getting width of original image #" + k + " failed: " + err + "".red);
-									} else {
-										originalImgWidth = stdout;
-										resolve();
-									}
-								});
-							});
-							var get_Original_k_height = new Promise ( function (resolve, reject) {
-								exec("convert tmp_img_Original_" + k + ".png -ping -format %h info:", function (err, stdout, stderr) {
-									if (err) {
-										reject("Getting height of original image #" + k + " failed: " + err + "".red);
-									} else {
-										originalImgHeight = stdout;
-										resolve();
-									}
-								});
-							});
-							var get_Reproduced_k_width = new Promise ( function (resolve, reject) {
-								exec("convert tmp_img_Reproduced_" + k + ".png -ping -format %w info:", function (err, stdout, stderr) {
-									if (err) {
-										reject("Getting width of reproduced image #" + k + " failed: " + err + "".red);
-									} else {
-										reproducedImgWidth = stdout;
-										resolve();
-									}
-								});
-							});
-							var get_Reproduced_k_height = new Promise ( function (resolve, reject) {
-								exec("convert tmp_img_Reproduced_" + k + ".png -ping -format %h info:", function (err, stdout, stderr) {
-									if (err) {
-										reject("Getting height of reproduced image #" + k + " failed: " + err + "");
-									} else {
-										reproducedImgHeight = stdout;
-										resolve();
-									}
-								});
-							});
-
-							Promise.all(get_Original_k_width, get_Original_k_height, get_Reproduced_k_width, get_Reproduced_k_height).then(null, function (reason) { debugERROR("\t\t"+ reason.red) }).then(resizeImages()).catch(debugERROR.bind(console));
-
-							function resizeImages() {
-								if((originalImgHeight+originalImgWidth) <= (reproducedImgHeight+reproducedImgWidth)) {
-									exec("convert tmp_img_Original_" + k + ".png -resize " + reproducedImgWidth + "x" + reproducedImgWidth + "! -quality 100 tmp_img_Original_" + k + ".png")
-								}
-								else {
-									exec("convert tmp_img_Reproduced_" + k + ".png -resize " + originalImgHeight + "x" + originalImgWidth + "! -quality 100 tmp_img_Reproduced_" + k + ".png")
-								}
-
-								setTimeout( function () {
-									exec("compare tmp_img_Original_" + k + ".png tmp_img_Reproduced_" + k + ".png tmp_comp_imgOrigRep_" + k +".png", function (stdout, stderr, err) {
-										debugComp("\tVisually compared Image #" + k + "; "+ stdout + "" + stderr + "" + err);
-
-										exec("base64 tmp_comp_imgOrigRep_" + k +".png > tmp_comp_base64_" + k + ".txt", function (stdout, stderr, err) {
-											debugComp("\tWriting base64 file for Image #" + k  + ": " + stdout + "" + stderr + "" + err);
-											if (k == base64ImagesOriginal.length-1) {
-												checkIfAllImagesAreDoneComparing();
-											}
-										});
-									})
-								},5);
-							}
-
-						}
-
-						else {
+						if(stderr == null) {
+							// no comparison required, images are equal
 							boolArrayImageDiffOrdered[k] = false;
 							if( k == base64ImagesOriginal.length-1) {
 								setTimeout( function () {
@@ -277,9 +212,99 @@ function stringifyHTMLandCompare(originalPaperHTML, reproducedPaperHTML, outputN
 									reassembleHTMLfromComparedImagesAndText();
 								}, 5);
 							}
+
+							return;
 						}
-						if (stdout) {
-							debugComp("\tImage #" + k +":  " + stdout);
+
+
+						debugComp("\tImage #" + k +":  " + stdout);
+	
+						differingImagePositions[differingImagesCount] = k;
+						differingImagesCount += 1;
+
+						var originalImgWidth, originalImgHeight, reproducedImgWidth, reproducedImgHeight;
+
+						boolArrayImageDiffOrdered[k] = true;
+
+						let get_Original_k_width = new Promise ( function (resolve, reject) {
+							exec("convert tmp_img_Original_" + k + ".png -ping -format %w info:", function (err, stdout, stderr) {
+								if (err) {
+									reject("Getting width of original image #" + k + " failed: " + err + "".red);
+								} else {
+									originalImgWidth = stdout;
+									resolve();
+								}
+							});
+						});
+						let get_Original_k_height = new Promise ( function (resolve, reject) {
+							exec("convert tmp_img_Original_" + k + ".png -ping -format %h info:", function (err, stdout, stderr) {
+								if (err) {
+									reject("Getting height of original image #" + k + " failed: " + err + "".red);
+								} else {
+									originalImgHeight = stdout;
+									resolve();
+								}
+							});
+						});
+						let get_Reproduced_k_width = new Promise ( function (resolve, reject) {
+							exec("convert tmp_img_Reproduced_" + k + ".png -ping -format %w info:", function (err, stdout, stderr) {
+								if (err) {
+									reject("Getting width of reproduced image #" + k + " failed: " + err + "".red);
+								} else {
+									reproducedImgWidth = stdout;
+									resolve();
+								}
+							});
+						});
+						let get_Reproduced_k_height = new Promise ( function (resolve, reject) {
+							exec("convert tmp_img_Reproduced_" + k + ".png -ping -format %h info:", function (err, stdout, stderr) {
+								if (err) {
+									reject("Getting height of reproduced image #" + k + " failed: " + err + "");
+								} else {
+									reproducedImgHeight = stdout;
+									resolve();
+								}
+							});
+						});
+
+						Promise.all(
+								get_Original_k_width,
+								get_Original_k_height,
+								get_Reproduced_k_width,
+								get_Reproduced_k_height)
+							.then(null, 
+								function (reason) {
+									debugERROR("\t\t"+ reason.red) }
+								)
+							.then(resizeImages())
+							.catch(debugERROR.bind(console));
+
+						function resizeImages() {
+							if((originalImgHeight+originalImgWidth) <= (reproducedImgHeight+reproducedImgWidth)) {
+								exec("convert tmp_img_Original_" + k + ".png -resize " + reproducedImgWidth + "x" + reproducedImgWidth + "! -quality 100 tmp_img_Original_" + k + ".png")
+							}
+							else {
+								exec("convert tmp_img_Reproduced_" + k + ".png -resize " + originalImgHeight + "x" + originalImgWidth + "! -quality 100 tmp_img_Reproduced_" + k + ".png")
+							}
+
+							setTimeout( function () {
+								exec("compare tmp_img_Original_" + k + ".png tmp_img_Reproduced_" + k + ".png tmp_comp_imgOrigRep_" + k +".png", 
+									function (err, stdout, stderr) {
+										debugComp("Visually compared Image #%s: \nstdout: %s \nstderr: %s \nerr: %s", k, stdout, stderr, err);
+
+										if(err) {
+											debugERROR("%s", err.message);
+											return;
+										}
+
+										exec("base64 tmp_comp_imgOrigRep_" + k +".png > tmp_comp_base64_" + k + ".txt", function (err, stdout, stderr) {
+											debugComp("Writing base64 file for Image #%s: \nstdout: %s \nstderr: %s \nerr: %s", k, stdout, stderr, err);
+											if (k == base64ImagesOriginal.length-1) {
+												checkIfAllImagesAreDoneComparing();
+											}
+										});
+									})
+							}, 5);
 						}
 					})
 				}
