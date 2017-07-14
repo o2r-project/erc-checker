@@ -62,19 +62,37 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 // -
 // - ...
 
+
 	Promise
 		.all([readFileSync(originalHTMLPaperPath), readFileSync(reproducedHTMLPaperPath)])
 		.then(
-			function(success) {
-				debugGeneral(success);
+			// resolve
+			function(readFilesArray) {
+				debugGeneral("Successfully read files.");
+				// add space and linebreak before every img Tag to stabilize regex splitting later
+				let originalPaperString = readFilesArray[0].replace(/<img/g, " \n<img"),
+					reproducedPaperString = readFilesArray[1].replace(/<img/g, " \n<img");
+
+				// Extract img-tags (holding base64-images), and store text seperately
+				let base64ImagesOriginalWithWidth = getContentsOfImageTags(originalPaperString),
+					base64ImagesReproducedWithWidth = getContentsOfImageTags(reproducedPaperString),
+					arrayOriginalHTMLexcludingImages = originalPaperString.split(regexSplitCuttingImages),
+					arrayReproducedHTMLexcludingImages = reproducedPaperString.split(regexSplitCuttingImages);
+				debugSlice("Sliced up those pesky Stringsens.");
+				debugSlice("Original:  %s images, %s chunks of text.", base64ImagesOriginalWithWidth.length, arrayOriginalHTMLexcludingImages.length);
+				debugSlice("Reproduced: %s images, %s chunks of text.", base64ImagesReproducedWithWidth.length, arrayReproducedHTMLexcludingImages.length);
+
+				//TODO: return Promise.all()
 			},
-			function(nope) {
-				debugERROR(nope)
+			// reject
+			function(reason) {
+				debugERROR(reason);
 			}
 		);
 }
 
-stringifyHTMLandCompare("/home/timmimim/own", "/home/timmimim/Hallo.txt");
+stringifyHTMLandCompare("/home/timmimim/ownCloud/o2r-data/Hilfskräfte/Kühnel/Checker/erc-checker/test/TestPapers_2/paper_9_img_A.html",
+						"/home/timmimim/ownCloud/o2r-data/Hilfskräfte/Kühnel/Checker/erc-checker/test/TestPapers_2/paper_9_img_B.html");
 
 function readFileSync (paperPath) {
 	return new Promise (function (resolve, reject) {
@@ -84,7 +102,19 @@ function readFileSync (paperPath) {
 		}
 		catch (e) {
 			debugERROR("Error: Could not read file %s. Error code: %s", paperPath, e);
-			reject("Error reading file(s).");
+			reject("Error reading file(s).".red);
 		}
 	})
 }
+
+function getContentsOfImageTags(stringifiedHTML) {
+
+	return stringifiedHTML.match(allImgTagsAsStrings).map(function (finding) {
+		return finding.substr(8, finding.length);
+	});
+}
+
+
+module.exports = {
+	compareHTML: stringifyHTMLandCompare
+};
