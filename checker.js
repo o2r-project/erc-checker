@@ -35,7 +35,7 @@ const Promise = require('promise');
 const sizeOf = require('image-size');
 
 var sharp = require('sharp');
-const Blinky = require('blink-diff');
+var BlinkDiff = require('blink-diff');
 
 // RegEx to find all img tags
 const allImgTagsAsStrings = /<img src="data:image\/png;base64,(.*)" \/>/g;
@@ -107,7 +107,7 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 				debugSlice("All images were extracted successfully.".green);
 				debugCompare("Begin comparing images.".cyan);
 
-				check(resolve, "Raw");
+				//check(resolve, "Raw");
 
 				return prepareImagesForComparison(resolve);
 			},
@@ -118,7 +118,11 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 		.then(
 			function (resolve) {
 
-				check(resolve, "Prepared");
+				//check(resolve, "Prepared");
+
+				debugGeneral("prep done, now blink it");
+
+				runBlinkDiff(resolve[0][0], resolve[0][1]);
 
 			},
 			function (reason) {
@@ -127,7 +131,7 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 		);
 }
 
-function check (arrayBuffersAndOtherStuff, state) {
+/*function check (arrayBuffersAndOtherStuff, state) {
 	arrayBuffersAndOtherStuff[0].map(
 		function(current, index) {
 			fs.writeFile(path.join(tempDirectoryForDecodedImages, "original"+state+index+".png"), current);
@@ -138,7 +142,8 @@ function check (arrayBuffersAndOtherStuff, state) {
 			fs.writeFile(path.join(tempDirectoryForDecodedImages, "reproduced"+state+index+".png"), current);
 		}
 	);
-}
+}*/
+
 
 
 function readFileSync (paperPath) {
@@ -272,8 +277,8 @@ function prepareImagesForComparison (twoDimensionalArrayOfBuffers) {
 							function (resolve) {
 								countPreparedImages++;
 								intArrayImagesCompared[index] = resolve[2];
-								resultingImageBuffers[0].push(resolve[0]);
-								resultingImageBuffers[1].push(resolve[1]);
+								resultingImageBuffers[index][0] = resolve[0];
+								resultingImageBuffers[index][1] = resolve[1];
 
 								if (countPreparedImages == originalImageBuffers.length) {
 										resolver();
@@ -297,29 +302,6 @@ function prepareImagesForComparison (twoDimensionalArrayOfBuffers) {
 				resolve(resultingImageBuffers);
 
 			}
-
-
-			/**
-			 boolArrayImagesNeedComparing.map(
-			 function (current, index) {
-					if (current) {
-						let pathDiffImage = "/tmp/erc-checker/diffImages/diffImageIndex";
-
-						try {
-							resultingImagesBase64[index] = encodeBase64(fs.readFileSync(pathDiffImage + index + ".png"));
-							debugCompare("Writing diff-Image for index %s back to base64-String.", index);
-						}
-						catch (e) {
-							debugERROR("Failed to read diff-Image for index %s as base64.".red, index);
-							reject(e);
-						}
-					}
-					else {
-						resultingImagesBase64[index] = originalImagesBase64[index];
-					}
-				}
-			 );*/
-
 		}
 	);
 }
@@ -402,22 +384,33 @@ function resizeImageIfNecessary (originalImageBuffer, reproducedImageBuffer, dim
 
 }
 
-function runBlinkDiff(pathCurrentOriginal, pathCurrentReproduced, pathDiffImage) {
-	let diffBlinky = new Blinky({
-		imageAPath: pathCurrentOriginal,
-		imageBPath: pathCurrentReproduced,
-		thresholdType: Blinky.THRESHOLD_PERCENT,
-		threshold: 0,
-		composition: false,
+//var PNGImage = require('pngjs-image');
+//var PNGJS = require('node-png');
 
-		imageOutputPath: pathDiffImage
+function runBlinkDiff(currentOriginal, currentReproduced) {
+
+	debugCompare("blinking it")
+
+	var diff = new BlinkDiff({
+		imageA: currentOriginal,
+		imageB: currentReproduced,
+		thresholdType: BlinkDiff.THRESHOLD_PERCENT,
+		threshold: 0,
+		imageOutputPath: "/tmp/erc-checker/testCompare.png",
+		composition: false
 	});
 
-	debugCompare("Creating a diff-Image for images with index %s", index);
-	let result = diffBlinky.runSync();
-	debugCompare('Found ' + result.differences + ' differing pixels.');
-	console.log(result);
-	return result;
+	//debugCompare("Creating a diff-Image for images with index %s", index);
+	diff.run( function (err, result) {
+		if (err) throw err;
+		debugCompare('Found ' + result.differences + ' differing pixels.');
+		console.log(result);
+		debugCompare(diff);
+		/*diff._imageOutput.writeImage("/tmp/erc-checker/whataboutthis.png");
+		var buffer = PNGee.sync.write(diff._imageOutput.getImage());
+		fs.writeFile("/tmp/erc-checker/stuff.png", buffer)*/
+	});
+
 }
 
 
