@@ -127,9 +127,6 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 		);
 }
 
-stringifyHTMLandCompare("/home/timmimim/ownCloud/o2r-data/Hilfskräfte/Kühnel/Checker/erc-checker/test/TestPapers_2/paper_9_img_A.html",
-						"/home/timmimim/ownCloud/o2r-data/Hilfskräfte/Kühnel/Checker/erc-checker/test/TestPapers_2/paper_9_img_C.html");
-
 function check (arrayBuffersAndOtherStuff, state) {
 	arrayBuffersAndOtherStuff[0].map(
 		function(current, index) {

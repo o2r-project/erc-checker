@@ -22,31 +22,23 @@ const colors = require('colors');
 
 const checker = require('../index').ercChecker;
 
-describe('Testing erc-checker', function () {
+var rewire = require('rewire'); // for testing unexported functions, see https://stackoverflow.com/questions/14874208/how-to-access-and-test-an-internal-non-exports-function-in-a-node-js-module
+var app = rewire('../checker.js');
 
-	describe('Compare HTML function', function () {
-		it('called with invalid path', function () {
+describe('Testing image comparison', function () {
+
+	describe('Compare with blink-diff', function () {
+		it('makes image comparison', function () {
 			let testStringA = "path/to/nothing.html",
 				testStringB = "path/to/more/nothing.html";
 			debug("Test run with invalid path Strings: \n".cyan, testStringA.cyan, ",",  testStringB.cyan);
 			expect(checker(testStringA, testStringB)).to.not.equal(0);
 			debug(checker(testStringA, testStringB));
-		});
 
-		it('called with only one invalid path', function () {
-			let testStringA = "path/to/nothing.html",
-				testStringB = "test/TestPapers_1/testPaper_1_shortened_a.html";
-			debug("Test run with invalid path Strings: \n".cyan, testStringA.cyan, ",",  testStringB.cyan);
-			expect(checker(testStringA, testStringB)).to.not.equal(0);
-			debug(checker(testStringA, testStringB));
-		});
+stringifyHTMLandCompare("/home/timmimim/ownCloud/o2r-data/Hilfskräfte/Kühnel/Checker/erc-checker/test/TestPapers_2/paper_9_img_A.html",
+						"/home/timmimim/ownCloud/o2r-data/Hilfskräfte/Kühnel/Checker/erc-checker/test/TestPapers_2/paper_9_img_C.html");
 
-		it('comparing papers with equal images reaches diff tool', function () {
-			let testStringA = "test/TestPapers_1/testPaper_1_shortened_a.html",
-				testStringB = "test/TestPapers_1/testPaper_1_shortened_b.html";
-			debug("Test run with invalid path Strings: \n".cyan, testStringA.cyan, ",",  testStringB.cyan);
-			expect(checker(testStringA, testStringB)).to.equal(0);
-			debug(checker(testStringA, testStringB));
+
 		});
 	})
 
