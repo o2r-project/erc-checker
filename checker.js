@@ -387,10 +387,10 @@ function resizeImageIfNecessary (originalImageBuffer, reproducedImageBuffer, dim
 
 }
 
-var PNGImage = require('pngjs-image');
-var PNGJS = require('node-png');
+//var PNGImage = require('pngjs-image');
+//var PNGJS = require('node-png');
 
-function runBlinkDiff(imagesToBeCompared) {
+function runBlinkDiff(currentOriginal, currentReproduced) {
 
 	debugCompare("blinking it")
 
@@ -409,10 +409,10 @@ function runBlinkDiff(imagesToBeCompared) {
 		debugCompare('Found ' + result.differences + ' differing pixels.');
 		console.log(result);
 		debugCompare(diff);
-		diff._imageOutput.writeImage("/tmp/erc-checker/whataboutthis.png");
+		/*diff._imageOutput.writeImage("/tmp/erc-checker/whataboutthis.png");
 		var buffer = PNGee.sync.write(diff._imageOutput.getImage());
-		fs.writeFile("/tmp/erc-checker/stuff.png", buffer)
-	})
+		fs.writeFile("/tmp/erc-checker/stuff.png", buffer)*/
+	});
 
 }
 
