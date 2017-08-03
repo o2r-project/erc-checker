@@ -15,30 +15,52 @@
  *
  */
 
+const fs = require('fs');
 const assert = require('chai').assert;
 const expect = require('chai').expect;
 const debug = require('debug')('tester');
 const colors = require('colors');
 
-const checker = require('../index').ercChecker;
-
 var rewire = require('rewire'); // for testing unexported functions, see https://stackoverflow.com/questions/14874208/how-to-access-and-test-an-internal-non-exports-function-in-a-node-js-module
 var app = rewire('../checker.js');
 
-describe('Testing image comparison', function () {
+runBlinkDiff = app.__get__('runBlinkDiff');
+sliceImagesOutOfHTMLStringsAndCreateBuffers = app.__get__('sliceImagesOutOfHTMLStringsAndCreateBuffers');
+
+describe.only('Testing image comparison', function () {
 
 	describe('Compare with blink-diff', function () {
-		it('makes image comparison', function () {
-			let testStringA = "path/to/nothing.html",
-				testStringB = "path/to/more/nothing.html";
-			debug("Test run with invalid path Strings: \n".cyan, testStringA.cyan, ",",  testStringB.cyan);
-			expect(checker(testStringA, testStringB)).to.not.equal(0);
-			debug(checker(testStringA, testStringB));
+		var paperA = 'test/TestPapers_2/paper_9_img_A.html';
+		var paperB = 'test/TestPapers_2/paper_9_img_C.html';
 
-stringifyHTMLandCompare("/home/timmimim/ownCloud/o2r-data/Hilfskräfte/Kühnel/Checker/erc-checker/test/TestPapers_2/paper_9_img_A.html",
-						"/home/timmimim/ownCloud/o2r-data/Hilfskräfte/Kühnel/Checker/erc-checker/test/TestPapers_2/paper_9_img_C.html");
+		var imageA, imageB;
+		before(function (done) {
+			let inputFiles = [fs.readFileSync(paperA, 'utf-8'), fs.readFileSync(paperB, 'utf-8')];
 
+			sliceImagesOutOfHTMLStringsAndCreateBuffers(inputFiles).then(function (result) {
+				var originalImageBuffers = result[0],
+					reproducedImageBuffers = result[1];
 
+				imageA = originalImageBuffers[0];
+				imageB = reproducedImageBuffers[0];
+
+				done();
+			});
+		})
+
+		it('makes image comparison', function (done) {
+			runBlinkDiff(imageA, imageB, function (diff, diff_result) {
+
+				console.log(diff);
+				//diff._imageOutput.writeImageSync('/tmp/testoutput.png');
+				var b = diff._imageOutput.getBlob();
+
+				// FIXME implement test against created file
+
+				// TODO remove temp test file
+
+				done();
+			});
 		});
 	})
 
