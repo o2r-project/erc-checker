@@ -54,3 +54,5 @@ original_papers/
 
 # any backup files created by gedit editor
 *~
+
+.vscode
