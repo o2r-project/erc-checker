@@ -9,34 +9,40 @@ The erc-checker runs on [NodeJS](https://nodejs.org/en/). The tool implements a 
 
 **Note:**  
 This tool is being developed and tested on Linux Ubuntu 14.04 LTS. It has not yet been tested on any other OS.  
-It should, however, perform on all Linux systems. 
+It should, however, perform on all Linux systems that have `diffutils` installed (default). 
+
+The index.js is currently not functional, only the node-module `compareHTML`, which is exported from `checker.js`, can be used.
 
 ### Dependencies 
 * **[node](nodejs.org)** v6.11.0 or compatible
 * **[npm](http://npmjs.com/)**
+  * [base64-arraybuffer](https://www.npmjs.com/package/base64-arraybuffer) (^0.1.5)
+  * [blink-diff](https://www.npmjs.com/package/blink-diff) (^1.0.13)
   * [chai](https://www.npmjs.com/package/chai) (^4.0.2)
   * [colors](https://www.npmjs.com/package/colors) (^1.1.2)
   * [commander](https://www.npmjs.com/package/commander) (^2.9.0)
   * [debug](https://www.npmjs.com/package/debug) (^2.6.8)
+  * [image-size](https://www.npmjs.com/package/image-size) (^0.6.0)
+  * [leven](https://www.npmjs.com/package/leven) (^2.1.0)
   * [levenshtein](https://www.npmjs.com/package/levenshtein) (^1.0.5)
   * [mocha](https://www.npmjs.com/package/mocha) (^3.4.2)
   * [promise](https://www.npmjs.com/package/promise) (^7.1.1)
+  * [rewire](https://www.npmjs.com/package/rewire) (^2.5.2)
+  * [sharp](https://www.npmjs.com/package/sharp) (^0.18.2)
 
 * **other**
-  * [ImageMagick](https://www.imagemagick.org/) (v8:6.7.7.10)
   * [diff/diffutils](https://wiki.ubuntuusers.de/diff/) - Unix/Linux tool to find differences in files 
-  * [base64](http://manpages.ubuntu.com/manpages/wily/de/man1/base64.1.html) - cli command for base64 en- and decoding
 
 -------------------------------------------------
 
 ### Current Usability
 
-Currently, the erc-checker tool is capable of taking two input paths pointing to locally stored HTML files, an 'original' and a 'reproduced' paper, and an optional third path for the output created.  
+Currently, the erc-checker tool is capable of taking two input paths pointing to locally stored HTML files, an 'original' and a 'reproduced' paper, and an optional third path for the output created (**current version: directories in path must exist in advance!**).  
 The tool will compare both HTML files for images only. The images MUST be __base64__-encoded, and encapsulated in an HTML img-Tag, as generated automatically when rendering an .Rmd file into HTML format. 
 
 For more information on the nature of ERC HTML papers, see the _testPapers_ provided in the `test/` directory, the documentations for [RMarkdown](http://rmarkdown.rstudio.com/), [knitr](https://yihui.name/knitr/), and the [ERC specification](https://github.com/o2r-project/erc-spec) of the o2r-project.
 
-If both HTML papers contain an equal number of images, erc-checker writes a new HTML files containing the results of the comparison between all images in the input files, as created by ImageMagick's `compare` function, as well as, currently, the text of the first (original) paper. 
+If both HTML papers contain an equal number of images, erc-checker writes a new HTML files containing the results of the comparison between all images in the input files, as created by `blink-diff` (_by Yahoo_), as well as, currently, the text of the first (original) paper. 
 
 -------------------------------------------------
 
@@ -141,8 +147,3 @@ o2r checker is licensed under Apache License, Version 2.0, see file LICENSE.
 Copyright (C) 2016 - o2r project. 
 
 ![o2r](https://avatars3.githubusercontent.com/u/16774537?v=3&s=200)
-
-|  _Author_: | Timm Kühnel |
-| -----------------: | :------------- |
-|  _with_: | o2r - Opening Reproductive Research |
-| _Version_:| 1.0.0 |
