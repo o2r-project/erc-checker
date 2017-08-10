@@ -76,22 +76,11 @@ var metadata = {
  *
  * @param originalHTMLPaperPath		Stringified path to original paper's HTML file
  * @param reproducedHTMLPaperPath	Stringified path to reproduced paper's HTML file
- * @param outputName			Optional:  name of output file
+ * @param outputPath 				Optional:  name of output file
  */
 function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, outputPath) {
 
-	// promises ALL:
-	// - read file 1
-	// - read file 2
-	// ALL:
-	// - compare image 1
-	// - compare image 2
-	// - compare image 3
-	// THEN:
-	// -
-	// - ...
 	var textChunks;
-
 
 	Promise
 		.all([readFileSync(originalHTMLPaperPath), readFileSync(reproducedHTMLPaperPath)])
@@ -141,7 +130,7 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 			function(resolve) {
 				debugCompare("Visual Comparison completed.".green);
 				debugReassemble("Begin Reassembling HTML with Diff-Images where images were not equal.")
-				return reassembleDiffHTML(resolve.diffImages, textChunks, outputName);
+				return reassembleDiffHTML(resolve.diffImages, textChunks, outputPath);
 			},
 			function (reason) {
 				debugERROR(reason);
@@ -535,10 +524,15 @@ function reassembleDiffHTML (diffImageBufferArray, textChunkArray, outputName) {
 		return;
 	}
 	debugGeneral("Output files written successfully".green);
+	//debugGeneral(metadata);
 	return metadata;
 }
 
-
+/*
+var paperA = 'test/TestPapers_2/paper_9_img_A.html';
+var paperB = 'test/TestPapers_2/paper_9_img_C.html';
+stringifyHTMLandCompare(paperA, paperB);
+*/
 
 module.exports = {
 	compareHTML: stringifyHTMLandCompare
