@@ -37,6 +37,8 @@ const sizeOf = require('image-size');
 var sharp = require('sharp');
 var BlinkDiff = require('blink-diff');
 
+var toBase64 = require('base64-arraybuffer');
+
 // RegEx to find all img tags
 const allImgTagsAsStrings = /<img src="data:image\/png;base64,(.*)" \/>/g;
 const regexSplitCuttingImages = /<img src="data:image\/png;base64,.*" \/>/g;
@@ -49,16 +51,21 @@ exec("mkdir -p " + tempDirectoryForBase64Files + " " + tempDirectoryForDecodedIm
 	function (err) {
 		if (err) {
 			debugERROR("Could not create one or more tmp directories.".red);
+			metadata.errorsEncountered.push(err);
 			debugERROR(err);
 		}
 	}
 );
 
 var metadata = {
+	differencesFound: false,
 	text: "not implemented yet",
-	images: [
+	numberOfImages: null,
+	images: [],
+	resultHTML: null,
+	timeAndDateOfCheck : Date.now(),
+	errorsEncountered: [],
 
-	]
 };
 
 
@@ -71,7 +78,7 @@ var metadata = {
  * @param reproducedHTMLPaperPath	Stringified path to reproduced paper's HTML file
  * @param outputName			Optional:  name of output file
  */
-function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, outputName) {
+function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, outputPath) {
 
 	// promises ALL:
 	// - read file 1
@@ -83,67 +90,66 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 	// THEN:
 	// -
 	// - ...
+	var textChunks;
 
 
 	Promise
 		.all([readFileSync(originalHTMLPaperPath), readFileSync(reproducedHTMLPaperPath)])
 		.then(
-		// resolve  <=>  files were read successfully
-		function (readFilesArray) {
+			// resolve  <=>  files were read successfully
+			function (readFilesArray) {
 
-			return sliceImagesOutOfHTMLStringsAndCreateBuffers(readFilesArray);
+				debugSlice("Extracting text chunks from original HTML String and saving them for later.");
+				textChunks = readFilesArray[0].split(regexSplitCuttingImages);
 
-		},
-		// reject
-		function (reason) {
-			debugERROR(reason);
-		}
+				return sliceImagesOutOfHTMLStringsAndCreateBuffers(readFilesArray);
+
+			},
+			// reject
+			function (reason) {
+				debugERROR(reason);
+			}
 		)
 		.then(
-		// @param resolve Array, holding 2 further Arrays of base64-Strings:
-		// [0] is original images,
-		// [1] is reproduced images
-		function (resolve) {
-			debugSlice("All images were extracted successfully.".green);
-			debugCompare("Begin comparing images.".cyan);
+			// @param resolve Array, holding 2 further Arrays of base64-Strings:
+			// [0] is original images,
+			// [1] is reproduced images
+			function (result2DArrayOfBase64Images) {
+				debugSlice("All images were extracted successfully.".green);
+				debugCompare("Begin comparing images.".cyan);
 
-			//check(resolve, "Raw");
-
-			return prepareImagesForComparison(resolve);
-		},
-		function (reason) {
-			debugERROR(reason);
-		}
+				return prepareImagesForComparison(result2DArrayOfBase64Images);
+			},
+			function (reason) {
+				debugERROR(reason);
+			}
 		)
 		.then(
-		function (resolve) {
+			function (resolve) {
+				let preparedImages = resolve.images;
+				debugGeneral("Preparation is done, move on to visual comparison".green);
+				debugCompare(resolve);
 
-			//check(resolve, "Prepared");
+				return runBlinkDiff(preparedImages);
 
-			debugGeneral("prep done, now blink it");
+			},
+			function (reason) {
+				debugERROR(reason);
+			}
+		)
+		.then(
+			function(resolve) {
+				debugCompare("Visual Comparison completed.".green);
+				debugReassemble("Begin Reassembling HTML with Diff-Images where images were not equal.")
+				return reassembleDiffHTML(resolve.diffImages, textChunks, outputName);
+			},
+			function (reason) {
+				debugERROR(reason);
+			}
+		)
 
-			runBlinkDiff(resolve[0][0], resolve[0][1]);
-			// FIXME runBlinkDiff(resolve.images.inputImageA.base64, resolve.images.inputImageB.base64);
-		},
-		function (reason) {
-			debugERROR(reason);
-		}
-		);
+		.catch(debugERROR);
 }
-
-/*function check (arrayBuffersAndOtherStuff, state) {
-	arrayBuffersAndOtherStuff[0].map(
-		function(current, index) {
-			fs.writeFile(path.join(tempDirectoryForDecodedImages, "original"+state+index+".png"), current);
-		}
-	);
-	arrayBuffersAndOtherStuff[1].map(
-		function(current, index) {
-			fs.writeFile(path.join(tempDirectoryForDecodedImages, "reproduced"+state+index+".png"), current);
-		}
-	);
-}*/
-
 
 
 function readFileSync(paperPath) {
@@ -154,6 +160,7 @@ function readFileSync(paperPath) {
 		}
 		catch (e) {
 			debugERROR("Error: Could not read file %s.".red, paperPath);
+			metadata.errorsEncountered.push(e);
 			reject(e);
 		}
 	})
@@ -209,7 +216,8 @@ function sliceImagesOutOfHTMLStringsAndCreateBuffers(readFilesArray) {
 				resolve([bufferedImagesOriginal, bufferedImagesReproduced]);
 			}
 			catch (e) {
-				debugERROR("Failed to create Buffer for at least one base64 encoded image.")
+				debugERROR("Failed to create Buffer for at least one base64 encoded image.");
+				metadata.errorsEncountered.push(e);
 				reject(e);
 			}
 
@@ -229,9 +237,10 @@ function getContentsOfImageTags(stringifiedHTML) {
 
 
 function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
-	var resultingImageBuffers = [];
-	resultingImageBuffers[0] = [];
-	resultingImageBuffers[1] = [];
+
+	// resolve.images.inputImageA.base64, resolve.images.inputImageB.base64
+	var resultingImageBuffers = { images: [] };
+
 
 	// Array of Integers; index represents position of image in paper
 	// i.e.: first image is represented by Integer at Array [0], and so forth
@@ -259,12 +268,35 @@ function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 					var currentBufferOriginal = originalImageBuffers[index],
 						currentBufferReproduced = reproducedImageBuffers[index];
 
+					// if buffers are equal === if images are equal --> no comparison or resizing needed
+					if ( currentBufferOriginal == currentBufferReproduced ) {
+						debugCompare("Images with index %s are equal.", index);
+						countPreparedImages++;
+						intArrayImagesCompared[index] = 0;
+						resultingImageBuffers.images[index] = {
+							originalImage: {
+								buffer: currentBufferOriginal
+							},
+							reproducedImage: {
+								buffer: currentBufferReproduced
+							}
+
+						};
+						if (countPreparedImages == originalImageBuffers.length) {
+							resolver();
+						}
+						return;
+					}
+
+
+
 					try {
 						dimensionsOriginal = sizeOf(originalImageBuffers[index]);
 						dimensionsReproduced = sizeOf(reproducedImageBuffers[index]);
 					}
 					catch (e) {
 						debugERROR("Failed to get size on image %s. Buffer may be broken.".red, index);
+						metadata.errorsEncountered.push(e);
 						reject(e);
 					}
 
@@ -273,13 +305,12 @@ function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 
 
 
-					resizeImageIfNecessary(currentBufferOriginal, currentBufferReproduced, dimensionsOriginal, dimensionsReproduced)
+					resizeImageIfNecessary(currentBufferOriginal, currentBufferReproduced, dimensionsOriginal, dimensionsReproduced, index)
 						.then(
 						function (resolve) {
 							countPreparedImages++;
-							intArrayImagesCompared[index] = resolve[2];
-							resultingImageBuffers[index][0] = resolve[0];
-							resultingImageBuffers[index][1] = resolve[1];
+							intArrayImagesCompared[index] = resolve.prepOpCode;
+							resultingImageBuffers.images[index] = resolve.images;
 
 							if (countPreparedImages == originalImageBuffers.length) {
 								resolver();
@@ -292,10 +323,12 @@ function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 
 				intArrayImagesCompared.map(
 					function (current, index) {
+						(current != 0) ? metadata.differencesFound = true : null;
 						metadata.images.push(
 							{
 								imageIndex: index,
-								size: current
+								prepResult: current,
+								compareResults: null
 							}
 						);
 					}
@@ -313,11 +346,24 @@ function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
  * @param reproducedImageBuffer
  * @param dimensionsOriginal
  * @param dimensionsReproduced
+ * @param index
  */
 function resizeImageIfNecessary(originalImageBuffer, reproducedImageBuffer, dimensionsOriginal, dimensionsReproduced, index) {
 
 	var originalImage = originalImageBuffer,
 		reproducedImage = reproducedImageBuffer;
+
+	function prepResultImages (bufferPreppedOriginal, bufferPreppedReproduction, resultCode) {
+		this.images = {
+			originalImage : {
+				buffer: bufferPreppedOriginal
+			},
+			reproducedImage : {
+				buffer: bufferPreppedReproduction
+			}
+		};
+		this.prepOpCode = resultCode;
+	}
 
 	return new Promise(
 		function (resolve, reject) {
@@ -343,11 +389,13 @@ function resizeImageIfNecessary(originalImageBuffer, reproducedImageBuffer, dime
 									})
 									.catch(e => {
 										debugERROR("Failure resizing Reproduced image No.%s.".red, index); resultHandler(false, e);
+										metadata.errorsEncountered.push(e);
 									});
 							}
 						})
 						.catch(e => {
 							debugERROR("Failure resizing Original image No.%s.".red, index);
+							metadata.errorsEncountered.push(e);
 							resultHandler(false, e)
 						});
 				}
@@ -364,21 +412,23 @@ function resizeImageIfNecessary(originalImageBuffer, reproducedImageBuffer, dime
 							})
 							.catch(e => {
 								debugERROR("Failure resizing Reproduced image No.%s.".red, index); resultHandler(false, e);
+								metadata.errorsEncountered.push(e);
 							});
 					}
 				}
 			}
 			else {
-				resolve([originalImageBuffer, reproducedImageBuffer, 1]);
+				debugCompare("No resizing needed for images with index %s", index);
+				resolve(new	prepResultImages(originalImage, reproducedImage, 1));
 			}
 
 			function resultHandler(resolveThis) {
 
 				if (resolveThis) {
-					resolve([originalImage, reproducedImage, 2]);
+					resolve(new prepResultImages(originalImage, reproducedImage, 2));
 				}
 				else {
-					resolve([originalImage, reproducedImage, 3]);
+					resolve(new prepResultImages(originalImage, reproducedImage, 3));
 				}
 			}
 		}
@@ -390,30 +440,104 @@ function resizeImageIfNecessary(originalImageBuffer, reproducedImageBuffer, dime
 //var PNGImage = require('pngjs-image');
 //var PNGJS = require('node-png');
 
-function runBlinkDiff(original, reproduced, done) {
-	debugCompare("blinking it");
+function runBlinkDiff(images) {
 
-	var diff = new BlinkDiff({
-		imageA: original,
-		imageB: reproduced,
-		thresholdType: BlinkDiff.THRESHOLD_PERCENT,
-		threshold: 0,
-		imageOutputPath: "/tmp/erc-checker/testCompare.png",
-		composition: false
-	});
+	debugCompare("Starting visual comparison.".cyan);
 
-	//debugCompare("Creating a diff-Image for images with index %s", index);
-	diff.run(function (err, result) {
-		if (err) throw err;
-		debugCompare('Found ' + result.differences + ' differing pixels.');
-		debugCompare(diff);
-		/*diff._imageOutput.writeImage("/tmp/erc-checker/whataboutthis.png");
-		var buffer = PNGee.sync.write(diff._imageOutput.getImage());
-		fs.writeFile("/tmp/erc-checker/stuff.png", buffer)*/
-		done(diff, result);
-	});
+	let countComparedImages = 0,
+		resultImages = {
+			diffImages: []
+		};
 
+
+	return new Promise(
+		function (resolve, reject) {
+			images.map(
+				function (current, index) {
+					let resultPath = "/tmp/erc-checker/diffImages/diffImage"+index+".png";
+
+					let diff = new BlinkDiff({
+						imageA: current.originalImage.buffer,
+						imageB: current.reproducedImage.buffer,
+						thresholdType: BlinkDiff.THRESHOLD_PERCENT,
+						threshold: 0,
+						imageOutputPath: resultPath,
+						composition: false
+					});
+
+					debugCompare("Creating a diff-Image for images with index %s", index);
+
+					diff.run(
+						function (err, result) {
+							if (err) {
+								debugERROR("Error comparing images with index %s.".red, index);
+								metadata.errorsEncountered.push(err);
+								reject(err);
+							}
+							countComparedImages++;
+
+							debugCompare('Found %s differing pixels for images with index %s.', result.differences, index);
+
+							if (diff.hasPassed(result.code)) {
+								resultImages.diffImages[index] = { buffer : current.originalImage.buffer };
+							}
+							else {
+								resultImages.diffImages[index] =  { buffer : fs.readFileSync(resultPath) };
+							}
+
+							metadata.images[index].compareResults = {
+								differences : result.differences,
+								dimension : result.dimension
+							};
+
+							if (countComparedImages === images.length) {
+								resolve(resultImages);
+							}
+						}
+					)
+				}
+			)
+		}
+	)
 }
+
+function reassembleDiffHTML (diffImageBufferArray, textChunkArray, outputName) {
+
+	let reassembledDiffHTMLString = "";
+
+	debugReassemble("Piecing together text chunks and images.");
+	textChunkArray.map(
+		function (currentTextChunk, index) {
+			reassembledDiffHTMLString += currentTextChunk
+				+  "<img src=\"data:image/png;base64,"
+				+ toBase64.encode(diffImageBufferArray[index].buffer)
+				+ "\" width=\"672\" />";
+		}
+	);
+	reassembledDiffHTMLString += textChunkArray.pop();
+	debugReassemble("Reassembly done.".green);
+	debugGeneral("Writing result HTML".cyan);
+
+	metadata.resultHTML = reassembledDiffHTMLString;
+
+	try {
+		if(outputName) {
+			fs.writeFileSync("./" + outputName + ".html", reassembledDiffHTMLString);
+		}
+		else {
+			fs.writeFileSync("./result.html", reassembledDiffHTMLString);
+		}
+	}
+	catch(e) {
+		debugERROR("Failed to write result HTML file.".red);
+		metadata.errorsEncountered.push(e);
+		debugERROR(e);
+		return;
+	}
+	debugGeneral("Output files written successfully".green);
+	return metadata;
+}
+
 
 
 module.exports = {
