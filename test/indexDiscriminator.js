@@ -19,13 +19,10 @@ const assert = require('chai').assert;
 const expect = require('chai').expect;
 const debug = require('debug')('tester');
 const colors = require('colors');
-const startrek = require('startrek');
 
-const checker = require('../index').ercChecker;
+//const checker = require('../index').ercChecker;
 
-debug(startrek());
-
-describe('Testing erc-checker', function () {
+describe.skip('Testing erc-checker', function () {
 
 	describe('Compare HTML function', function () {
 		it('called with invalid path', function () {

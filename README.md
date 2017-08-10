@@ -21,7 +21,6 @@ It should, however, perform on all Linux systems.
   * [levenshtein](https://www.npmjs.com/package/levenshtein) (^1.0.5)
   * [mocha](https://www.npmjs.com/package/mocha) (^3.4.2)
   * [promise](https://www.npmjs.com/package/promise) (^7.1.1)
-  * [startrek](https://www.npmjs.com/package/startrek) (^1.3.4)
 
 * **other**
   * [ImageMagick](https://www.imagemagick.org/) (v8:6.7.7.10)
