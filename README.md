@@ -7,11 +7,6 @@ The erc-checker is part of the [o2r-project](http://www.o2r.info/). Its purpose 
 
 The erc-checker runs on [NodeJS](https://nodejs.org/en/). The tool implements a [command line interface](#command-line-interface). It can also be used as a [NodeJS module](#node-module). 
 
-**Note:**  
-This tool is being developed and tested on Linux Ubuntu 14.04 LTS. It has not yet been tested on any other OS.  
-It should, however, perform on all Linux systems that have `diffutils` installed (default). 
-
-The index.js is currently not functional, only the node-module `compareHTML`, which is exported from `checker.js`, can be used.
 
 ### Dependencies 
 * **[node](nodejs.org)** v6.11.0 or compatible
@@ -30,14 +25,12 @@ The index.js is currently not functional, only the node-module `compareHTML`, wh
   * [rewire](https://www.npmjs.com/package/rewire) (^2.5.2)
   * [sharp](https://www.npmjs.com/package/sharp) (^0.18.2)
 
-* **other**
-  * [diff/diffutils](https://wiki.ubuntuusers.de/diff/) - Unix/Linux tool to find differences in files 
 
 -------------------------------------------------
 
 ### Current Usability
 
-Currently, the erc-checker tool is capable of taking two input paths pointing to locally stored HTML files, an 'original' and a 'reproduced' paper, and an optional third path for the output created (**current version: directories in path must exist in advance!**).  
+Currently, the erc-checker tool is capable of taking two input paths pointing to locally stored HTML files, an 'original' and a 'reproduced' paper, and an optional third path for the output created.  
 The tool will compare both HTML files for images only. The images MUST be __base64__-encoded, and encapsulated in an HTML img-Tag, as generated automatically when rendering an .Rmd file into HTML format. 
 
 For more information on the nature of ERC HTML papers, see the _testPapers_ provided in the `test/` directory, the documentations for [RMarkdown](http://rmarkdown.rstudio.com/), [knitr](https://yihui.name/knitr/), and the [ERC specification](https://github.com/o2r-project/erc-spec) of the o2r-project.

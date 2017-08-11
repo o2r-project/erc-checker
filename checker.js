@@ -46,16 +46,6 @@ const regexSplitCuttingImages = /<img src="data:image\/png;base64,.*" \/>/g;
 // Path Strings used
 const tempDirectoryForDiffImages = "/tmp/erc-checker/diffImages";
 
-exec("mkdir -p " + tempDirectoryForDiffImages,
-	function (err) {
-		if (err) {
-			debugERROR("Could not create tmp directoriy.".red);
-			metadata.errorsEncountered.push(err);
-			debugERROR(err);
-		}
-	}
-);
-
 var metadata = {
 	differencesFound: false,
 	text: "not implemented yet",
@@ -65,6 +55,29 @@ var metadata = {
 	timeAndDateOfCheck : Date.now(),
 	errorsEncountered: []
 };
+
+if (process.platform === 'win32') {
+	exec("mkdir " + tempDirectoryForDiffImages,
+		function (err) {
+			if (err) {
+				debugERROR("Could not create tmp directory.".red);
+				metadata.errorsEncountered.push(err);
+				debugERROR(err);
+			}
+		}
+	);
+}
+else {
+	exec("mkdir -p " + tempDirectoryForDiffImages,
+		function (err) {
+			if (err) {
+				debugERROR("Could not create tmp directory.".red);
+				metadata.errorsEncountered.push(err);
+				debugERROR(err);
+			}
+		}
+	);
+}
 
 
 /**
@@ -79,6 +92,31 @@ var metadata = {
 function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, outputPath) {
 
 	var textChunks;
+
+	let pathDirectories = outputPath.replace(outputPath.split('\\').pop().split('/').pop(),'');
+	if (process.platform === 'win32') {
+		exec("mkdir " + pathDirectories,
+			function (err) {
+				if (err) {
+					debugERROR("Could not create output directory.".red);
+					metadata.errorsEncountered.push(err);
+					debugERROR(err);
+				}
+			}
+		);
+	}
+	else {
+		exec("mkdir -p " + pathDirectories,
+			function (err) {
+				if (err) {
+					debugERROR("Could not create output directory.".red);
+					metadata.errorsEncountered.push(err);
+					debugERROR(err);
+				}
+			}
+		);
+	}
+
 
 	return Promise
 		.all([readFileSync(originalHTMLPaperPath), readFileSync(reproducedHTMLPaperPath)])
