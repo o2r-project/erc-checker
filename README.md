@@ -64,6 +64,8 @@ erc-checker [options] <originalHTML> <reproducedHTML> [-o <output>]
 -o, --output <outputPath>   desired output location and file name 
     			            as String or standard path input.
     			            Accepts absolute and relative paths alike.
+
+-p, --parents               automatically create parent directories for output path
                                
 -q, --quiet                 quiet mode, silencing DEBUG logs entirely
 ```

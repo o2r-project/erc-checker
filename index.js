@@ -70,6 +70,8 @@ program
 
 		var pathOriginalHTML = originalHTML,
 			pathReproducedHTML = reproducedHTML,
+			createParentDirectoriesInOutputPath = program.parents,
+			silenceDebuggers = program.quiet,
 			brokenPath = null;
 
 		var outputName = program.output;
@@ -119,14 +121,14 @@ program
 		}
 		else {
 			debug("\tDifferences were found; Calling compareHTML to create a HTML file highlighting these differences.");
-			return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName);
+			return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName, createParentDirectoriesInOutputPath, silenceDebuggers);
 		}
 
 	})
 	.parse(process.argv);
 
 
-var ercChecker = function (originalHTML, reproducedHTML, outputPath) {
+var ercChecker = function (originalHTML, reproducedHTML, outputPath, createParentDirectoriesInOutputPath, silenceDebuggers) {
 	var pathOriginalHTML = originalHTML,
 		pathReproducedHTML = reproducedHTML,
 		brokenPath = false;
@@ -172,7 +174,6 @@ var ercChecker = function (originalHTML, reproducedHTML, outputPath) {
 		return new Metadata(e);
 	}
 
-
 	if (originalHTMLBuffer.equals(reproducedHTMLBuffer)) {
 		debug('\tThe compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ.'.green + '\n' +'Congrats!'.green);
 		return new Metadata(null);
@@ -180,7 +181,8 @@ var ercChecker = function (originalHTML, reproducedHTML, outputPath) {
 	else {
 		debug("\tDifferences were found; Calling compareHTML to create a HTML file highlighting these differences.");
 		let metadata;
-		checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName)
+
+		checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName, createParentDirectoriesInOutputPath, silenceDebuggers)
 			.then(
 				function (result) {
 					// TODO do somehting with Metadata

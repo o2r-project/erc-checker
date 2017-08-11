@@ -21,11 +21,11 @@ const fs = require('fs');
 const path = require('path');
 const exec = require('child_process').exec;
 
-const debugGeneral = require('debug')('checker:general');
-const debugSlice = require('debug')('checker:slice');
-const debugCompare = require('debug')('checker:compare');
-const debugReassemble = require('debug')('checker:reassemble');
-const debugERROR = require('debug')('checker:ERROR');
+var debugGeneral = require('debug')('checker:general');
+var debugSlice = require('debug')('checker:slice');
+var debugCompare = require('debug')('checker:compare');
+var debugReassemble = require('debug')('checker:reassemble');
+var debugERROR = require('debug')('checker:ERROR');
 const colors = require('colors');
 
 const Promise = require('promise');
@@ -88,34 +88,45 @@ else {
  * @param originalHTMLPaperPath		Stringified path to original paper's HTML file
  * @param reproducedHTMLPaperPath	Stringified path to reproduced paper's HTML file
  * @param outputPath 				Optional:  name of output file
+ * @param createParents
+ * @param silenceDebuggers
  */
-function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, outputPath) {
+function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, outputPath, createParents, silenceDebuggers) {
 
 	var textChunks;
 
-	let pathDirectories = outputPath.replace(outputPath.split('\\').pop().split('/').pop(),'');
-	if (process.platform === 'win32') {
-		exec("mkdir " + pathDirectories,
-			function (err) {
-				if (err) {
-					debugERROR("Could not create output directory.".red);
-					metadata.errorsEncountered.push(err);
-					debugERROR(err);
-				}
-			}
-		);
+	if (silenceDebuggers) {
+		debugGeneral = debugSlice = debugCompare = debugReassemble = debugERROR = require('debug')('quiet');
 	}
-	else {
-		exec("mkdir -p " + pathDirectories,
-			function (err) {
-				if (err) {
-					debugERROR("Could not create output directory.".red);
-					metadata.errorsEncountered.push(err);
-					debugERROR(err);
+
+	if (createParents) {
+
+		let pathDirectories = outputPath.replace(outputPath.split('\\').pop().split('/').pop(),'');
+
+		if (process.platform === 'win32') {
+			exec("mkdir " + pathDirectories,
+				function (err) {
+					if (err) {
+						debugERROR("Could not create output directory.".red);
+						metadata.errorsEncountered.push(err);
+						debugERROR(err);
+					}
 				}
-			}
-		);
+			);
+		}
+		else {
+			exec("mkdir -p " + pathDirectories,
+				function (err) {
+					if (err) {
+						debugERROR("Could not create output directory.".red);
+						metadata.errorsEncountered.push(err);
+						debugERROR(err);
+					}
+				}
+			);
+		}
 	}
+
 
 
 	return Promise
