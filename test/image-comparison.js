@@ -22,18 +22,19 @@ const debug = require('debug')('tester');
 const colors = require('colors');
 
 var rewire = require('rewire'); // for testing unexported functions, see https://stackoverflow.com/questions/14874208/how-to-access-and-test-an-internal-non-exports-function-in-a-node-js-module
-var app = rewire('../checker.js');
+var checkerCore = rewire('../checker.js');
 
-runBlinkDiff = app.__get__('runBlinkDiff');
-sliceImagesOutOfHTMLStringsAndCreateBuffers = app.__get__('sliceImagesOutOfHTMLStringsAndCreateBuffers');
+runBlinkDiff = checkerCore.__get__('runBlinkDiff');
+sliceImagesOutOfHTMLStringsAndCreateBuffers = checkerCore.__get__('sliceImagesOutOfHTMLStringsAndCreateBuffers');
 
-describe.only('Testing image comparison', function () {
+describe('Testing image comparison', function () {
 
-	describe('Compare with blink-diff', function () {
+	describe('Comparison via blink-diff', function () {
 		var paperA = 'test/TestPapers_2/paper_9_img_A.html';
 		var paperB = 'test/TestPapers_2/paper_9_img_C.html';
 
-		var imageA, imageB;
+		var images;
+
 		before(function (done) {
 			let inputFiles = [fs.readFileSync(paperA, 'utf-8'), fs.readFileSync(paperB, 'utf-8')];
 
@@ -41,27 +42,49 @@ describe.only('Testing image comparison', function () {
 				var originalImageBuffers = result[0],
 					reproducedImageBuffers = result[1];
 
-				imageA = originalImageBuffers[0];
-				imageB = reproducedImageBuffers[0];
-
-				done();
-			});
-		})
-
-		it('makes image comparison', function (done) {
-			runBlinkDiff(imageA, imageB, function (diff, diff_result) {
-
-				console.log(diff);
-				//diff._imageOutput.writeImageSync('/tmp/testoutput.png');
-				var b = diff._imageOutput.getBlob();
-
-				// FIXME implement test against created file
-
-				// TODO remove temp test file
-
+				images = [{
+					originalImage: {
+						buffer: originalImageBuffers[0]
+					},
+					reproducedImage: {
+						buffer: reproducedImageBuffers[0]
+					}
+				}];
 				done();
 			});
 		});
+
+		it('should create a file matching the reference file', function (done) {
+			runBlinkDiff(images)
+				.then(
+					function (resolve) {
+						let result = resolve.diffImages;
+
+						if(result != undefined && result.length === images.length && result[0].buffer instanceof Buffer) {
+							let testImage = fs.readFileSync("/home/timmimim/ownCloud/o2r-data/Hilfskräfte/Kühnel/Checker/erc-checker/test/img/testDiffImg.png"),
+								newDiffImage = fs.readFileSync("/tmp/erc-checker/diffImages/diffImage0.png");
+
+							if (testImage.equals(newDiffImage)) {
+								done();
+							}
+							else{
+								done(new Error ("Diff Image differs from provided test image."));
+							}
+						}
+						else {
+							done(new Error ("Wrong result."))
+						}
+					},
+					function (reason) {
+						console.log("Error comparing images.".yellow)
+						done(new Error (reason));
+					}
+				);
+		});
+
+		// FIXME implement test against created file
+
+		// TODO remove temp test file
 	})
 
 });

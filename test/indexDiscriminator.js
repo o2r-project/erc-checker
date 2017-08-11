@@ -20,33 +20,39 @@ const expect = require('chai').expect;
 const debug = require('debug')('tester');
 const colors = require('colors');
 
-//const checker = require('../index').ercChecker;
+const checker = require('../index').ercChecker;
 
-describe.skip('Testing erc-checker', function () {
+describe('Testing erc-checker', function () {
 
 	describe('Compare HTML function', function () {
-		it('called with invalid path', function () {
+		it('called with two invalid paths should return metadata containing an Error', function () {
 			let testStringA = "path/to/nothing.html",
 				testStringB = "path/to/more/nothing.html";
-			debug("Test run with invalid path Strings: \n".cyan, testStringA.cyan, ",",  testStringB.cyan);
-			expect(checker(testStringA, testStringB)).to.not.equal(0);
-			debug(checker(testStringA, testStringB));
+
+			expect(checker(testStringA, testStringB).errorsEncountered[0]).to.not.equal(0);
 		});
 
-		it('called with only one invalid path', function () {
+		it('called with only one invalid path should return metadata containing an Error', function () {
 			let testStringA = "path/to/nothing.html",
 				testStringB = "test/TestPapers_1/testPaper_1_shortened_a.html";
-			debug("Test run with invalid path Strings: \n".cyan, testStringA.cyan, ",",  testStringB.cyan);
-			expect(checker(testStringA, testStringB)).to.not.equal(0);
-			debug(checker(testStringA, testStringB));
+
+			expect(checker(testStringA, testStringB).errorsEncountered[0]).to.not.equal(0);
 		});
 
-		it('comparing papers with equal images reaches diff tool', function () {
+		it('called with equal papers should return return metadata containing no Errors, but also value 0 for differences', function () {
+			let testStringA = "test/TestPapers_1/testPaper_1_shortened_a.html",
+				testStringB = "test/TestPapers_1/testPaper_1_shortened_a.html";
+
+			expect(checker(testStringA, testStringB).differencesFound).to.equal(0);
+			expect(checker(testStringA, testStringB).errorsEncountered[0]).to.equal(null);
+		});
+
+		it('called with differing papers should return Promise', function () {
 			let testStringA = "test/TestPapers_1/testPaper_1_shortened_a.html",
 				testStringB = "test/TestPapers_1/testPaper_1_shortened_b.html";
-			debug("Test run with invalid path Strings: \n".cyan, testStringA.cyan, ",",  testStringB.cyan);
-			expect(checker(testStringA, testStringB)).to.equal(0);
-			debug(checker(testStringA, testStringB));
+			let result = checker(testStringA, testStringB);
+
+			expect(result).to.equal(0);
 		});
 	})
 
