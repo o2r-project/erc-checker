@@ -19,8 +19,7 @@
 if(process.env.DEBUG === undefined) process.env['DEBUG']='index:requestHandling,index:ERROR,checker:general,checker:ERROR';
 
 
-const checker = require('./checker');
-const exec = require('child_process').exec;
+var checker = require('./checker');
 
 var debug = require('debug')('index:requestHandling');
 var debugERROR = require('debug')('index:ERROR');
@@ -30,6 +29,13 @@ const fs = require("fs");
 const path = require("path");
 const program = require('commander');
 
+function Metadata (errorEncountered) {
+	this.differencesFound = 0;
+	this.timeAndDateOfCheck = Date.now();
+	this.errorsEncountered = [];
+	this.errorsEncountered[0] = errorEncountered;
+}
+
 
 program
 	.arguments('<originalHTML>', 'Relative or absolute location of the Original HTML file to be compared.')
@@ -38,7 +44,9 @@ program
 	.option('')
 	.option('-o, --output <outputPath>', '\tdesired output location and file name \n\t\t\t\tas String or standard path input.\n\t\t\t\tAccepts absolute and relative paths alike.')
 	.option('')
-	.option('-q, --quiet', '\tquiet mode, silencing DEBUG logs entirely')
+	.option('-p, --parents', '\tautomatically create parent directories for the output path.')
+	.option('')
+	.option('-q, --quiet', '\tquiet mode, silencing DEBUG logs entirely.')
 
 	.usage('[options]'.magenta + ' ' + '<originalHTML>'.blue + ' ' + '<reproducedHTML>'.cyan + '\n\n' +
 		'\t' + '<originalHTML>'.blue + '\t\t' + 'Relative or absolute location of the Original HTML file to be compared.'.blue +'\n' +
@@ -48,7 +56,7 @@ program
 		console.log();
 		console.log("   To debug this tool, set a environment variable 'DEBUG'.".yellow);
 		console.log("   Example:".yellow);
-		console.log("\tDEBUG=* erc-checker [option] <path_original> <path_reproduced> -o <output>");
+		console.log("\tDEBUG=* erc-checker [option] <path_original> <path_reproduced> [-o <output>]");
 		console.log();
 		console.log("   Available DEBUG loggers are:".yellow);
 		console.log("\t- index:requestHandling\t(default)\n\t- index:ERROR\t\t\t(default)\n\t- checker:general\t\t(default)\n\t- checker:slice\n\t- checker:compare\n\t- checker:reassemble\n\t- checker:ERROR\t\t\t(default)\n\n");
@@ -62,54 +70,58 @@ program
 
 		var pathOriginalHTML = originalHTML,
 			pathReproducedHTML = reproducedHTML,
-			brokenPath = false;
+			brokenPath = null;
 
 		var outputName = program.output;
 
 		try {
 			if (path.isAbsolute(originalHTML)) {
-				originalFileExisting = fs.statSync(originalHTML);
+				let originalFileExisting = fs.statSync(originalHTML);
 			} else {
-				originalFileExisting = fs.statSync(path.join(process.cwd(), originalHTML));
+				let originalFileExisting = fs.statSync(path.join(process.cwd(), originalHTML));
 				pathOriginalHTML = path.join(process.cwd(), originalHTML);
 			}
 		}
 		catch (e) {
 			debugERROR("\t\tThe path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
-			brokenPath = true;
+			brokenPath = new Metadata(e);
 		}
 		try {
 			if (!path.isAbsolute(originalHTML)) {
-				reproducedFileExisting = fs.statSync(path.join(process.cwd(), reproducedHTML));
+				let reproducedFileExisting = fs.statSync(path.join(process.cwd(), reproducedHTML));
 				pathReproducedHTML = path.join(process.cwd(), reproducedHTML);
 			} else {
-				var reproducedFileExisting = fs.statSync(reproducedHTML);
+				let reproducedFileExisting = fs.statSync(reproducedHTML);
 			}
 		}
 		catch (e) {
 			debugERROR("\t\tThe path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
-			console.log("");
-			brokenPath = true;
+			brokenPath = new Metadata(e);
 		}
-		finally {
-			if (brokenPath) {return 1}
 
-			debug("\tFiles to be compared (w/ path): 	" + originalHTML + " - " + reproducedHTML);
-			exec("diff " + originalHTML.replace(/ /g, '\\ ') + " " + reproducedHTML.replace(/ /g, '\\ ') + " -q", function (error, stdout, stderr) {
+		if (brokenPath) {return brokenPath}
 
-				if (stdout) {
+		debug("\tFiles to be compared (w/ path): 	" + originalHTML + " - " + reproducedHTML);
 
-					debug("\tDifferences were found; Calling compareHTML to create a HTML file highlighting these differences.");
-					return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName);
-
-				}
-				else {
-					debug('\tThe compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ.'.green + '\n' +'Congrats!'.green);
-					console.log("");
-					return 0;
-				}
-			});
+		try {
+			var originalHTMLBuffer = fs.readFileSync(pathOriginalHTML);
+			var reproducedHTMLBuffer  = fs.readFileSync(pathReproducedHTML);
 		}
+		catch (e) {
+			debugERROR("Failed to read HTML file.".red);
+			debugERROR(e);
+			return new Metadata(e);
+		}
+
+		if (originalHTMLBuffer.equals(reproducedHTMLBuffer)) {
+			debug('\tThe compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ.'.green + '\n' +'Congrats!'.green);
+			return new Metadata(null);
+		}
+		else {
+			debug("\tDifferences were found; Calling compareHTML to create a HTML file highlighting these differences.");
+			return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName);
+		}
+
 	})
 	.parse(process.argv);
 
@@ -123,50 +135,60 @@ var ercChecker = function (originalHTML, reproducedHTML, outputPath) {
 
 	try {
 		if (path.isAbsolute(originalHTML)) {
-			originalFileExisting = fs.statSync(originalHTML);
+			let originalFileExisting = fs.statSync(originalHTML);
 		} else {
-			originalFileExisting = fs.statSync(path.join(process.cwd(), originalHTML));
+			let originalFileExisting = fs.statSync(path.join(process.cwd(), originalHTML));
 			pathOriginalHTML = path.join(process.cwd(), originalHTML);
 		}
 	}
 	catch (e) {
 		debugERROR("\t\tThe path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
-		console.log("");
-		brokenPath = true;
+
+		brokenPath = new Metadata(e);
 	}
 	try {
 		if (!path.isAbsolute(originalHTML)) {
-			reproducedFileExisting = fs.statSync(path.join(process.cwd(), reproducedHTML));
+			let reproducedFileExisting = fs.statSync(path.join(process.cwd(), reproducedHTML));
 			pathReproducedHTML = path.join(process.cwd(), reproducedHTML);
 		} else {
-			reproducedFileExisting = fs.statSync(reproducedHTML);
+			let reproducedFileExisting = fs.statSync(reproducedHTML);
 		}
 	}
 	catch (e) {
 		debugERROR("\t\tThe path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
-		console.log("");
-		brokenPath = true;
+
+		brokenPath = new Metadata(e);
 	}
-	finally {
-		if(brokenPath){return 1}
 
-		exec("diff " + originalHTML.replace(/ /g, '\\ ') + " " + reproducedHTML.replace(/ /g, '\\ ') + " -q", function (error, stdout, stderr) {
-			if (stdout) {
+	if (brokenPath) { return brokenPath }
 
-				debug("\tDifferences were found; \nCalling compareHTML to create a HTML file highlighting these differences.");
-				checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName);
-				return waiting = false;
-			}
-			else {
-				debug('\tThe compared files, ' + originalHTML.replace(/ /g, '\\ ') + ' and ' + reproducedHTML + ' do not differ.'.green);
-				debug('\tCongrats!'.green);
-				console.log("");
-				return waiting = false;
-			}
-		});
+	try {
+		var originalHTMLBuffer = fs.readFileSync(pathOriginalHTML);
+		var reproducedHTMLBuffer  = fs.readFileSync(pathReproducedHTML);
+	}
+	catch (e) {
+		debugERROR("Failed to read HTML file.".red);
+		debugERROR(e);
+		return new Metadata(e);
+	}
 
+
+	if (originalHTMLBuffer.equals(reproducedHTMLBuffer)) {
+		debug('\tThe compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ.'.green + '\n' +'Congrats!'.green);
+		return new Metadata(null);
+	}
+	else {
+		debug("\tDifferences were found; Calling compareHTML to create a HTML file highlighting these differences.");
+		let metadata;
+		checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName)
+			.then(
+				function (result) {
+					// TODO do somehting with Metadata
+				}
+			);
 		return 0;
 	}
+
 };
 
 module.exports = {
