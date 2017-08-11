@@ -63,8 +63,7 @@ var metadata = {
 	images: [],
 	resultHTML: null,
 	timeAndDateOfCheck : Date.now(),
-	errorsEncountered: [],
-
+	errorsEncountered: []
 };
 
 
@@ -514,7 +513,12 @@ function reassembleDiffHTML (diffImageBufferArray, textChunkArray, outputName) {
 
 	try {
 		if(outputName) {
-			fs.writeFileSync("./" + outputName + ".html", reassembledDiffHTMLString);
+			if (outputName.indexOf(".html") == -1) {
+				fs.writeFileSync(outputName + ".html", reassembledDiffHTMLString);
+			}
+			else {
+				fs.writeFileSync(outputName, reassembledDiffHTMLString);
+			}
 		}
 		else {
 			fs.writeFileSync("./result.html", reassembledDiffHTMLString);
