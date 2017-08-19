@@ -18,6 +18,7 @@
 'use strict';
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const exec = require('child_process').exec;
 
@@ -41,10 +42,8 @@ var toBase64 = require('base64-arraybuffer');
 
 // RegEx to find all img tags
 const allImgTagsAsStrings = /<img src="data:image\/png;base64,(.*)" \/>/g;
+// RegEx to split HTML, excluding images
 const regexSplitCuttingImages = /<img src="data:image\/png;base64,.*" \/>/g;
-
-// Path Strings used
-const tempDirectoryForDiffImages = "/tmp/erc-checker/diffImages";
 
 var metadata = {
 	differencesFound: false,
@@ -52,46 +51,54 @@ var metadata = {
 	numberOfImages: null,
 	images: [],
 	resultHTML: null,
-	timeAndDateOfCheck : Date.now(),
+	timeOfCheck : {
+		start: null,
+		end: null
+	},
 	errorsEncountered: []
 };
 
-if (process.platform === 'win32') {
-	exec("mkdir " + tempDirectoryForDiffImages,
-		function (err) {
-			if (err) {
-				debugERROR("Could not create tmp directory.".red);
-				metadata.errorsEncountered.push(err);
-				debugERROR(err);
-			}
-		}
-	);
-}
-else {
-	exec("mkdir -p " + tempDirectoryForDiffImages,
-		function (err) {
-			if (err) {
-				debugERROR("Could not create tmp directory.".red);
-				metadata.errorsEncountered.push(err);
-				debugERROR(err);
-			}
-		}
-	);
-}
+// Path Strings used
+var tempDirectoryForDiffImages = path.join(os.tmpdir(), 'erc-checker', 'diffImages');
+
+// if tmp directory for erc-checker does not exist already, create it
+try {
+	fs.mkdirSync(path.join(os.tmpdir(), 'erc-checker'));
+}catch (e) {
 
 
-/**
+}/**
  * This function takes two stringified paths to HTML papers from an ERC following the o2r-specification.
  * It extracts and compares all included images, and creates diff versions where necessary.
  * Then, a 'diff-HTML' file is patched back together, substituting images with their diff version, if one was created.
  *
  * @param originalHTMLPaperPath		Stringified path to original paper's HTML file
  * @param reproducedHTMLPaperPath	Stringified path to reproduced paper's HTML file
- * @param outputPath 				Optional:  name of output file
- * @param createParents
- * @param silenceDebuggers
+ * @param outputPath 				Optional:  name and path for output file
+ * @param checkID
+ * @param createParents				optional flag for more control over tool output
+ * @param silenceDebuggers			effectively shut down debug logger
+ * @param checkStart				timestamp of check start (UTC time)
  */
-function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, outputPath, createParents, silenceDebuggers) {
+function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, outputPath, checkID, createParents, silenceDebuggers, checkStart) {
+
+	metadata.timeOfCheck.start = checkStart;
+
+	// Path Strings used
+	tempDirectoryForDiffImages = path.join(os.tmpdir(), 'erc-checker', 'diffImages');
+
+	// if tmp directory for erc-checker does not exist already, create it
+	try {
+		fs.mkdirSync(path.join(os.tmpdir(), 'erc-checker'));
+	}catch (e) {}
+
+	if (checkID) {
+		tempDirectoryForDiffImages = tempDirectoryForDiffImages+checkID;
+	}
+
+	try {
+		fs.mkdirSync(tempDirectoryForDiffImages);
+	}catch (e) {}
 
 	var textChunks;
 
@@ -140,14 +147,10 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 
 				return sliceImagesOutOfHTMLStringsAndCreateBuffers(readFilesArray);
 
-			},
-			// reject
-			function (reason) {
-				debugERROR(reason);
 			}
 		)
 		.then(
-			// @param resolve Array, holding 2 further Arrays of base64-Strings:
+			// @param result2DArrayOfBase64Images resolved Array, holding 2 further Arrays of base64-Strings:
 			// [0] is original images,
 			// [1] is reproduced images
 			function (result2DArrayOfBase64Images) {
@@ -155,9 +158,6 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 				debugCompare("Begin comparing images.".cyan);
 
 				return prepareImagesForComparison(result2DArrayOfBase64Images);
-			},
-			function (reason) {
-				debugERROR(reason);
 			}
 		)
 		.then(
@@ -168,26 +168,18 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 
 				return runBlinkDiff(preparedImages);
 
-			},
-			function (reason) {
-				debugERROR(reason);
 			}
 		)
 		.then(
 			function(resolve) {
 				debugCompare("Visual Comparison completed.".green);
-				debugReassemble("Begin Reassembling HTML with Diff-Images where images were not equal.")
+				debugReassemble("Begin Reassembling HTML with Diff-Images where images were not equal.");
+
 				return reassembleDiffHTML(resolve.diffImages, textChunks, outputPath);
-			},
-			function (reason) {
-				debugERROR(reason);
-				return metadata;
 			}
 		)
-
 		.catch(debugERROR);
 }
-
 
 function readFileSync(paperPath) {
 	return new Promise(function (resolve, reject) {
@@ -202,7 +194,6 @@ function readFileSync(paperPath) {
 		}
 	})
 }
-
 
 /**
  * Function to extract and save base64-encoded images from stringified HTML papers.
@@ -227,11 +218,19 @@ function sliceImagesOutOfHTMLStringsAndCreateBuffers(readFilesArray) {
 				arrayOriginalHTMLexcludingImages = originalPaperString.split(regexSplitCuttingImages),
 				arrayReproducedHTMLexcludingImages = reproducedPaperString.split(regexSplitCuttingImages);
 
+			let numImagesOriginal = base64ImagesOriginal.length,
+				numImagesReproduced = base64ImagesReproduced.length
 
 			debugSlice("Sliced up those pesky Stringsens.");
-			debugSlice("Original:  %s images, %s chunks of text.", base64ImagesOriginal.length, arrayOriginalHTMLexcludingImages.length);
-			debugSlice("Reproduced: %s images, %s chunks of text.", base64ImagesReproduced.length, arrayReproducedHTMLexcludingImages.length);
+			debugSlice("Original:  %s images, %s chunks of text.", numImagesOriginal, arrayOriginalHTMLexcludingImages.length);
+			debugSlice("Reproduced: %s images, %s chunks of text.", numImagesReproduced, arrayReproducedHTMLexcludingImages.length);
 
+			if (numImagesOriginal != numImagesReproduced) {
+				reject(new Error ("Unequal number of images in input papers: "+numImagesOriginal+" != "+numImagesReproduced));
+			}
+			else {
+				metadata.numberOfImages = numImagesOriginal;
+			}
 			var bufferedImagesOriginal, bufferedImagesReproduced;
 
 			// create Buffer from base64 encoded .png-Images for all Original and Reproduced images
@@ -263,16 +262,12 @@ function sliceImagesOutOfHTMLStringsAndCreateBuffers(readFilesArray) {
 	);
 }
 
-
-
 function getContentsOfImageTags(stringifiedHTML) {
 	// searches String for patterns matching RegEx, automatically
 	return stringifiedHTML.match(allImgTagsAsStrings).map(function (finding) {
 		return finding.substr(32, finding.length - 48);
 	});
 }
-
-
 
 function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 
@@ -344,25 +339,20 @@ function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 
 
 					resizeImageIfNecessary(currentBufferOriginal, currentBufferReproduced, dimensionsOriginal, dimensionsReproduced, index)
-						.then(
-						function (resolve) {
+						.then( function (resolve) {
 							countPreparedImages++;
 							intArrayImagesCompared[index] = resolve.prepOpCode;
 							resultingImageBuffers.images[index] = resolve.images;
-
 							if (countPreparedImages == originalImageBuffers.length) {
 								resolver();
 							}
-
-						}
-						);
+						});
 				});
 			function resolver() {
-
 				intArrayImagesCompared.map(
 					function (current, index) {
-						(current != 0) ? metadata.differencesFound = true : null;
-						metadata.images.push(
+						(current != 0) ? metadata.differencesFound = true : null ;
+						metadata.images[index] = (
 							{
 								imageIndex: index,
 								prepResult: current,
@@ -372,11 +362,11 @@ function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 					}
 				);
 				resolve(resultingImageBuffers);
-
 			}
 		}
 	);
 }
+
 /**
  *
  *
@@ -426,8 +416,9 @@ function resizeImageIfNecessary(originalImageBuffer, reproducedImageBuffer, dime
 										resultHandler(true);
 									})
 									.catch(e => {
-										debugERROR("Failure resizing Reproduced image No.%s.".red, index); resultHandler(false, e);
+										debugERROR("Failure resizing Reproduced image No.%s.".red, index);
 										metadata.errorsEncountered.push(e);
+										resultHandler(false, e);
 									});
 							}
 						})
@@ -449,8 +440,9 @@ function resizeImageIfNecessary(originalImageBuffer, reproducedImageBuffer, dime
 								resultHandler(true);
 							})
 							.catch(e => {
-								debugERROR("Failure resizing Reproduced image No.%s.".red, index); resultHandler(false, e);
+								debugERROR("Failure resizing Reproduced image No.%s.".red, index);
 								metadata.errorsEncountered.push(e);
+								resultHandler(false, e);
 							});
 					}
 				}
@@ -489,7 +481,7 @@ function runBlinkDiff(images) {
 		function (resolve, reject) {
 			images.map(
 				function (current, index) {
-					let resultPath = "/tmp/erc-checker/diffImages/diffImage"+index+".png";
+					let resultPath = tempDirectoryForDiffImages+'/diffImage'+index+".png";
 
 					let diff = new BlinkDiff({
 						imageA: current.originalImage.buffer,
@@ -541,47 +533,59 @@ function runBlinkDiff(images) {
 	)
 }
 
-function reassembleDiffHTML (diffImageBufferArray, textChunkArray, outputName) {
+function reassembleDiffHTML (diffImageBufferArray, textChunkArray, outputPath) {
 
-	let reassembledDiffHTMLString = "";
+	return new Promise(
+		function (resolve, reject) {
 
-	debugReassemble("Piecing together text chunks and images.");
-	textChunkArray.map(
-		function (currentTextChunk, index) {
-			reassembledDiffHTMLString += currentTextChunk
-				+  "<img src=\"data:image/png;base64,"
-				+ toBase64.encode(diffImageBufferArray[index].buffer)
-				+ "\" width=\"672\" />";
+			let reassembledDiffHTMLString = "";
+			debugReassemble("Piecing together text chunks and images.");
+			diffImageBufferArray.map(
+				function (currentImage, index) {
+					reassembledDiffHTMLString += textChunkArray[index]
+						+ "<img src=\"data:image/png;base64,"
+						+ toBase64.encode(currentImage.buffer)
+						+ "\" width=\"672\" />";
+				}
+			);
+			reassembledDiffHTMLString += textChunkArray.pop();
+			debugReassemble("Reassembly done.".green);
+			debugGeneral("Writing result HTML".cyan);
+
+			metadata.resultHTML = reassembledDiffHTMLString;
+
+			if (outputPath) {
+				try {
+					if (outputName.indexOf(".html") == -1) {
+						fs.writeFileSync(outputPath + ".html", reassembledDiffHTMLString);
+					}
+					else {
+						fs.writeFileSync(outputPath, reassembledDiffHTMLString);
+					}
+				}
+
+				catch (e) {
+					debugERROR("Failed to write result HTML file.".red);
+					metadata.errorsEncountered.push(e);
+					debugERROR(e);
+					reject(metadata);
+				}
+
+				debugGeneral("Output Diff-HTML file written successfully".green);
+			}
+
+			// For testing purposes save result as file by default, even if flag not set:
+			/*
+			else {
+				fs.writeFileSync(path.join(process.cwd(), "result.html"), reassembledDiffHTMLString);
+			}
+			*/
+
+
+			resolve(metadata);
+
 		}
 	);
-	reassembledDiffHTMLString += textChunkArray.pop();
-	debugReassemble("Reassembly done.".green);
-	debugGeneral("Writing result HTML".cyan);
-
-	metadata.resultHTML = reassembledDiffHTMLString;
-
-	try {
-		if(outputName) {
-			if (outputName.indexOf(".html") == -1) {
-				fs.writeFileSync(outputName + ".html", reassembledDiffHTMLString);
-			}
-			else {
-				fs.writeFileSync(outputName, reassembledDiffHTMLString);
-			}
-		}
-		else {
-			fs.writeFileSync("./result.html", reassembledDiffHTMLString);
-		}
-	}
-	catch(e) {
-		debugERROR("Failed to write result HTML file.".red);
-		metadata.errorsEncountered.push(e);
-		debugERROR(e);
-		return;
-	}
-	debugGeneral("Output files written successfully".green);
-
-	return metadata;
 }
 
 

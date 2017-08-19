@@ -16,7 +16,7 @@
  *
  */
 
-if(process.env.DEBUG === undefined) process.env['DEBUG']='index:requestHandling,index:ERROR,checker:general,checker:ERROR';
+if(process.env.DEBUG === undefined) process.env['DEBUG']='index:requestHandling,index:ERROR,checker:ERROR';
 
 
 var checker = require('./checker');
@@ -29,9 +29,12 @@ const fs = require("fs");
 const path = require("path");
 const program = require('commander');
 
-function Metadata (errorEncountered) {
-	this.differencesFound = 0;
-	this.timeAndDateOfCheck = Date.now();
+function Metadata (dateStart, errorEncountered) {
+	this.differencesFound = false;
+	this.timeOfCheck = {
+		start:  dateStart,
+		end: Date.now()
+	};
 	this.errorsEncountered = [];
 	this.errorsEncountered[0] = errorEncountered;
 }
@@ -42,14 +45,17 @@ program
 	.arguments('<reproducedHTML>', 'Relative or absolute location of the Reproduced HTML file to be compared.')
 
 	.option('')
-	.option('-o, --output <outputPath>', '\tdesired output location and file name \n\t\t\t\tas String or standard path input.\n\t\t\t\tAccepts absolute and relative paths alike.')
+	.option('-m, --metadata <metadataOutputPath>', '\tSave Check metadata to file; \n\t\t\t\tChoose desired output location and file name as String or standard path input.\n\t\t\t\tAccepts absolute and relative paths alike.')
 	.option('')
-	.option('-p, --parents', '\tautomatically create parent directories for the output path.')
+	.option('-o, --output <outputPath>', '\tSave output to file; \n\t\t\t\tChoose desired output location and file name as String or standard path input.\n\t\t\t\tAccepts absolute and relative paths alike.')
 	.option('')
-	.option('-q, --quiet', '\tquiet mode, silencing DEBUG logs entirely.')
+	.option('-p, --parents', '\tAutomatically create parent directories for the output path.')
+	.option('')
+	.option('-q, --quiet', '\tQuiet mode, silencing DEBUG logs entirely.')
+	.option('')
 
-	.usage('[options]'.magenta + ' ' + '<originalHTML>'.blue + ' ' + '<reproducedHTML>'.cyan + '\n\n' +
-		'\t' + '<originalHTML>'.blue + '\t\t' + 'Relative or absolute location of the Original HTML file to be compared.'.blue +'\n' +
+	.usage('[options]'.magenta + ' ' + '<originalHTML>'.green + ' ' + '<reproducedHTML>'.cyan + '\n\n' +
+		'\t' + '<originalHTML>'.green + '\t\t' + 'Relative or absolute location of the Original HTML file to be compared.'.green +'\n' +
 		'\t' + '<reproducedHTML>'.cyan +'\t' + 'Relative or absolute location of the Reproduced HTML file to be compared.'.cyan)
 
 	.on('--help', function () {
@@ -59,10 +65,13 @@ program
 		console.log("\tDEBUG=* erc-checker [option] <path_original> <path_reproduced> [-o <output>]");
 		console.log();
 		console.log("   Available DEBUG loggers are:".yellow);
-		console.log("\t- index:requestHandling\t(default)\n\t- index:ERROR\t\t\t(default)\n\t- checker:general\t\t(default)\n\t- checker:slice\n\t- checker:compare\n\t- checker:reassemble\n\t- checker:ERROR\t\t\t(default)\n\n");
+		console.log("\t- index:requestHandling\t(default)\n\t- index:ERROR\t\t(default)\n\t- checker:general\t(default)\n\t- checker:slice\n\t- checker:compare\n\t- checker:reassemble\n\t- checker:ERROR\t\t(default)\n\n");
 	})
 
 	.action(function (originalHTML, reproducedHTML, program) {
+
+		var checkStart = Date.now();
+
 		if (program.quiet)
 		{
 			debug = debugERROR = require('debug')('quiet');
@@ -86,7 +95,7 @@ program
 		}
 		catch (e) {
 			debugERROR("\t\tThe path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
-			brokenPath = new Metadata(e);
+			brokenPath = new Metadata(checkStart, e);
 		}
 		try {
 			if (!path.isAbsolute(originalHTML)) {
@@ -98,10 +107,17 @@ program
 		}
 		catch (e) {
 			debugERROR("\t\tThe path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
-			brokenPath = new Metadata(e);
+			brokenPath = new Metadata(checkStart, e);
 		}
 
-		if (brokenPath) {return brokenPath}
+		if (brokenPath) {
+			let metadata = brokenPath;
+			if (program.metadata) {
+				fs.writeFileSync('./resultMetadata.json', metadata);
+			}
+			debug(metadata);
+			return;
+		}
 
 		debug("\tFiles to be compared (w/ path): 	" + originalHTML + " - " + reproducedHTML);
 
@@ -112,87 +128,154 @@ program
 		catch (e) {
 			debugERROR("Failed to read HTML file.".red);
 			debugERROR(e);
-			return new Metadata(e);
+			let metadata = new Metadata(checkStart, e);
+			if (program.metadata) {
+				fs.writeFileSync('./resultMetadata.json', metadata);
+			}
+			debug(metadata);
+			return;
 		}
 
 		if (originalHTMLBuffer.equals(reproducedHTMLBuffer)) {
-			debug('\tThe compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ.'.green + '\n' +'Congrats!'.green);
-			return new Metadata(null);
+			debug('\tThe compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ.'.green);
+			let metadata = new Metadata(checkStart, null);
+			if (program.metadata) {
+				fs.writeFileSync('./resultMetadata.json', metadata);
+			}
+			debug(metadata);
 		}
 		else {
 			debug("\tDifferences were found; Calling compareHTML to create a HTML file highlighting these differences.");
-			return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName, createParentDirectoriesInOutputPath, silenceDebuggers);
+			return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName, createParentDirectoriesInOutputPath, silenceDebuggers, checkStart)
+				.then( function (resolve) {
+					if (program.metadata) {
+						fs.writeFileSync('./resultMetadata.json', resolve);
+					}
+					debug('Done'.green);
+				},
+				function (reason) {
+					debugERROR('Check failed:'.red);
+					debugERROR(reason);
+					let metadata = new Metadata(checkStart, reason);
+					if (program.metadata) {
+						fs.writeFileSync('./resultMetadata.json', metadata);
+					}
+					else {
+						debug(metadata);
+					}
+				});
 		}
-
 	})
 	.parse(process.argv);
 
 
-var ercChecker = function (originalHTML, reproducedHTML, outputPath, createParentDirectoriesInOutputPath, silenceDebuggers) {
-	var pathOriginalHTML = originalHTML,
-		pathReproducedHTML = reproducedHTML,
-		brokenPath = false;
+var ercChecker = function (originalHTML, reproducedHTML, outputPath, checkID, createParentDirectoriesInOutputPath, silenceDebuggers) {
 
-	var outputName = outputPath;
+	return new Promise( function (resolve, reject) {
 
-	try {
-		if (path.isAbsolute(originalHTML)) {
-			let originalFileExisting = fs.statSync(originalHTML);
-		} else {
-			let originalFileExisting = fs.statSync(path.join(process.cwd(), originalHTML));
-			pathOriginalHTML = path.join(process.cwd(), originalHTML);
+		var pathOriginalHTML = originalHTML,
+			pathReproducedHTML = reproducedHTML,
+			brokenPath = false,
+			checkStart = Date.now();
+
+		var outputName = outputPath;
+		if (checkID) {
+			var checkIDString = '_'+checkID;
 		}
-	}
-	catch (e) {
-		debugERROR("\t\tThe path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
-
-		brokenPath = new Metadata(e);
-	}
-	try {
-		if (!path.isAbsolute(originalHTML)) {
-			let reproducedFileExisting = fs.statSync(path.join(process.cwd(), reproducedHTML));
-			pathReproducedHTML = path.join(process.cwd(), reproducedHTML);
-		} else {
-			let reproducedFileExisting = fs.statSync(reproducedHTML);
+		try {
+			if (path.isAbsolute(originalHTML)) {
+				let originalFileExisting = fs.statSync(originalHTML);
+			} else {
+				let originalFileExisting = fs.statSync(path.join(process.cwd(), originalHTML));
+				pathOriginalHTML = path.join(process.cwd(), originalHTML);
+			}
 		}
-	}
-	catch (e) {
-		debugERROR("\t\tThe path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
+		catch (e) {
+			debugERROR("\t\tThe path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
 
-		brokenPath = new Metadata(e);
-	}
+			brokenPath = new Metadata(checkStart, e);
+		}
+		try {
+			if (!path.isAbsolute(originalHTML)) {
+				let reproducedFileExisting = fs.statSync(path.join(process.cwd(), reproducedHTML));
+				pathReproducedHTML = path.join(process.cwd(), reproducedHTML);
+			} else {
+				let reproducedFileExisting = fs.statSync(reproducedHTML);
+			}
+		}
+		catch (e) {
+			debugERROR("\t\tThe path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
 
-	if (brokenPath) { return brokenPath }
+			brokenPath = new Metadata(checkStart, e);
+		}
 
-	try {
-		var originalHTMLBuffer = fs.readFileSync(pathOriginalHTML);
-		var reproducedHTMLBuffer  = fs.readFileSync(pathReproducedHTML);
-	}
-	catch (e) {
-		debugERROR("Failed to read HTML file.".red);
-		debugERROR(e);
-		return new Metadata(e);
-	}
+		if (brokenPath) {
+				reject(brokenPath);
+		}
 
-	if (originalHTMLBuffer.equals(reproducedHTMLBuffer)) {
-		debug('\tThe compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ.'.green + '\n' +'Congrats!'.green);
-		return new Metadata(null);
-	}
-	else {
-		debug("\tDifferences were found; Calling compareHTML to create a HTML file highlighting these differences.");
-		let metadata;
+		try {
+			var originalHTMLBuffer = fs.readFileSync(pathOriginalHTML);
+			var reproducedHTMLBuffer = fs.readFileSync(pathReproducedHTML);
+		}
+		catch (e) {
+			debugERROR("Failed to read HTML file.".red);
+			debugERROR(e);
+				reject(new Metadata(checkStart, e));
+		}
 
-		checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName, createParentDirectoriesInOutputPath, silenceDebuggers)
-			.then(
-				function (result) {
-					// TODO do somehting with Metadata
-				}
-			);
-		return 0;
-	}
+		if (originalHTMLBuffer.equals(reproducedHTMLBuffer)) {
+			debug('\tThe compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ.'.green + '\n' + 'Congrats!'.green);
+			resolve(new Metadata(checkStart, null))
+		}
+		else {
+			debug("\tDifferences were found; Calling compareHTML to create a HTML file highlighting these differences.");
+
+			checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName, checkIDString, createParentDirectoriesInOutputPath, silenceDebuggers, checkStart)
+				.then(
+					function (result) {
+						// provisional arrangement: write output file to check correct result
+						let resultMetadata = result;
+						resultMetadata.timeOfCheck.end = Date.now();
+						//fs.writeFileSync('./metadata.json', JSON.stringify(resultMetadata));
+						if (checkIDString) {
+							try{deleteFolderRecursive('/tmp/erc-checker/diffImages'+checkIDString);}catch (e){debugERROR}
+						}
+						try{deleteFolderRecursive('/tmp/erc-checker/diffImages');}catch (e){debugERROR}
+						debug('Check done.'.green);
+
+						resolve(resultMetadata);
+					},
+					function (reason) {
+						debugERROR(reason);
+						let rejectMetadata = new Metadata(checkStart, reason);
+						//fs.writeFileSync('./metadata.json', JSON.stringify(rejectMetadata));
+
+						reject(rejectMetadata);
+					}
+				);
+		}
+	});
 
 };
 
+var deleteFolderRecursive = function(path) {
+	if( fs.existsSync(path) ) {
+		fs.readdirSync(path).forEach(function(file,index){
+			var curPath = path + "/" + file;
+			if(fs.lstatSync(curPath).isDirectory()) { // recurse
+				deleteFolderRecursive(curPath);
+			} else { // delete file
+				fs.unlinkSync(curPath);
+			}
+		});
+		fs.rmdirSync(path);
+	}
+};
+
+
 module.exports = {
+	// ercChecker returns a Promise
+	// in case of any Error, the Promise is REJECTED, and contains a Metadata Object with Timestamps and Error Description
+	// otherwise, the Promise is RESOLVED and contains a Metadata Object. In case of Differences, it also contains a Diff-HTML String.
 	ercChecker: ercChecker
 };
