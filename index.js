@@ -25,8 +25,9 @@ var debug = require('debug')('index:requestHandling');
 var debugERROR = require('debug')('index:ERROR');
 const colors = require('colors');
 
-const fs = require("fs");
-const path = require("path");
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const program = require('commander');
 
 function Metadata (dateStart, errorEncountered) {
@@ -238,9 +239,9 @@ var ercChecker = function (originalHTML, reproducedHTML, outputPath, checkID, cr
 						resultMetadata.timeOfCheck.end = Date.now();
 						//fs.writeFileSync('./metadata.json', JSON.stringify(resultMetadata));
 						if (checkIDString) {
-							try{deleteFolderRecursive('/tmp/erc-checker/diffImages'+checkIDString);}catch (e){debugERROR}
+							try{deleteFolderRecursive(path.join(os.tmpdir(), 'erc-checker/diffImages'+checkIDString));}catch (e){debugERROR}
 						}
-						try{deleteFolderRecursive('/tmp/erc-checker/diffImages');}catch (e){debugERROR}
+						try{deleteFolderRecursive(path.join(os.tmpdir(), 'erc-checker/diffImages'));}catch (e){debugERROR}
 						debug('Check done.'.green);
 
 						resolve(resultMetadata);
