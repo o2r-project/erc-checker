@@ -16,6 +16,8 @@
  */
 
 const fs = require('fs');
+const path = require('path');
+const os = require('os');
 const assert = require('chai').assert;
 const expect = require('chai').expect;
 const debug = require('debug')('tester');
@@ -35,7 +37,16 @@ describe('Testing image comparison', function () {
 
 		var images;
 
+		var tempDirectoryForDiffImages = path.join(os.tmpdir(), 'erc-checker/diffImages')
+		try {
+			fs.mkdirSync(path.join(os.tmpdir(), 'erc-checker'));
+		}catch (e) {}
+		try {
+			fs.mkdirSync(tempDirectoryForDiffImages);
+		}catch (e) {}
+
 		before(function (done) {
+
 			let inputFiles = [fs.readFileSync(paperA, 'utf-8'), fs.readFileSync(paperB, 'utf-8')];
 
 			sliceImagesOutOfHTMLStringsAndCreateBuffers(inputFiles).then(function (result) {
@@ -55,14 +66,17 @@ describe('Testing image comparison', function () {
 		});
 
 		it('should create a file matching the reference file', function (done) {
+
 			runBlinkDiff(images)
 				.then(
 					function (resolve) {
 						let result = resolve.diffImages;
 
 						if(result != undefined && result.length === images.length && result[0].buffer instanceof Buffer) {
-							let testImage = fs.readFileSync("/home/timmimim/ownCloud/o2r-data/Hilfskräfte/Kühnel/Checker/erc-checker/test/img/testDiffImg.png"),
-								newDiffImage = fs.readFileSync("/tmp/erc-checker/diffImages/diffImage0.png");
+							let testImage = fs.readFileSync("./test/img/testDiffImg.png"),
+								newDiffImage = fs.readFileSync(path.join(os.tmpdir(), "erc-checker/diffImages/diffImage0.png"));
+
+							try {fs.unlinkSync(path.join(os.tmpdir(), "erc-checker/diffImages/diffImage0.png"));} catch (e){console.log(e)}
 
 							if (testImage.equals(newDiffImage)) {
 								done();
@@ -72,6 +86,10 @@ describe('Testing image comparison', function () {
 							}
 						}
 						else {
+							try {
+								fs.unlinkSync(path.join(os.tmpdir(), "erc-checker/diffImages/diffImage0.png"));
+							}
+							catch(e) {}
 							done(new Error ("Wrong result."))
 						}
 					},
@@ -81,10 +99,6 @@ describe('Testing image comparison', function () {
 					}
 				);
 		});
-
-		// FIXME implement test against created file
-
-		// TODO remove temp test file
 	})
 
 });

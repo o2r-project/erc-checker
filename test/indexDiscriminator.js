@@ -29,31 +29,40 @@ describe('Testing erc-checker', function () {
 			let testStringA = "path/to/nothing.html",
 				testStringB = "path/to/more/nothing.html";
 
-			expect(checker(testStringA, testStringB).errorsEncountered[0]).to.not.equal(0);
+			checker(testStringA, testStringB)
+				.then( function (resolve) {
+					expect(resolve).to.equal(undefined)
+				},
+				function (rejectMetadata) {
+					expect(rejectMetadata.errorsEncountered[0]).to.not.equal(0);
+				})
 		});
 
 		it('called with only one invalid path should return metadata containing an Error', function () {
 			let testStringA = "path/to/nothing.html",
 				testStringB = "test/TestPapers_1/testPaper_1_shortened_a.html";
 
-			expect(checker(testStringA, testStringB).errorsEncountered[0]).to.not.equal(0);
+			checker(testStringA, testStringB)
+				.then(function(resolve) {
+					expect(resolve).to.equal(undefined);
+				},
+				function (rejectMetadata) {
+					expect(rejectMetadata.errorsEncountered[0]).to.not.equal(0);
+				})
 		});
 
-		it('called with equal papers should return return metadata containing no Errors, but also value 0 for differences', function () {
+		it('called with equal papers should return Promise state *resolved* with metadata containing no Errors, but also value 0 for differences', function (done) {
 			let testStringA = "test/TestPapers_1/testPaper_1_shortened_a.html",
 				testStringB = "test/TestPapers_1/testPaper_1_shortened_a.html";
 
-			expect(checker(testStringA, testStringB).differencesFound).to.equal(0);
-			expect(checker(testStringA, testStringB).errorsEncountered[0]).to.equal(null);
-		});
-
-		it('called with differing papers should return Promise', function () {
-			let testStringA = "test/TestPapers_1/testPaper_1_shortened_a.html",
-				testStringB = "test/TestPapers_1/testPaper_1_shortened_b.html";
-			let result = checker(testStringA, testStringB);
-
-			expect(result).to.equal(0);
+			checker(testStringA, testStringB)
+				.then(function (resolve) {
+						if ( resolve.differencesFound == false && resolve.errorsEncountered[0] == null) {done()}
+						else { done(new Error ("Failed to handle eqial papers"))}
+				},
+				function (reject) {
+					throw new Error (reject);
+				})
 		});
 	})
-
 });
