@@ -21,7 +21,7 @@ const expect = require('chai').expect;
 const debug = require('debug')('tester');
 const colors = require('colors');
 
-var checker = require('../index').ercChecker;
+const checker = require('../index').ercChecker;
 
 describe('Using ERC-Checker as node-module', function () {
 	let testStringA = "test/TestPapers_1/testPaper_1_shortened_a.html",

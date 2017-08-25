@@ -36,6 +36,8 @@ function Metadata (dateStart, errorEncountered) {
 		start:  dateStart,
 		end: Date.now()
 	};
+	this.images = null;
+	this.resultHTML = null;
 	this.errorsEncountered = [];
 	this.errorsEncountered[0] = errorEncountered;
 }
@@ -170,9 +172,16 @@ program
 	.parse(process.argv);
 
 
-var ercChecker = function (originalHTML, reproducedHTML, outputPath, checkID, createParentDirectoriesInOutputPath, silenceDebuggers) {
+/**
+*	node module:  function ercChecker  returns Promise
+*/
+
+
+var ercChecker = function (originalHTML, reproducedHTML, outputPath, checkID, createParentDirectoriesInOutputPath, silenceDebuggers, saveMetadata) {
 
 	return new Promise( function (resolve, reject) {
+
+
 
 		var pathOriginalHTML = originalHTML,
 			pathReproducedHTML = reproducedHTML,

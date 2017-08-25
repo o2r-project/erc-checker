@@ -67,7 +67,9 @@ try {
 }catch (e) {
 
 
-}/**
+}
+
+/**
  * This function takes two stringified paths to HTML papers from an ERC following the o2r-specification.
  * It extracts and compares all included images, and creates diff versions where necessary.
  * Then, a 'diff-HTML' file is patched back together, substituting images with their diff version, if one was created.
@@ -75,13 +77,14 @@ try {
  * @param originalHTMLPaperPath		Stringified path to original paper's HTML file
  * @param reproducedHTMLPaperPath	Stringified path to reproduced paper's HTML file
  * @param outputPath 				Optional:  name and path for output file
- * @param checkID
+ * @param checkID					idParameter, needed to distinguish check-specific temp directories (necessary for parallel checking)
  * @param createParents				optional flag for more control over tool output
  * @param silenceDebuggers			effectively shut down debug logger
  * @param checkStart				timestamp of check start (UTC time)
  */
 function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, outputPath, checkID, createParents, silenceDebuggers, checkStart) {
 
+	// set start date in check metadata
 	metadata.timeOfCheck.start = checkStart;
 
 	// Path Strings used
@@ -91,15 +94,14 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 	try {
 		fs.mkdirSync(path.join(os.tmpdir(), 'erc-checker'));
 	}catch (e) {}
-
 	if (checkID) {
 		tempDirectoryForDiffImages = tempDirectoryForDiffImages+checkID;
 	}
-
 	try {
 		fs.mkdirSync(tempDirectoryForDiffImages);
 	}catch (e) {}
 
+	// initiate container variable for text-chunks from input HTML
 	var textChunks;
 
 	if (silenceDebuggers) {
@@ -107,7 +109,6 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 	}
 
 	if (createParents) {
-
 		let pathDirectories = outputPath.replace(outputPath.split('\\').pop().split('/').pop(),'');
 
 		if (process.platform === 'win32') {
@@ -135,7 +136,7 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 	}
 
 
-
+	// Main process
 	return Promise
 		.all([readFileSync(originalHTMLPaperPath), readFileSync(reproducedHTMLPaperPath)])
 		.then(
@@ -151,8 +152,8 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 		)
 		.then(
 			// @param result2DArrayOfBase64Images resolved Array, holding 2 further Arrays of base64-Strings:
-			// [0] is original images,
-			// [1] is reproduced images
+			// [0] contains original images,
+			// [1] contains reproduced images
 			function (result2DArrayOfBase64Images) {
 				debugSlice("All images were extracted successfully.".green);
 				debugCompare("Begin comparing images.".cyan);
@@ -161,21 +162,23 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 			}
 		)
 		.then(
-			function (resolve) {
-				let preparedImages = resolve.images;
+			// @param prepResult contains an array of 'image' objects, each holding a buffer for original and reproduced image each
+			function (prepResult) {
+				let preparedImages = prepResult.images;
 				debugGeneral("Preparation is done, move on to visual comparison".green);
-				debugCompare(resolve);
+				debugCompare(prepResult);
 
 				return runBlinkDiff(preparedImages);
 
 			}
 		)
 		.then(
-			function(resolve) {
+			// @param result is a json object, holding an array of diff-Images created from each pair of input images (corresponding by order)
+			function(result) {
 				debugCompare("Visual Comparison completed.".green);
 				debugReassemble("Begin Reassembling HTML with Diff-Images where images were not equal.");
 
-				return reassembleDiffHTML(resolve.diffImages, textChunks, outputPath);
+				return reassembleDiffHTML(result.diffImages, textChunks, outputPath);
 			}
 		)
 		.catch(debugERROR);
