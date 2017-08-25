@@ -12,7 +12,6 @@ It further implements a [command line interface](#command-line-interface) (WORK 
 
 
 -------------------------------------------------
--------------------------------------------------
 
 ## NodeJS module usage
 
@@ -49,11 +48,11 @@ Further parameters (in order):
   - [Boolean] flag: silence loggers
   - [Boolean] flag: save metadata (same directory and file-name as result html output)
 
-####Errors
+#### Errors
 Any Errors during execution cause the returned JSPromise to be __rejected__. Errors will be caught and
  - logged out to the console
  - saved in a check metadata JSON object, which is returned as _rejection argument_ as such:
- ```json
+ ```
      ﻿{
      	"differencesFound": ... ,
      	"text":"not implemented yet",
@@ -72,14 +71,16 @@ Metadata may contain a varying amount of data, depending on where in the process
 Externally caused Errors will occur, if:
 - paths to files / directoy are invalid
 - output path does not exist, and createParentDirectories flag is not set
-- papers contain an uneven number of images
+- papers contain an unequal number of images
+- base64-encoded image invalid / broken
 - 
+
     
-####Returns
+#### Returns
 The ercChecker function returns a JSPromise. 
 
 If execution is successful, the Promise will be __resolved__, containing a check metadata JSON object as such:
- ```json
+ ```
     ﻿{
     	"differencesFound": Boolean,
     	"text":"not implemented yet",
@@ -105,6 +106,12 @@ If execution is successful, the Promise will be __resolved__, containing a check
         "errorsEncountered": [] 
     }
  ```
+
+prepResult codes (for images of same index in paper):
+- 0: images equal
+- 1: images do not differ in size
+- 2: images differed in size -- resized for comparison
+- 3: images differed in size -- not resized for comparison
 
 
 ### How to use the ERC-Checker module
