@@ -37,9 +37,7 @@ The ERC-Checker requires two valid paths as input. These MUST be either
  
 The tool will compare both HTML files for images only. The images __MUST__ be __base64__-encoded, and encapsulated in an HTML img tag, as generated automatically when rendering an .Rmd file into HTML format. 
 
-For more information on the nature of ERC HTML papers, see the _testPapers_ provided in the `test/` directory, the documentations for [RMarkdown](http://rmarkdown.rstudio.com/), [knitr](https://yihui.name/knitr/), and the [ERC specification](https://github.com/o2r-project/erc-spec) of the o2r-project.
-
-If both HTML papers contain an equal number of images, erc-checker writes a new HTML files containing the results of the comparison between all images in the input files, as created by `blink-diff` (_by Yahoo_), as well as, currently, the text of the first (original) paper. 
+If both HTML papers contain an equal number of images, erc-checker writes a new HTML files containing the results of the comparison between all images in the input files, as created by [`blink-diff`](http://yahoo.github.io/blink-diff/), as well as, currently, the text of the first (original) paper. 
 
 Further parameters (in order): 
   - [String]  optional third path for the output created
@@ -51,12 +49,10 @@ Further parameters (in order):
 #### Errors
 Any Errors during execution cause the returned JSPromise to be __rejected__. Errors will be caught and
  - logged out to the console
- - saved in a check metadata JSON object, which is returned as _rejection argument_ as such:
- ```
+ - saved in a check metadata JSON object, which is returned as _rejection argument_:
+ ``` javascript
      ﻿{
      	"differencesFound": ... ,
-     	"text":"not implemented yet",
-     	"numberOfImages": ... ,
      	"images": [ ... ],
      	"resultHTML": ... ,
         "timeOfCheck": {      // dates as milliseconds since 01.01.1970 00:00:00 UTC (UNIX time)
@@ -69,26 +65,23 @@ Any Errors during execution cause the returned JSPromise to be __rejected__. Err
 Metadata may contain a varying amount of data, depending on where in the process an Error occurred.
 
 Externally caused Errors will occur, if:
-- paths to files / directoy are invalid
+- paths to files / directory are invalid
 - output path does not exist, and createParentDirectories flag is not set
 - papers contain an unequal number of images
 - base64-encoded image invalid / broken
-- 
 
     
 #### Returns
 The ercChecker function returns a JSPromise. 
 
-If execution is successful, the Promise will be __resolved__, containing a check metadata JSON object as such:
- ```
+If execution is successful, the Promise will be __resolved__, containing a check metadata JSON object:
+ ```javascript
     ﻿{
     	"differencesFound": Boolean,
-    	"text":"not implemented yet",
-    	"numberOfImages": Number,
     	"images": [	
     		{
     			"imageIndex": Number,
-    			"prepResult": Number, // represents status code, see below
+    			"resizeOperationCode": Number, // represents status code, see below
     			"compareResults":	{
     				"differences": Number,
     				"dimension": Number
@@ -108,10 +101,9 @@ If execution is successful, the Promise will be __resolved__, containing a check
  ```
 
 prepResult codes (for images of same index in paper):
-- 0: images equal
-- 1: images do not differ in size
-- 2: images differed in size -- resized for comparison
-- 3: images differed in size -- not resized for comparison
+- 0: images do not differ in size
+- 1: images differed in size -- resized for comparison
+- 2: images differed in size -- not resized for comparison
 
 
 ### How to use the ERC-Checker module
@@ -119,13 +111,13 @@ prepResult codes (for images of same index in paper):
 ```javascript
 const checker = require('<path>/<to>/erc-checker/index').ercChecker;  // import the ercChecker module, which is a function
 
-// head: checker(originalHTML, reproducedHTML, outputPath, checkID, createParentDirectoriesInOutputPath, silenceDebuggers, saveMetadata);    
+// head: checker(originalHTML, reproducedHTML, checkID, outputPath, saveDiffHTML, saveMetadataJSON, createParentDirectoriesInOutputPath, silenceDebuggers);    
 ```
 
 The ercChecker function will return a Promise, which will be resolved on successful execution, or rejected on Error.
 
 Thus, while the Checker will run asynchronously, it can be chained in a controlled fashion.
-It can be used as such: 
+It can be used as follows: 
 
 ```javascript
     // use with direct file paths:
@@ -134,7 +126,7 @@ It can be used as such:
         outputPath = "optional/output/path/and/new/[filename]";   // output will be named [filename].html (and [filename].json)
     
     // example
-    checker(pathToFileA, pathToFileB, outputPath, "exampleCheckFiles", true, false, true)
+    checker(pathToFileA, pathToFileB, "exampleCheckFiles", outputPath, true, true, true, false)
         .then(
             // successfully resolved: result contains metadata object
             function (resolveMetadata) {
@@ -154,24 +146,25 @@ It can be used as such:
     let parentDir = "path/to/directory";
     
     // leave second parameter empty to use first path as directory
-    checker(parentDir, null, null, "exampleCheckDir", false, true, false)
+    checker(parentDir, null, "exampleCheckDir", null, false, false, true)
         .then( /*...*/ );
         
     // in this example, no files will be written, and Debug loggers are silenced
 ```
 
 
+__Note:__ The erc-checker will automatically remove all temporary files on termination. To prevent this, set an environment variable `DEV=true`.
 
 
 #### Debug
 
-To receive command line outputs from the erc-checker's node module, please set the environment variable DEBUG first.  
-E.g. if your project uses the module, start it as such:
+Enable debugging by setting an environment variable **DEBUG**.
+E.g.:
  ```bash
     $  DEBUG=* node yourProject.js
  ```
  
- Find available DEBUG Loggers [below](#debug-loggers).
+ Find available DEBUG loggers [below](#debug-loggers).
  
 -------------------------------------------------
 
@@ -208,7 +201,7 @@ erc-checker [options] <originalHTML> <reproducedHTML> [-o <output>]
 
 ##### Debug
 
-To _debug_ this tool, set a environment variable **DEBUG**.
+Enable debugging by setting an environment variable **DEBUG**.
    
 Example:
    
@@ -220,7 +213,7 @@ Find available DEBUG loggers [below](#debug-loggers).
 
 -------------------------------------------------
 
-### Debug Loggers
+### Debug loggers
 
 Available DEBUG loggers are:
 
@@ -232,6 +225,8 @@ Available DEBUG loggers are:
 * checker:reassemble
 * checker:ERROR  *
 
+For debugging tests, use 'tester'.
+
 \* default when used as CLI
 
 ----------------------------------------------------
@@ -239,24 +234,26 @@ Available DEBUG loggers are:
 ### Dependencies 
 * **[node](nodejs.org)** v6.11.0 or compatible
 * **[npm](http://npmjs.com/)**
-  * [base64-arraybuffer](https://www.npmjs.com/package/base64-arraybuffer) (^0.1.5)
-  * [blink-diff](https://www.npmjs.com/package/blink-diff) (^1.0.13)
-  * [chai](https://www.npmjs.com/package/chai) (^4.0.2)
-  * [colors](https://www.npmjs.com/package/colors) (^1.1.2)
-  * [commander](https://www.npmjs.com/package/commander) (^2.9.0)
-  * [debug](https://www.npmjs.com/package/debug) (^2.6.8)
-  * [image-size](https://www.npmjs.com/package/image-size) (^0.6.0)
-  * [leven](https://www.npmjs.com/package/leven) (^2.1.0)
-  * [levenshtein](https://www.npmjs.com/package/levenshtein) (^1.0.5)
-  * [mocha](https://www.npmjs.com/package/mocha) (^3.4.2)
-  * [promise](https://www.npmjs.com/package/promise) (^7.1.1)
-  * [rewire](https://www.npmjs.com/package/rewire) (^2.5.2)
-  * [sharp](https://www.npmjs.com/package/sharp) (^0.18.2)
+  * [base64-arraybuffer](https://www.npmjs.com/package/base64-arraybuffer)
+  * [blink-diff](https://www.npmjs.com/package/blink-diff)
+  * [chai](https://www.npmjs.com/package/chai)
+  * [colors](https://www.npmjs.com/package/colors)
+  * [commander](https://www.npmjs.com/package/commander)
+  * [debug](https://www.npmjs.com/package/debug) 
+  * [image-size](https://www.npmjs.com/package/image-size)
+  * [leven](https://www.npmjs.com/package/leven)
+  * [levenshtein](https://www.npmjs.com/package/levenshtein)
+  * [mocha](https://www.npmjs.com/package/mocha)
+  * [promise](https://www.npmjs.com/package/promise)
+  * [rewire](https://www.npmjs.com/package/rewire)
+  * [sharp](https://www.npmjs.com/package/sharp)
+
+For versions, see `package.json`.
 
 ## License
 
 o2r checker is licensed under Apache License, Version 2.0, see file LICENSE.
 
-Copyright (C) 2016 - o2r project. 
+Copyright (C) 2017 - o2r project. 
 
 ![o2r](https://avatars3.githubusercontent.com/u/16774537?v=3&s=200)

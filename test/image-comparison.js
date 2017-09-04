@@ -37,7 +37,7 @@ describe('Testing image comparison', function () {
 
 		var images;
 
-		var tempDirectoryForDiffImages = path.join(os.tmpdir(), 'erc-checker/diffImages')
+		var tempDirectoryForDiffImages = path.join(os.tmpdir(), 'erc-checker/diffImages');
 		try {
 			fs.mkdirSync(path.join(os.tmpdir(), 'erc-checker'));
 		}catch (e) {}

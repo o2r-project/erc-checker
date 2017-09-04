@@ -91,10 +91,10 @@ describe('Using ERC-Checker as node-module', function () {
 	describe('Returned Promise object should be *resolved* and include a Metadata object, which ', function () {
 
 		describe('for two equal input papers', function () {
-			it('should contain no errors, and a parameter {"differencesFound" == false }', function (done) {
+			it('should contain no errors, and a parameter {"checkSuccessful" == true}, i.e. no differences found', function (done) {
 				checker(testStringC, testStringC)
 					.then(function (metadata) {
-							if (metadata.differencesFound === false && metadata.errorsEncountered[0] == null) { done() }
+							if (metadata.checkSuccessful === true && metadata.errorsEncountered[0] == null) { done() }
 							else { done(new Error ("Wrong result."))};
 						},
 						function (reject) {
@@ -105,22 +105,24 @@ describe('Using ERC-Checker as node-module', function () {
 		});
 
 		describe('for two differing papers containing 2 images each', function () {
-			it('should contain no errors, and a parameter {"differencesFound" == true}, plus an Array of image comparison results with a length 2', function (done) {
+			it('should contain no errors, and a parameter {"checkSuccessful" == false}, i.e. differences exist, plus an Array of image comparison results with a length 2', function (done) {
 				this.timeout(0);
-				checker(testStringA, testStringB, null, "test_2Img_OnlySecondDiffering")
+				checker(testStringA, testStringB, "test_2Img_OnlySecondDiffering")
 					.then(
 						function (metadata) {
-							if (metadata.differencesFound == true
+							if (metadata.checkSuccessful == false
 								&& metadata.errorsEncountered[0] == null
 								&& metadata.errorsEncountered.length == 0
-								&& metadata.numberOfImages == 2
 								&& metadata.images.length == 2
 								&& metadata.images[0].compareResults.differences == 0
 								&& metadata.images[1].compareResults.differences != 0)
 							{
-								done()
+								done();
 							}
 							else {
+								let meta = metadata;
+								meta.resultHTML = null;
+								debug(meta.yellow);
 								done(new Error("Wrong result.", meta));
 							}
 						},
@@ -132,9 +134,9 @@ describe('Using ERC-Checker as node-module', function () {
 		});
 
 		describe('for two papers containing 9 of 9 differing images', function () {
-			it('should contain no errors, and a parameter {"differencesFound" == true}, plus an Array of image comparison results with a length of 9', function (done) {
+			it('should contain no errors, and a parameter {"checkSuccessful" == false}, i.e. differences exist, plus an Array of image comparison results with a length of 9', function (done) {
 				this.timeout(0);
-				checker(testStringD, testStringC, null, "test_9Img_9Differing")
+				checker(testStringD, testStringC, "test_9Img_9Differing")
 					.then(
 						function (metadata) {
 
@@ -144,7 +146,7 @@ describe('Using ERC-Checker as node-module', function () {
 								if (image.compareResults.differences == 0) compResults = false;
 							}
 
-							if (metadata.differencesFound == true
+							if (metadata.checkSuccessful == false
 								&& metadata.errorsEncountered[0] == null
 								&& metadata.errorsEncountered.length == 0
 								&& metadata.images.length == 9
@@ -154,7 +156,7 @@ describe('Using ERC-Checker as node-module', function () {
 							else {
 								let meta = metadata;
 								meta.resultHTML = null;
-								console.log(meta.yellow);
+								debug(meta.yellow);
 								done(new Error("Wrong result.", meta));
 							}
 						},
@@ -166,9 +168,9 @@ describe('Using ERC-Checker as node-module', function () {
 		});
 
 		describe('for a paper containing 9 images with only the first image differing', function () {
-			it('should contain no errors, and a parameter {"differencesFound" == true}, plus an Array of image comparison results with a length 9, of which only the first entry describes differences', function (done) {
+			it('should contain no errors, and a parameter {"checkSuccessful" == false}, i.e. differences exist, plus an Array of image comparison results with a length 9, of which only the first entry describes differences', function (done) {
 				this.timeout(0);
-				checker(testStringD, testStringE, null, "test_9Img_1Differing")
+				checker(testStringD, testStringE, "test_9Img_1Differing")
 					.then(
 						function (metadata) {
 							let compareResults = true;
@@ -181,7 +183,7 @@ describe('Using ERC-Checker as node-module', function () {
 								}
 							});
 
-							if(metadata.differencesFound == true
+							if(metadata.checkSuccessful == false
 								&& metadata.errorsEncountered[0] == null
 								&& metadata.errorsEncountered.length == 0
 								&& metadata.images.length == 9
@@ -190,6 +192,9 @@ describe('Using ERC-Checker as node-module', function () {
 								done();
 							}
 							else {
+								let meta = metadata;
+								meta.resultHTML = '';
+								debug(meta)
 								done( new Error ("Wrong result.") );
 							}
 						}

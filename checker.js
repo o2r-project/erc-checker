@@ -46,9 +46,7 @@ const allImgTagsAsStrings = /<img src="data:image\/png;base64,(.*)" \/>/g;
 const regexSplitCuttingImages = /<img src="data:image\/png;base64,.*" \/>/g;
 
 var metadata = {
-	differencesFound: false,
-	text: "not implemented yet",
-	numberOfImages: null,
+	checkSuccessful: true,
 	images: [],
 	resultHTML: null,
 	timeOfCheck : {
@@ -60,14 +58,7 @@ var metadata = {
 
 // Path Strings used
 var tempDirectoryForDiffImages = path.join(os.tmpdir(), 'erc-checker', 'diffImages');
-
-// if tmp directory for erc-checker does not exist already, create it
-try {
-	fs.mkdirSync(path.join(os.tmpdir(), 'erc-checker'));
-}catch (e) {
-
-
-}
+var checkIDglobal = '';
 
 /**
  * This function takes two stringified paths to HTML papers from an ERC following the o2r-specification.
@@ -76,13 +67,11 @@ try {
  *
  * @param originalHTMLPaperPath		Stringified path to original paper's HTML file
  * @param reproducedHTMLPaperPath	Stringified path to reproduced paper's HTML file
- * @param outputPath 				Optional:  name and path for output file
  * @param checkID					idParameter, needed to distinguish check-specific temp directories (necessary for parallel checking)
- * @param createParents				optional flag for more control over tool output
  * @param silenceDebuggers			effectively shut down debug logger
  * @param checkStart				timestamp of check start (UTC time)
  */
-function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, outputPath, checkID, createParents, silenceDebuggers, checkStart) {
+function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, checkID, silenceDebuggers, checkStart) {
 
 	// set start date in check metadata
 	metadata.timeOfCheck.start = checkStart;
@@ -90,13 +79,17 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 	// Path Strings used
 	tempDirectoryForDiffImages = path.join(os.tmpdir(), 'erc-checker', 'diffImages');
 
+	if (checkID != null) {
+		checkIDglobal = checkID;
+	}
+	else { checkIDglobal = ''; }
+
+	tempDirectoryForDiffImages += checkIDglobal;
+
 	// if tmp directory for erc-checker does not exist already, create it
 	try {
 		fs.mkdirSync(path.join(os.tmpdir(), 'erc-checker'));
 	}catch (e) {}
-	if (checkID) {
-		tempDirectoryForDiffImages = tempDirectoryForDiffImages+checkID;
-	}
 	try {
 		fs.mkdirSync(tempDirectoryForDiffImages);
 	}catch (e) {}
@@ -106,33 +99,6 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 
 	if (silenceDebuggers) {
 		debugGeneral = debugSlice = debugCompare = debugReassemble = debugERROR = require('debug')('quiet');
-	}
-
-	if (createParents) {
-		let pathDirectories = outputPath.replace(outputPath.split('\\').pop().split('/').pop(),'');
-
-		if (process.platform === 'win32') {
-			exec("mkdir " + pathDirectories,
-				function (err) {
-					if (err) {
-						debugERROR("Could not create output directory.".red);
-						metadata.errorsEncountered.push(err);
-						debugERROR(err);
-					}
-				}
-			);
-		}
-		else {
-			exec("mkdir -p " + pathDirectories,
-				function (err) {
-					if (err) {
-						debugERROR("Could not create output directory.".red);
-						metadata.errorsEncountered.push(err);
-						debugERROR(err);
-					}
-				}
-			);
-		}
 	}
 
 
@@ -162,13 +128,12 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 			}
 		)
 		.then(
-			// @param prepResult contains an array of 'image' objects, each holding a buffer for original and reproduced image each
-			function (prepResult) {
-				let preparedImages = prepResult.images;
-				debugGeneral("Preparation is done, move on to visual comparison".green);
-				debugCompare(prepResult);
+			// @param resizeOperationCode contains an array of 'image' objects, each holding a buffer for original and reproduced image each
+			function (resizeOperationCode) {
+				let preparedImages = resizeOperationCode.images;
+				debugGeneral("Preparation is done, move on to visual comparison.".green);
 
-				return runBlinkDiff(preparedImages);
+				return runBlinkDiff(preparedImages, tempDirectoryForDiffImages);
 
 			}
 		)
@@ -178,7 +143,7 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 				debugCompare("Visual Comparison completed.".green);
 				debugReassemble("Begin Reassembling HTML with Diff-Images where images were not equal.");
 
-				return reassembleDiffHTML(result.diffImages, textChunks, outputPath);
+				return reassembleDiffHTML(result.diffImages, textChunks);
 			}
 		)
 		.catch(debugERROR);
@@ -222,7 +187,7 @@ function sliceImagesOutOfHTMLStringsAndCreateBuffers(readFilesArray) {
 				arrayReproducedHTMLexcludingImages = reproducedPaperString.split(regexSplitCuttingImages);
 
 			let numImagesOriginal = base64ImagesOriginal.length,
-				numImagesReproduced = base64ImagesReproduced.length
+				numImagesReproduced = base64ImagesReproduced.length;
 
 			debugSlice("Sliced up those pesky Stringsens.");
 			debugSlice("Original:  %s images, %s chunks of text.", numImagesOriginal, arrayOriginalHTMLexcludingImages.length);
@@ -231,9 +196,7 @@ function sliceImagesOutOfHTMLStringsAndCreateBuffers(readFilesArray) {
 			if (numImagesOriginal != numImagesReproduced) {
 				reject(new Error ("Unequal number of images in input papers: "+numImagesOriginal+" != "+numImagesReproduced));
 			}
-			else {
-				metadata.numberOfImages = numImagesOriginal;
-			}
+
 			var bufferedImagesOriginal, bufferedImagesReproduced;
 
 			// create Buffer from base64 encoded .png-Images for all Original and Reproduced images
@@ -280,10 +243,9 @@ function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 
 	// Array of Integers; index represents position of image in paper
 	// i.e.: first image is represented by Integer at Array [0], and so forth
-	// values:	0 <=> images equal, nothing will be changed
-	// 			1 <=> images differ and were visually comparison.
-	// 			2 <=> images differ in size, at least one was resized; visual comparison contains distortions, features may have been cut of.
-	//			3 <=> images differ in size, but resizing failed; visual comparison contains distortions, features may have been cut of.
+	// values:	0 <=> images are of equal size, no resizing necessary
+	// 			1 <=> images differ in size, at least one was resized; visual comparison contains distortions, features may have been cut of.
+	//			2 <=> images differ in size, but resizing failed; visual comparison contains distortions, features may have been cut of.
 	var intArrayImagesCompared = [];
 
 	return new Promise(
@@ -344,7 +306,7 @@ function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 					resizeImageIfNecessary(currentBufferOriginal, currentBufferReproduced, dimensionsOriginal, dimensionsReproduced, index)
 						.then( function (resolve) {
 							countPreparedImages++;
-							intArrayImagesCompared[index] = resolve.prepOpCode;
+							intArrayImagesCompared[index] = resolve.resizeResultCode;
 							resultingImageBuffers.images[index] = resolve.images;
 							if (countPreparedImages == originalImageBuffers.length) {
 								resolver();
@@ -354,11 +316,11 @@ function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 			function resolver() {
 				intArrayImagesCompared.map(
 					function (current, index) {
-						(current != 0) ? metadata.differencesFound = true : null ;
+						(current != 0) ? metadata.checkSuccessful = false : null ;
 						metadata.images[index] = (
 							{
 								imageIndex: index,
-								prepResult: current,
+								resizeOperationCode: current,
 								compareResults: null
 							}
 						);
@@ -384,7 +346,7 @@ function resizeImageIfNecessary(originalImageBuffer, reproducedImageBuffer, dime
 	var originalImage = originalImageBuffer,
 		reproducedImage = reproducedImageBuffer;
 
-	function prepResultImages (bufferPreppedOriginal, bufferPreppedReproduction, resultCode) {
+	function ResizeOperationResults (bufferPreppedOriginal, bufferPreppedReproduction, resultCode) {
 		this.images = {
 			originalImage : {
 				buffer: bufferPreppedOriginal
@@ -393,7 +355,7 @@ function resizeImageIfNecessary(originalImageBuffer, reproducedImageBuffer, dime
 				buffer: bufferPreppedReproduction
 			}
 		};
-		this.prepOpCode = resultCode;
+		this.resizeResultCode = resultCode;
 	}
 
 	return new Promise(
@@ -452,16 +414,16 @@ function resizeImageIfNecessary(originalImageBuffer, reproducedImageBuffer, dime
 			}
 			else {
 				debugCompare("No resizing needed for images with index %s", index);
-				resolve(new	prepResultImages(originalImage, reproducedImage, 1));
+				resolve(new	ResizeOperationResults(originalImage, reproducedImage, 0));
 			}
 
-			function resultHandler(resolveThis) {
+			function resultHandler(resizingSuccessfull) {
 
-				if (resolveThis) {
-					resolve(new prepResultImages(originalImage, reproducedImage, 2));
+				if (resizingSuccessfull) {
+					resolve(new ResizeOperationResults(originalImage, reproducedImage, 1));
 				}
 				else {
-					resolve(new prepResultImages(originalImage, reproducedImage, 3));
+					resolve(new ResizeOperationResults(originalImage, reproducedImage, 2));
 				}
 			}
 		}
@@ -474,6 +436,7 @@ function runBlinkDiff(images) {
 
 	debugCompare("Starting visual comparison.".cyan);
 
+	let outPath = tempDirectoryForDiffImages;
 	let countComparedImages = 0,
 		resultImages = {
 			diffImages: []
@@ -484,14 +447,15 @@ function runBlinkDiff(images) {
 		function (resolve, reject) {
 			images.map(
 				function (current, index) {
-					let resultPath = tempDirectoryForDiffImages+'/diffImage'+index+".png";
 
+					let blinkOutputPath = outPath+'/diffImage'+index+".png";
+					debugERROR(blinkOutputPath);
 					let diff = new BlinkDiff({
 						imageA: current.originalImage.buffer,
 						imageB: current.reproducedImage.buffer,
 						thresholdType: BlinkDiff.THRESHOLD_PERCENT,
 						threshold: 0,
-						imageOutputPath: resultPath,
+						imageOutputPath: blinkOutputPath,
 						composition: false
 					});
 
@@ -506,24 +470,21 @@ function runBlinkDiff(images) {
 							}
 							countComparedImages++;
 
-							debugCompare('Found %s differing pixels for images with index %s.', result.differences, index);
-
 							if (diff.hasPassed(result.code)) {
 								resultImages.diffImages[index] = { buffer : current.originalImage.buffer };
 							}
 							else {
-								resultImages.diffImages[index] =  { buffer : fs.readFileSync(resultPath) };
+								metadata.checkSuccessful = false;
+								resultImages.diffImages[index] =  { buffer : fs.readFileSync(blinkOutputPath) };
 							}
-
 							try {
 								metadata.images[index].compareResults = {
 									differences : result.differences,
 									dimension : result.dimension
 								};
-							}
-							catch (e) {
-								debugERROR("Error writing Metadata".red);
-							}
+							} catch(e) {}
+
+
 
 							if (countComparedImages === images.length) {
 								resolve(resultImages);
@@ -536,7 +497,7 @@ function runBlinkDiff(images) {
 	)
 }
 
-function reassembleDiffHTML (diffImageBufferArray, textChunkArray, outputPath) {
+function reassembleDiffHTML (diffImageBufferArray, textChunkArray) {
 
 	return new Promise(
 		function (resolve, reject) {
@@ -553,38 +514,8 @@ function reassembleDiffHTML (diffImageBufferArray, textChunkArray, outputPath) {
 			);
 			reassembledDiffHTMLString += textChunkArray.pop();
 			debugReassemble("Reassembly done.".green);
-			debugGeneral("Writing result HTML".cyan);
 
 			metadata.resultHTML = reassembledDiffHTMLString;
-
-			if (outputPath) {
-				try {
-					if (outputName.indexOf(".html") == -1) {
-						fs.writeFileSync(outputPath + ".html", reassembledDiffHTMLString);
-					}
-					else {
-						fs.writeFileSync(outputPath, reassembledDiffHTMLString);
-					}
-				}
-
-				catch (e) {
-					debugERROR("Failed to write result HTML file.".red);
-					metadata.errorsEncountered.push(e);
-					debugERROR(e);
-					reject(metadata);
-				}
-
-				debugGeneral("Output Diff-HTML file written successfully".green);
-			}
-
-			// For testing purposes save result as file by default, even if flag not set:
-			/*
-			else {
-				fs.writeFileSync(path.join(process.cwd(), "result.html"), reassembledDiffHTMLString);
-			}
-			*/
-
-
 			resolve(metadata);
 
 		}

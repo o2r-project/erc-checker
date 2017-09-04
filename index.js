@@ -23,6 +23,7 @@ var checker = require('./checker');
 
 var debug = require('debug')('index:requestHandling');
 var debugERROR = require('debug')('index:ERROR');
+var test = require('debug')('test');
 const colors = require('colors');
 
 const fs = require('fs');
@@ -31,7 +32,7 @@ const path = require('path');
 const program = require('commander');
 
 function Metadata (dateStart, errorEncountered) {
-	this.differencesFound = false;
+	this.checkSuccessful = true;
 	this.timeOfCheck = {
 		start:  dateStart,
 		end: Date.now()
@@ -40,6 +41,9 @@ function Metadata (dateStart, errorEncountered) {
 	this.resultHTML = null;
 	this.errorsEncountered = [];
 	this.errorsEncountered[0] = errorEncountered;
+	if (errorEncountered) {
+		this.checkSuccessful = false;
+	}
 }
 
 
@@ -86,7 +90,7 @@ program
 			silenceDebuggers = program.quiet,
 			brokenPath = null;
 
-		var outputName = program.output;
+		var fileOutputPath = program.output;
 
 		try {
 			if (path.isAbsolute(originalHTML)) {
@@ -149,7 +153,7 @@ program
 		}
 		else {
 			debug("\tDifferences were found; Calling compareHTML to create a HTML file highlighting these differences.");
-			return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName, createParentDirectoriesInOutputPath, silenceDebuggers, checkStart)
+			return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, fileOutputPath, createParentDirectoriesInOutputPath, silenceDebuggers, checkStart)
 				.then( function (resolve) {
 					if (program.metadata) {
 						fs.writeFileSync('./resultMetadata.json', resolve);
@@ -177,21 +181,71 @@ program
 */
 
 
-var ercChecker = function (originalHTML, reproducedHTML, outputPath, checkID, createParentDirectoriesInOutputPath, silenceDebuggers, saveMetadata) {
+var ercChecker = function (originalHTML, reproducedHTML, checkID, outputPath, saveDiffHTML, saveMetadataJSON, createParentDirectoriesInOutputPath, silenceDebuggers) {
 
+	var checkId = '';
 	return new Promise( function (resolve, reject) {
-
-
 
 		var pathOriginalHTML = originalHTML,
 			pathReproducedHTML = reproducedHTML,
 			brokenPath = false,
 			checkStart = Date.now();
 
-		var outputName = outputPath;
-		if (checkID) {
-			var checkIDString = '_'+checkID;
+		if ((saveDiffHTML || saveMetadataJSON) && outputPath == null) {
+			debugERROR("Cannot save files without output path.".red);
+			reject(new Metadata(checkStart, new Error("Requested saving check files without specifying an output path.")));
 		}
+
+		debug(checkID);
+
+		if (checkID) {
+			checkId = '_'+checkID;
+		}else {
+			checkId = '';
+		}
+		var fileOutputPath;
+		try {
+			if (outputPath) {
+				fileOutputPath = fs.realpathSync(outputPath);
+			}
+		}
+		catch (e) {
+			if (createParentDirectoriesInOutputPath) {
+
+				if (process.platform === 'win32') {
+					exec("mkdir " + fileOutputPath,
+						function (err) {
+							if (err) {
+								debugERROR("Could not create output directory.".red);
+								reject( new Metadata(checkStart, err) );
+							}
+						}
+					);
+				}
+				else {
+					exec("mkdir -p " + fileOutputPath,
+						function (err) {
+							if (err) {
+								debugERROR("Could not create output directory.".red);
+								reject( new Metadata(checkStart, err) );
+							}
+						}
+					);
+				}
+				fileOutputPath = fs.realpathSync(outputPath);
+			}
+			else {
+				debugERROR("Output path non-existent, option to create it was not set. ".red);
+				reject( new Metadata(checkStart, "Output path non-existent, option to create it was not set. " + e))
+			}
+		}
+
+		
+		
+		if (pathOriginalHTML != null && pathReproducedHTML == null) {
+			var inputFilePaths = getInputFilePathsDirectoryMode(pathOriginalHTML);
+		}
+
 		try {
 			if (path.isAbsolute(originalHTML)) {
 				let originalFileExisting = fs.statSync(originalHTML);
@@ -220,6 +274,9 @@ var ercChecker = function (originalHTML, reproducedHTML, outputPath, checkID, cr
 		}
 
 		if (brokenPath) {
+			if(saveMetadataJSON) {
+
+			}
 				reject(brokenPath);
 		}
 
@@ -240,45 +297,89 @@ var ercChecker = function (originalHTML, reproducedHTML, outputPath, checkID, cr
 		else {
 			debug("\tDifferences were found; Calling compareHTML to create a HTML file highlighting these differences.");
 
-			checker.compareHTML(pathOriginalHTML, pathReproducedHTML, outputName, checkIDString, createParentDirectoriesInOutputPath, silenceDebuggers, checkStart)
+			
+
+			checker.compareHTML(pathOriginalHTML, pathReproducedHTML, checkId, silenceDebuggers, checkStart)
 				.then(
 					function (result) {
-						// provisional arrangement: write output file to check correct result
-						let resultMetadata = result;
-						resultMetadata.timeOfCheck.end = Date.now();
-						//fs.writeFileSync('./metadata.json', JSON.stringify(resultMetadata));
-						if (checkIDString) {
-							try{deleteFolderRecursive(path.join(os.tmpdir(), 'erc-checker/diffImages'+checkIDString));}catch (e){debugERROR}
-						}
-						try{deleteFolderRecursive(path.join(os.tmpdir(), 'erc-checker/diffImages'));}catch (e){debugERROR}
 						debug('Check done.'.green);
+
+						let resultMetadata = result;
+
+						resultMetadata.timeOfCheck.end = Date.now();
+
+						if (saveDiffHTML || saveMetadataJSON) {
+							try {
+								writeOutputFiles(resultMetadata, fileOutputPath, checkId, saveDiffHTML, saveMetadataJSON);
+							}
+							catch (e) {
+								debugERROR("Failed to write result HTML file.".red);
+								resultMetadata.errorsEncountered.push(e);
+								debugERROR(e);
+								reject(resultMetadata);
+							}
+						}
+
+						if (!process.env.DEV) {
+							try {
+								deleteFolderRecursive(path.join(os.tmpdir(), 'erc-checker/diffImages' + checkId));
+							} catch (e) {
+								debugERROR (e)
+							}
+						}
 
 						resolve(resultMetadata);
 					},
 					function (reason) {
 						debugERROR(reason);
 						let rejectMetadata = new Metadata(checkStart, reason);
-						//fs.writeFileSync('./metadata.json', JSON.stringify(rejectMetadata));
+						if(saveMetadata) {
+							fs.writeFileSync('./metadata.json', JSON.stringify(rejectMetadata));
+						}
 
 						reject(rejectMetadata);
 					}
-				);
+				)
+				.catch(debugERROR)
+			;
 		}
 	});
 
 };
 
+var checkPathsFileModeAndReturnAbsolutePaths = function () {
+	
+}
+
+
+var writeOutputFiles = function (data, outputPath, checkID, saveDiffHTML, saveMetadataJSON) {
+	if (saveMetadataJSON) {
+		fs.writeFileSync(path.join(outputPath, checkID + '_metadata.json'), JSON.stringify(data));
+	}
+
+	if (saveDiffHTML) {
+		fs.writeFileSync(path.join(outputPath, checkID+ "_diffHTML.html"), data.resultHTML);
+		debugGeneral("Output Diff-HTML file written successfully".green);
+	}
+};
+
 var deleteFolderRecursive = function(path) {
-	if( fs.existsSync(path) ) {
-		fs.readdirSync(path).forEach(function(file,index){
-			var curPath = path + "/" + file;
-			if(fs.lstatSync(curPath).isDirectory()) { // recurse
-				deleteFolderRecursive(curPath);
-			} else { // delete file
-				fs.unlinkSync(curPath);
-			}
-		});
-		fs.rmdirSync(path);
+
+	try {
+		if( fs.existsSync(path) ) {
+			fs.readdirSync(path).forEach(function(file,index){
+				var curPath = path + "/" + file;
+				if(fs.lstatSync(curPath).isDirectory()) { // recurse
+					deleteFolderRecursive(curPath);
+				} else { // delete file
+					fs.unlinkSync(curPath);
+				}
+			});
+				fs.rmdirSync(path);
+
+		}
+	} catch (e) {
+		debugERROR(e);
 	}
 };
 

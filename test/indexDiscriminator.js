@@ -57,8 +57,8 @@ describe('Testing erc-checker', function () {
 
 			checker(testStringA, testStringB)
 				.then(function (resolve) {
-						if ( resolve.differencesFound == false && resolve.errorsEncountered[0] == null) {done()}
-						else { done(new Error ("Failed to handle eqial papers"))}
+						if ( resolve.checkSuccessful == true && resolve.errorsEncountered[0] == null) {done()}
+						else { done(new Error ("Failed to handle equal papers")) }
 				},
 				function (reject) {
 					throw new Error (reject);
