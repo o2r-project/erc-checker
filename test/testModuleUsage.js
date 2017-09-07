@@ -16,12 +16,26 @@
  */
 
 const fs = require('fs');
+const path = require('path');
 const assert = require('chai').assert;
 const expect = require('chai').expect;
 const debug = require('debug')('tester');
 const colors = require('colors');
 
 const checker = require('../index').ercChecker;
+
+var checkConfig = {
+	directoryMode: false, 			// read papers from directories automatically?  (false: paths for both papers MUST be specified
+	pathToMainDirectory: "",
+	pathToOriginalHTML: "",
+	pathToReproducedHTML: "",
+	saveFilesOutputPath: "",		// necessary if diff-HTML or check metadata should be saved
+	saveDiffHTML: false,
+	ercID: "",
+	saveMetadataJSON: false,
+	createParentDirectories: false, 	// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
+	quiet: false
+};
 
 describe('Using ERC-Checker as node-module', function () {
 	let testStringA = "test/TestPapers_1/testPaper_1_shortened_a.html",
@@ -32,15 +46,18 @@ describe('Using ERC-Checker as node-module', function () {
 		testStringF = "./path/to/nothing";
 
 	it('should return a Promise', function () {
+		let config = checkConfig;
+		config.pathToOriginalHTML = testStringA;
+		config.pathToReproducedHTML = testStringB;
 
-
-		let checkObject1 = checker(testStringA, testStringB)
+		let checkObject1 = checker(config)
 			.then(function (resolve) {
 			}, function (reason) {
 			});
 		expect(checkObject1.then()).to.not.equal(undefined);
 
-		let checkObject2 = checker(testStringA, testStringA)
+		config.pathToReproducedHTML = testStringA;
+		let checkObject2 = checker(config)
 			.then(function (resolve) {
 			}, function (reason) {
 			});
@@ -50,18 +67,26 @@ describe('Using ERC-Checker as node-module', function () {
 	describe('Returned Promise should be *rejected* and Metadata in reject statement should contain Error message, when ERC-Checker', function () {
 
 		it('is called with one or both invalid paths', function () {
-			checker(testStringA, testStringF)
+			let config = checkConfig;
+			config.pathToOriginalHTML = testStringA;
+			config.pathToOriginalHTML= testStringF;
+			checker(config)
 				.then(function (resolve) {
 					expect(resolve).to.equal(null);
 				}, function (reason) {
 					expect(reason.errorsEncountered[0]).to.not.equal(null);
 				});
-			checker(testStringF, testStringA)
+
+			config.pathToOriginalHTML = testStringF;
+			config.pathToReproducedHTML = testStringA;
+			checker(config)
 				.then(function (resolve) {
 					expect(resolve).to.equal(null);
 				}, function (reason) {
 					expect(reason.errorsEncountered[0]).to.not.equal(null);
 				});
+
+			config.pathToReproducedHTML = testStringF;
 			checker(testStringF, testStringF)
 				.then(function (resolve) {
 					expect(resolve).to.equal(null);
@@ -71,13 +96,19 @@ describe('Using ERC-Checker as node-module', function () {
 		});
 
 		it('is called on papers containing a differing number of images', function () {
-			checker(testStringA, testStringC)
+			let config = checkConfig;
+			config.pathToOriginalHTML = testStringA;
+			config.pathToReproducedHTML = testStringC;
+			checker(config)
 				.then(function (resolve) {
 						expect(resolve).to.equal(null)
 					},
 					function (rejectMetadata) {
 						expect(rejectMetadata.errorsEncountered[0]).to.not.equal(null);
 					});
+
+			config.pathToOriginalHTML = testStringC;
+			config.pathToReproducedHTML = testStringA;
 			checker(testStringC, testStringA)
 				.then(function (resolve) {
 						expect(resolve).to.equal(null)
@@ -87,119 +118,219 @@ describe('Using ERC-Checker as node-module', function () {
 					});
 		})
 	});
-
+/**
 	describe('Returned Promise object should be *resolved* and include a Metadata object, which ', function () {
 
 		describe('for two equal input papers', function () {
 			it('should contain no errors, and a parameter {"checkSuccessful" == true}, i.e. no differences found', function (done) {
-				checker(testStringC, testStringC)
-					.then(function (metadata) {
-							if (metadata.checkSuccessful === true && metadata.errorsEncountered[0] == null) { done() }
-							else { done(new Error ("Wrong result."))};
+				this.timeout(0);
+
+				let config = checkConfig;
+				config.pathToOriginalHTML = testStringA;
+				config.pathToReproducedHTML = testStringA;
+
+				checker(config)
+					.then(
+						function (metadata) {
+
+							assert.isDefined(metadata, "No resolve metadata");
+
+							assert.isTrue(metadata.checkSuccessful, "check should not have found differences, yet it did");
+							assert.isUndefined(metadata.errorsEncountered[0], "There should have been no errors, instead: " + JSON.stringify(metadata.errorsEncountered));
+
+						}
+					)
+					.then(
+						function (result) {
+							done(result);
 						},
-						function (reject) {
-							console.log(reject);
-							expect(reject).to.equal(null);
-						});
+						function (reason) {
+							done(reason);
+						}
+					);
 			});
 		});
 
 		describe('for two differing papers containing 2 images each', function () {
 			it('should contain no errors, and a parameter {"checkSuccessful" == false}, i.e. differences exist, plus an Array of image comparison results with a length 2', function (done) {
 				this.timeout(0);
-				checker(testStringA, testStringB, "test_2Img_OnlySecondDiffering")
+
+				let config = checkConfig;
+				config.pathToOriginalHTML = testStringA;
+				config.pathToReproducedHTML = testStringB;
+
+				checker(config)
 					.then(
 						function (metadata) {
-							if (metadata.checkSuccessful == false
-								&& metadata.errorsEncountered[0] == null
-								&& metadata.errorsEncountered.length == 0
-								&& metadata.images.length == 2
-								&& metadata.images[0].compareResults.differences == 0
-								&& metadata.images[1].compareResults.differences != 0)
-							{
-								done();
-							}
-							else {
-								let meta = metadata;
-								meta.resultHTML = null;
-								debug(meta.yellow);
-								done(new Error("Wrong result.", meta));
-							}
-						},
-						function (reason) {
-							done(new Error(reason));
+
+							assert.isFalse(metadata.checkSuccessful, "Paper contains differences, check should find them and be unsuccessful.".red);
+
+							assert.isUndefined(metadata.errorsEncountered[0], "Encountered Errors should be empty, but contained  at least: "+metadata.errorsEncountered[0]+" and "+metadata.errorsEncountered[1]+" and "+metadata.errorsEncountered[2]);
+							assert.strictEqual(metadata.errorsEncountered.length, 0, "Encountered Errors should be empty, but contained "+metadata.errorsEncountered.length+" errors.");
+							assert.strictEqual(metadata.images.length, 2, "Paper contains 9 images, but only "+metadata.images.length+" were compared / featured in result object.");
+							assert.isString(metadata.resultHTML, "Resulting Diff HTML is not returned correctly (not a String)");
+
+							assert.strictEqual(metadata.images[0].compareResults.differences, 0, "Image #1 is equal in both test papers, but differences were found.");
+							assert.notStrictEqual(metadata.images[1].compareResults.differences, 0, "Images #2 in test papers are different, yet no differences were found.");
+
 						}
 					)
+					.then(function (result) {
+						done(result);
+					}, function (reason) {
+						done(reason);
+					});
 			});
 		});
 
 		describe('for two papers containing 9 of 9 differing images', function () {
 			it('should contain no errors, and a parameter {"checkSuccessful" == false}, i.e. differences exist, plus an Array of image comparison results with a length of 9', function (done) {
 				this.timeout(0);
-				checker(testStringD, testStringC, "test_9Img_9Differing")
+
+				let config = checkConfig;
+				config.pathToOriginalHTML = testStringD;
+				config.pathToReproducedHTML = testStringC;
+
+				checker(config)
 					.then(
 						function (metadata) {
 
-							let compResults = true;
-
+							let i=1;
 							for (let image of metadata.images) {
-								if (image.compareResults.differences == 0) compResults = false;
+								assert.notStrictEqual(image.compareResults.differences, 0, "Image #"+i+" of 9 in test paper has differences, but were not found.");
+								i++;
 							}
 
-							if (metadata.checkSuccessful == false
-								&& metadata.errorsEncountered[0] == null
-								&& metadata.errorsEncountered.length == 0
-								&& metadata.images.length == 9
-								&& compResults == true) {
-								done()
-							}
-							else {
-								let meta = metadata;
-								meta.resultHTML = null;
-								debug(meta.yellow);
-								done(new Error("Wrong result.", meta));
-							}
+							assert.isFalse(metadata.checkSuccessful, "Paper contains differences, check should find them and be unsuccessful.".red);
+
+							assert.isUndefined(metadata.errorsEncountered[0], "Encountered Errors should be empty, but contained  at least: "+metadata.errorsEncountered[0]);
+							assert.strictEqual(metadata.errorsEncountered.length, 0, "Encountered Errors should be empty, but contained "+metadata.errorsEncountered.length+" errors.");
+							assert.strictEqual(metadata.images.length, 9, "Paper contains 9 images, but only "+metadata.images.length+" were compared / featured in result object.");
+							assert.isString(metadata.resultHTML, "Resulting Diff HTML is not returned correctly (not a String)");
 						},
 						function (reason) {
 							done(new Error(reason));
 						}
-					)
+					).then(function (result) {
+							done(result);
+						}, function (reason) {
+							done(reason);
+						});
+
 			});
 		});
 
 		describe('for a paper containing 9 images with only the first image differing', function () {
-			it('should contain no errors, and a parameter {"checkSuccessful" == false}, i.e. differences exist, plus an Array of image comparison results with a length 9, of which only the first entry describes differences', function (done) {
+			it('should contain no errors, and a parameter {"checkSuccessful" == false}, i.e. differences exist, plus an Array of image comparison results with a length 9, of which only the first entry describes differences', function (done)
+			 {
 				this.timeout(0);
-				checker(testStringD, testStringE, "test_9Img_1Differing")
+
+				 let config = checkConfig;
+				 config.pathToOriginalHTML = testStringD;
+				 config.pathToReproducedHTML = testStringE;
+
+				checker(config)
 					.then(
 						function (metadata) {
-							let compareResults = true;
+
 							metadata.images.map( function (current, index) {
 								if (index == 0) {
-									compareResults = (current.compareResults.differences != 0);
+									assert.notStrictEqual(current.compareResults.differences, 0, "First image has differences, but were not found.");
 								}
 								else {
-									compareResults = (current.compareResults.differences == 0);
+									assert.strictEqual(current.compareResults.differences, 0, "Images are equal, but differences were found.");
 								}
 							});
 
-							if(metadata.checkSuccessful == false
-								&& metadata.errorsEncountered[0] == null
-								&& metadata.errorsEncountered.length == 0
-								&& metadata.images.length == 9
-								&& compareResults == true)
-							{
-								done();
-							}
-							else {
-								let meta = metadata;
-								meta.resultHTML = '';
-								debug(meta)
-								done( new Error ("Wrong result.") );
-							}
+							assert.isFalse(metadata.checkSuccessful, "Paper contains differences, check should find them and be unsuccessful.".red);
+
+							assert.isUndefined(metadata.errorsEncountered[0], "Encountered Errors should be empty, but contained  at least: "+metadata.errorsEncountered[0]);
+							assert.strictEqual(metadata.errorsEncountered.length, 0, "Encountered Errors should be empty, but contained "+metadata.errorsEncountered.length+" errors.");
+							assert.strictEqual(metadata.images.length, 9, "Paper contains 9 images, but only "+metadata.images.length+" were compared / featured in result object.");
+							assert.isString(metadata.resultHTML, "Resulting Diff HTML is not returned correctly (not a String)");
 						}
 					)
+					.then(
+						function (result) {
+							done(result);
+						}, function (reason) {
+							done(reason);
+						}
+					);
 			});
-		})
+		});
 	});
+
+	describe('With "saveMetadataJSON" flag set to "true", and "saveFilesOutputPath" given in the config object', function () {
+
+		describe('for a check on two papers containing equal amount of, but differing images, and "createParentDirectories" flag set', function () {
+
+			it('should successfully write a "metadata.json" file to the directory specified as Absolute Path', function (done) {
+				let config = checkConfig;
+				config.pathToOriginalHTML = testStringA;
+				config.pathToReproducedHTML = testStringB;
+				config.saveFilesOutputPath = "/tmp/erc-checker/test-saveMetadata";
+				config.saveMetadataJSON = true;
+				config.createParentDirectories = true;
+
+				checker(config)
+					.then( function (resultMetadata) {
+						let outputFileCreated = false;
+						let errorReadingOutputFile = "";
+						let jsonOutpath = path.join(config.saveFilesOutputPath, "metadata.json");
+
+						let resMeta = resultMetadata;
+
+						assert.strictEqual(resultMetadata.errorsEncountered.length, 0, "Check should not have produced Errors, yet it did: "+ resultMetadata.errorsEncountered);
+
+						try {
+							fs.accessSync(jsonOutpath);
+							outputFileCreated = true;
+						}
+						catch (e) {
+							errorReadingOutputFile  = e;
+						}
+
+						assert.isTrue(outputFileCreated, "Error: Output file was not created or could not be read: " + errorReadingOutputFile);
+
+						let savedJSONFileContent = JSON.parse(fs.readFileSync(jsonOutpath, 'utf-8'));
+
+						assert.deepEqual(resMeta, savedJSONFileContent, "Saved metadata.json file content varries from original check result metadata:")
+
+					}, function (reason) {
+						done(new Error(reason.errorsEncountered));
+					})
+					.then( function (success) {
+						deleteFolderRecursive(config.saveFilesOutputPath);
+						done();
+					}, function (reason) {
+						done(new Error(reason));
+					})
+			})
+
+		})
+
+	})
+ */
 });
+
+var deleteFolderRecursive = function(pathParam) {
+
+	let tmpDirPath = pathParam;
+	try {
+		if( fs.existsSync(tmpDirPath) ) {
+			fs.readdirSync(tmpDirPath).forEach(function(file,index){
+				let curPath = path.join(tmpDirPath, file);
+				if(fs.lstatSync(curPath).isDirectory()) { // recurse
+					deleteFolderRecursive(curPath);
+				} else { // delete file
+					fs.unlinkSync(curPath);
+				}
+			});
+			fs.rmdirSync(tmpDirPath);
+
+		}
+	} catch (e) {
+		debugERROR(e);
+	}
+};

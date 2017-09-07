@@ -37,13 +37,10 @@ describe('Testing image comparison', function () {
 
 		var images;
 
-		var tempDirectoryForDiffImages = path.join(os.tmpdir(), 'erc-checker/diffImages');
 		try {
 			fs.mkdirSync(path.join(os.tmpdir(), 'erc-checker'));
 		}catch (e) {}
-		try {
-			fs.mkdirSync(tempDirectoryForDiffImages);
-		}catch (e) {}
+
 
 		before(function (done) {
 
@@ -66,19 +63,27 @@ describe('Testing image comparison', function () {
 		});
 
 		it('should create a file matching the reference file', function (done) {
-
 			runBlinkDiff(images)
 				.then(
-					function (resolve) {
-						let result = resolve.diffImages;
+					function (compareResult) {
+
+						let result = compareResult[0].diffImages;
 
 						if(result != undefined && result.length === images.length && result[0].buffer instanceof Buffer) {
+
+							let tmpDiffOutputPath = compareResult[1];
+
 							let testImage = fs.readFileSync("./test/img/testDiffImg.png"),
-								newDiffImage = fs.readFileSync(path.join(os.tmpdir(), "erc-checker/diffImages/diffImage0.png"));
+								newDiffImage = fs.readFileSync(path.join(tmpDiffOutputPath, "diffImage0.png"));
 
-							try {fs.unlinkSync(path.join(os.tmpdir(), "erc-checker/diffImages/diffImage0.png"));} catch (e){console.log(e)}
+							try {
+								fs.unlinkSync(path.join(tmpDiffOutputPath, "diffImage0.png"));
+								fs.rmdirSync(tmpDiffOutputPath);
+							} catch (e){console.log(e)}
 
-							if (testImage.equals(newDiffImage)) {
+							let correctPathInResult = (tmpDiffOutputPath.includes('/erc-checker/diffImages_') || tmpDiffOutputPath.includes('\\erc-checker\\diffImages_'));
+
+							if (testImage.equals(newDiffImage) && correctPathInResult) {
 								done();
 							}
 							else{
@@ -87,7 +92,7 @@ describe('Testing image comparison', function () {
 						}
 						else {
 							try {
-								fs.unlinkSync(path.join(os.tmpdir(), "erc-checker/diffImages/diffImage0.png"));
+								fs.unlinkSync(path.join(compareResult[1], "diffImage0.png"));
 							}
 							catch(e) {}
 							done(new Error ("Wrong result."))

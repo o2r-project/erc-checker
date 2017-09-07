@@ -23,7 +23,6 @@ var checker = require('./checker');
 
 var debug = require('debug')('index:requestHandling');
 var debugERROR = require('debug')('index:ERROR');
-var test = require('debug')('test');
 const colors = require('colors');
 
 const fs = require('fs');
@@ -32,16 +31,16 @@ const path = require('path');
 const program = require('commander');
 
 function Metadata (dateStart, errorEncountered) {
-	this.checkSuccessful = true;
+	this.checkSuccessful = false;
 	this.timeOfCheck = {
 		start:  dateStart,
 		end: Date.now()
 	};
 	this.images = null;
 	this.resultHTML = null;
-	this.errorsEncountered = [];
-	this.errorsEncountered[0] = errorEncountered;
-	if (errorEncountered) {
+	this.errorsEncountered = new Array (0);
+	if (errorEncountered != null && errorEncountered != undefined) {
+		this.errorsEncountered.push(errorEncountered.toString());
 		this.checkSuccessful = false;
 	}
 }
@@ -176,82 +175,112 @@ program
 	.parse(process.argv);
 
 
+var checkConfig = {
+	directoryMode: Boolean, 			// read papers from directories automatically?  (false: paths for both papers MUST be specified
+	pathToMainDirectory: String,
+	pathToOriginalHTML: String,
+	pathToReproducedHTML: String,
+	saveFilesOutputPath: String,		// necessary if diff-HTML or check metadata should be saved
+	saveDiffHTML: Boolean,
+	ercID: String,
+	saveMetadataJSON: Boolean,
+	createParentDirectories: Boolean, 	// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
+	quiet: Boolean
+};
+
 /**
-*	node module:  function ercChecker  returns Promise
-*/
+ *	node module:  function ercChecker  returns Promise
+ */
+var ercChecker = function (config) {
+
+	let directoryMode = config.directoryMode,
+		pathToMainDirectory = config.pathToMainDirectory,
+		//pathToOriginalHTML = config.pathToOriginalHTML,
+		//pathToReproducedHTML: config.pathToReproducedHTML,
+		outputPath = config.saveFilesOutputPath,
+		ercID = config.ercID,
+		saveDiffHTML = config.saveDiffHTML,
+		saveMetadataJSON = config.saveMetadataJSON,
+		createParentDirectories = config.createParentDirectories,
+		quiet = config.quiet;
 
 
-var ercChecker = function (originalHTML, reproducedHTML, checkID, outputPath, saveDiffHTML, saveMetadataJSON, createParentDirectoriesInOutputPath, silenceDebuggers) {
+	if (quiet) {
+		debug = debugERROR = null;
+	}
 
-	var checkId = '';
 	return new Promise( function (resolve, reject) {
 
-		var pathOriginalHTML = originalHTML,
-			pathReproducedHTML = reproducedHTML,
+		var pathOriginalHTML = config.pathToOriginalHTML,
+			pathReproducedHTML = config.pathToReproducedHTML,
 			brokenPath = false,
 			checkStart = Date.now();
 
-		if ((saveDiffHTML || saveMetadataJSON) && outputPath == null) {
+		if ((saveDiffHTML || saveMetadataJSON) && (outputPath == null || outputPath == undefined)) {
 			debugERROR("Cannot save files without output path.".red);
 			reject(new Metadata(checkStart, new Error("Requested saving check files without specifying an output path.")));
 		}
 
-		debug(checkID);
-
-		if (checkID) {
-			checkId = '_'+checkID;
-		}else {
-			checkId = '';
-		}
-		var fileOutputPath;
-		try {
-			if (outputPath) {
+		// if output data requested, try define the output path, and if requested, create parent directories
+		if (saveMetadataJSON || saveDiffHTML) {
+			var fileOutputPath;
+			try {
 				fileOutputPath = fs.realpathSync(outputPath);
 			}
-		}
-		catch (e) {
-			if (createParentDirectoriesInOutputPath) {
+			catch (e) {
+				if (createParentDirectories) {
+					let delimiter = (os.platform() == 'win32') ? "\\" : "/";
 
-				if (process.platform === 'win32') {
-					exec("mkdir " + fileOutputPath,
-						function (err) {
-							if (err) {
-								debugERROR("Could not create output directory.".red);
-								reject( new Metadata(checkStart, err) );
+					if (!path.isAbsolute(outputPath)) {
+						outputPath = path.join(process.cwd(), outputPath);
+					}
+
+					var dirs = outputPath.replace(/\\/g, '/').split('/');
+					let pathString = delimiter;
+
+					try {
+						dirs.map(function (current, index) {
+							pathString = path.join(pathString, current);
+							let err;
+							try {
+								fs.accessSync(pathString);
 							}
-						}
-					);
+							catch (e) {
+								err = e;
+							}
+							if (err) fs.mkdirSync(pathString);
+						});
+					}
+					catch(e) {
+						debugERROR(e);
+						reject( new Metadata(checkStart, "Error creating output directory: "+e))
+					}
+
+					fileOutputPath = fs.realpathSync(pathString);
 				}
 				else {
-					exec("mkdir -p " + fileOutputPath,
-						function (err) {
-							if (err) {
-								debugERROR("Could not create output directory.".red);
-								reject( new Metadata(checkStart, err) );
-							}
-						}
-					);
+					debugERROR("Absolute output path could not be determined".red, e);
+					reject( new Metadata(checkStart, "Absolute output path could not be determined. " + e))
 				}
-				fileOutputPath = fs.realpathSync(outputPath);
-			}
-			else {
-				debugERROR("Output path non-existent, option to create it was not set. ".red);
-				reject( new Metadata(checkStart, "Output path non-existent, option to create it was not set. " + e))
 			}
 		}
 
-		
-		
 		if (pathOriginalHTML != null && pathReproducedHTML == null) {
-			var inputFilePaths = getInputFilePathsDirectoryMode(pathOriginalHTML);
+			try {
+				var inputFilePaths = getInputFilePathsDirectoryMode(pathOriginalHTML);
+			}
+			catch (e) {
+				debugERROR("Could not read data from directory: " + e);
+				reject(new Metadata(checkStart, e));
+			}
 		}
 
 		try {
-			if (path.isAbsolute(originalHTML)) {
-				let originalFileExisting = fs.statSync(originalHTML);
+			if (path.isAbsolute(pathOriginalHTML)) {
+				let originalFileExisting = fs.statSync(pathOriginalHTML);
 			} else {
-				let originalFileExisting = fs.statSync(path.join(process.cwd(), originalHTML));
-				pathOriginalHTML = path.join(process.cwd(), originalHTML);
+				let originalFileExisting = fs.statSync(path.join(process.cwd(), pathOriginalHTML));
+				pathOriginalHTML = path.join(process.cwd(), pathOriginalHTML);
 			}
 		}
 		catch (e) {
@@ -260,11 +289,11 @@ var ercChecker = function (originalHTML, reproducedHTML, checkID, outputPath, sa
 			brokenPath = new Metadata(checkStart, e);
 		}
 		try {
-			if (!path.isAbsolute(originalHTML)) {
-				let reproducedFileExisting = fs.statSync(path.join(process.cwd(), reproducedHTML));
-				pathReproducedHTML = path.join(process.cwd(), reproducedHTML);
+			if (!path.isAbsolute(pathReproducedHTML)) {
+				let reproducedFileExisting = fs.statSync(path.join(process.cwd(), pathReproducedHTML));
+				pathReproducedHTML = path.join(process.cwd(), pathReproducedHTML);
 			} else {
-				let reproducedFileExisting = fs.statSync(reproducedHTML);
+				let reproducedFileExisting = fs.statSync(pathReproducedHTML);
 			}
 		}
 		catch (e) {
@@ -272,12 +301,16 @@ var ercChecker = function (originalHTML, reproducedHTML, checkID, outputPath, sa
 
 			brokenPath = new Metadata(checkStart, e);
 		}
+		/*
+		function prematureRejection (rejectionMetadata) {
+			if (saveMetadataJSON) {
+				writeOutputFiles(rejectionMetadata, outputPath, ercID, )
+			}
+		}
+		*/
 
 		if (brokenPath) {
-			if(saveMetadataJSON) {
-
-			}
-				reject(brokenPath);
+			reject(brokenPath);
 		}
 
 		try {
@@ -291,15 +324,15 @@ var ercChecker = function (originalHTML, reproducedHTML, checkID, outputPath, sa
 		}
 
 		if (originalHTMLBuffer.equals(reproducedHTMLBuffer)) {
-			debug('\tThe compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ.'.green + '\n' + 'Congrats!'.green);
-			resolve(new Metadata(checkStart, null))
+			debug('\tThe compared files, ' + pathOriginalHTML + ' and ' + pathReproducedHTML + ' do not differ.'.green + '\n' + 'Congrats!'.green);
+			let resolveMetadataEqualPapers = new Metadata(checkStart);
+			resolveMetadataEqualPapers.checkSuccessful = true;
+			resolve(resolveMetadataEqualPapers);
 		}
 		else {
 			debug("\tDifferences were found; Calling compareHTML to create a HTML file highlighting these differences.");
 
-			
-
-			checker.compareHTML(pathOriginalHTML, pathReproducedHTML, checkId, silenceDebuggers, checkStart)
+			checker.compareHTML(pathOriginalHTML, pathReproducedHTML, quiet, checkStart)
 				.then(
 					function (result) {
 						debug('Check done.'.green);
@@ -308,34 +341,71 @@ var ercChecker = function (originalHTML, reproducedHTML, checkID, outputPath, sa
 
 						resultMetadata.timeOfCheck.end = Date.now();
 
-						if (saveDiffHTML || saveMetadataJSON) {
+						if (!process.env.DEV && resultMetadata.images.length != 0) {
 							try {
-								writeOutputFiles(resultMetadata, fileOutputPath, checkId, saveDiffHTML, saveMetadataJSON);
-							}
-							catch (e) {
-								debugERROR("Failed to write result HTML file.".red);
-								resultMetadata.errorsEncountered.push(e);
-								debugERROR(e);
-								reject(resultMetadata);
-							}
-						}
-
-						if (!process.env.DEV) {
-							try {
-								deleteFolderRecursive(path.join(os.tmpdir(), 'erc-checker/diffImages' + checkId));
+								let tmpDirForDiffImages = resultMetadata.tmpPath;
+								deleteFolderRecursive(tmpDirForDiffImages);
+								delete resultMetadata.tmpPath;
 							} catch (e) {
 								debugERROR (e)
 							}
 						}
 
+						if (saveDiffHTML || saveMetadataJSON) {
+							try {
+								writeOutputFiles(resultMetadata, fileOutputPath, saveDiffHTML, saveMetadataJSON);
+							}
+							catch (e) {
+								debugERROR("Failed to write result HTML file.".red);
+								resultMetadata.errorsEncountered.push(e);
+								debugERROR(e);
+								/*
+								let fileMeta = resultMetadata;
+								fileMeta.resultHTML = '';
+								fs.writeFileSync("./testing"+checkStart+".json", JSON.stringify(fileMeta));
+								*/
+								reject(resultMetadata);
+							}
+						}
+
+						/*
+						let fileMeta = resultMetadata;
+						fileMeta.resultHTML = '';
+						fs.writeFileSync("./testing"+checkStart+".json", JSON.stringify(fileMeta));
+						*/
 						resolve(resultMetadata);
 					},
-					function (reason) {
+					function (rejectData) {
+						let reason = rejectData[0];
+						let tmpPath = rejectData[1];
+						console.log(rejectData);
+						debugERROR("This may be the one with unequal number of images.".red);
 						debugERROR(reason);
 						let rejectMetadata = new Metadata(checkStart, reason);
-						if(saveMetadata) {
-							fs.writeFileSync('./metadata.json', JSON.stringify(rejectMetadata));
+
+						if (!process.env.DEV && tmpPath) {
+							try {
+								deleteFolderRecursive(tmpPath);
+							} catch (e) {
+								debugERROR ("Failed to delete temp path: " + e);
+								rejectMetadata.errorsEncountered.push(e);
+							}
+						} else {
+							rejectMetadata.tmpPath = tmpPath;
 						}
+
+						try {
+							writeOutputFiles(rejectMetadata, outputPath, false, saveMetadataJSON);
+						}
+						catch (e) {
+							rejectMetadata.errorsEncountered.push(e);
+							debugERROR("Failure writing metadata.json file:", e);
+						}
+						/*
+							let fileMeta = rejectMetadata;
+							fileMeta.resultHTML = config;
+							fs.writeFileSync("./testing"+checkStart+".json", JSON.stringify(fileMeta));
+						*/
 
 						reject(rejectMetadata);
 					}
@@ -347,35 +417,37 @@ var ercChecker = function (originalHTML, reproducedHTML, checkID, outputPath, sa
 
 };
 
+// Work In Progress - DirMode
 var checkPathsFileModeAndReturnAbsolutePaths = function () {
 	
-}
+};
 
 
-var writeOutputFiles = function (data, outputPath, checkID, saveDiffHTML, saveMetadataJSON) {
+var writeOutputFiles = function (data, outputPath, saveDiffHTML, saveMetadataJSON) {
 	if (saveMetadataJSON) {
-		fs.writeFileSync(path.join(outputPath, checkID + '_metadata.json'), JSON.stringify(data));
+		fs.writeFileSync(path.join(outputPath, 'metadata.json'), JSON.stringify(data));
 	}
 
 	if (saveDiffHTML) {
-		fs.writeFileSync(path.join(outputPath, checkID+ "_diffHTML.html"), data.resultHTML);
+		fs.writeFileSync(path.join(outputPath, "diffHTML.html"), data.resultHTML);
 		debugGeneral("Output Diff-HTML file written successfully".green);
 	}
 };
 
-var deleteFolderRecursive = function(path) {
+var deleteFolderRecursive = function(pathParam) {
 
+	let tmpDirPath = pathParam;
 	try {
-		if( fs.existsSync(path) ) {
-			fs.readdirSync(path).forEach(function(file,index){
-				var curPath = path + "/" + file;
+		if( fs.existsSync(tmpDirPath) ) {
+			fs.readdirSync(tmpDirPath).forEach(function(file,index){
+				let curPath = path.join(tmpDirPath, file);
 				if(fs.lstatSync(curPath).isDirectory()) { // recurse
 					deleteFolderRecursive(curPath);
 				} else { // delete file
 					fs.unlinkSync(curPath);
 				}
 			});
-				fs.rmdirSync(path);
+			fs.rmdirSync(tmpDirPath);
 
 		}
 	} catch (e) {

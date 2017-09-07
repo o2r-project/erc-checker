@@ -20,7 +20,6 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const exec = require('child_process').exec;
 
 var debugGeneral = require('debug')('checker:general');
 var debugSlice = require('debug')('checker:slice');
@@ -31,13 +30,9 @@ const colors = require('colors');
 
 const Promise = require('promise');
 
-// const leven = require('leven');
-
 const sizeOf = require('image-size');
-
 var sharp = require('sharp');
 var BlinkDiff = require('blink-diff');
-
 var toBase64 = require('base64-arraybuffer');
 
 // RegEx to find all img tags
@@ -56,10 +51,6 @@ var metadata = {
 	errorsEncountered: []
 };
 
-// Path Strings used
-var tempDirectoryForDiffImages = path.join(os.tmpdir(), 'erc-checker', 'diffImages');
-var checkIDglobal = '';
-
 /**
  * This function takes two stringified paths to HTML papers from an ERC following the o2r-specification.
  * It extracts and compares all included images, and creates diff versions where necessary.
@@ -67,40 +58,25 @@ var checkIDglobal = '';
  *
  * @param originalHTMLPaperPath		Stringified path to original paper's HTML file
  * @param reproducedHTMLPaperPath	Stringified path to reproduced paper's HTML file
- * @param checkID					idParameter, needed to distinguish check-specific temp directories (necessary for parallel checking)
- * @param silenceDebuggers			effectively shut down debug logger
+ * @param quiet						effectively shut down debug logger
  * @param checkStart				timestamp of check start (UTC time)
  */
-function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, checkID, silenceDebuggers, checkStart) {
+function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, quiet, checkStart) {
+
+	if (quiet) {
+		debugGeneral = debugSlice = debugCompare = debugReassemble = debugERROR = null;
+	}
 
 	// set start date in check metadata
 	metadata.timeOfCheck.start = checkStart;
-
-	// Path Strings used
-	tempDirectoryForDiffImages = path.join(os.tmpdir(), 'erc-checker', 'diffImages');
-
-	if (checkID != null) {
-		checkIDglobal = checkID;
-	}
-	else { checkIDglobal = ''; }
-
-	tempDirectoryForDiffImages += checkIDglobal;
 
 	// if tmp directory for erc-checker does not exist already, create it
 	try {
 		fs.mkdirSync(path.join(os.tmpdir(), 'erc-checker'));
 	}catch (e) {}
-	try {
-		fs.mkdirSync(tempDirectoryForDiffImages);
-	}catch (e) {}
 
 	// initiate container variable for text-chunks from input HTML
 	var textChunks;
-
-	if (silenceDebuggers) {
-		debugGeneral = debugSlice = debugCompare = debugReassemble = debugERROR = require('debug')('quiet');
-	}
-
 
 	// Main process
 	return Promise
@@ -114,6 +90,9 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 
 				return sliceImagesOutOfHTMLStringsAndCreateBuffers(readFilesArray);
 
+			},
+			function (reason) {
+				return Promise.reject(reason);
 			}
 		)
 		.then(
@@ -125,6 +104,9 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 				debugCompare("Begin comparing images.".cyan);
 
 				return prepareImagesForComparison(result2DArrayOfBase64Images);
+			},
+			function (reason) {
+				return Promise.reject(reason);
 			}
 		)
 		.then(
@@ -133,20 +115,27 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 				let preparedImages = resizeOperationCode.images;
 				debugGeneral("Preparation is done, move on to visual comparison.".green);
 
-				return runBlinkDiff(preparedImages, tempDirectoryForDiffImages);
+				return runBlinkDiff(preparedImages);
 
+			},
+			function (reason) {
+				return Promise.reject(reason);
 			}
 		)
 		.then(
-			// @param result is a json object, holding an array of diff-Images created from each pair of input images (corresponding by order)
+			// @param result is a 2-D json object,
+			// holding at result[0] an array of diff-Images created from each pair of input images (corresponding by order),
+			// and in result[1] the temporary directory path used by the comparison tool.
 			function(result) {
 				debugCompare("Visual Comparison completed.".green);
 				debugReassemble("Begin Reassembling HTML with Diff-Images where images were not equal.");
-
-				return reassembleDiffHTML(result.diffImages, textChunks);
+				metadata.tmpPath = result[1];
+				return reassembleDiffHTML(result[0].diffImages, textChunks);
+			},
+			function (reason) {
+				return Promise.reject(reason);
 			}
 		)
-		.catch(debugERROR);
 }
 
 function readFileSync(paperPath) {
@@ -194,7 +183,7 @@ function sliceImagesOutOfHTMLStringsAndCreateBuffers(readFilesArray) {
 			debugSlice("Reproduced: %s images, %s chunks of text.", numImagesReproduced, arrayReproducedHTMLexcludingImages.length);
 
 			if (numImagesOriginal != numImagesReproduced) {
-				reject(new Error ("Unequal number of images in input papers: "+numImagesOriginal+" != "+numImagesReproduced));
+				reject([new Error ("Unequal number of images in input papers: "+numImagesOriginal+" != "+numImagesReproduced), undefined]);
 			}
 
 			var bufferedImagesOriginal, bufferedImagesReproduced;
@@ -436,20 +425,28 @@ function runBlinkDiff(images) {
 
 	debugCompare("Starting visual comparison.".cyan);
 
-	let outPath = tempDirectoryForDiffImages;
+	// let outPath = outputPathTmp;
 	let countComparedImages = 0,
 		resultImages = {
 			diffImages: []
 		};
-
+	let tmpBlinkOutputPath;
 
 	return new Promise(
 		function (resolve, reject) {
+
+			try {
+				tmpBlinkOutputPath = fs.mkdtempSync(path.join(os.tmpdir(), 'erc-checker', 'diffImages_'));
+			} catch (e) {
+				debugERROR("Failed to create temp directory for image comparison output.".red);
+				reject(e);
+			}
+
 			images.map(
 				function (current, index) {
+					let currImageName = 'diffImage'+index+'.png';
+					let blinkOutputPath = path.join(tmpBlinkOutputPath, currImageName);
 
-					let blinkOutputPath = outPath+'/diffImage'+index+".png";
-					debugERROR(blinkOutputPath);
 					let diff = new BlinkDiff({
 						imageA: current.originalImage.buffer,
 						imageB: current.reproducedImage.buffer,
@@ -466,8 +463,9 @@ function runBlinkDiff(images) {
 							if (err) {
 								debugERROR("Error comparing images with index %s.".red, index);
 								metadata.errorsEncountered.push(err);
-								reject(err);
+								reject([new Error("Error reading file", err), tmpBlinkOutputPath]);
 							}
+
 							countComparedImages++;
 
 							if (diff.hasPassed(result.code)) {
@@ -475,7 +473,12 @@ function runBlinkDiff(images) {
 							}
 							else {
 								metadata.checkSuccessful = false;
-								resultImages.diffImages[index] =  { buffer : fs.readFileSync(blinkOutputPath) };
+								try {
+									resultImages.diffImages[index] = {buffer: fs.readFileSync(blinkOutputPath)};
+								} catch (e) {
+									debugERROR(e.red)
+									reject([new Error ("Error reading diff image #"+index+" : " +e), tmpBlinkOutputPath]);
+								}
 							}
 							try {
 								metadata.images[index].compareResults = {
@@ -487,7 +490,7 @@ function runBlinkDiff(images) {
 
 
 							if (countComparedImages === images.length) {
-								resolve(resultImages);
+								resolve([resultImages, tmpBlinkOutputPath]);
 							}
 						}
 					)
