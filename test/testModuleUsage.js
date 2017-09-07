@@ -118,7 +118,7 @@ describe('Using ERC-Checker as node-module', function () {
 					});
 		})
 	});
-/**
+
 	describe('Returned Promise object should be *resolved* and include a Metadata object, which ', function () {
 
 		describe('for two equal input papers', function () {
@@ -311,7 +311,7 @@ describe('Using ERC-Checker as node-module', function () {
 		})
 
 	})
- */
+
 });
 
 var deleteFolderRecursive = function(pathParam) {

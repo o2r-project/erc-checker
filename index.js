@@ -378,7 +378,6 @@ var ercChecker = function (config) {
 					function (rejectData) {
 						let reason = rejectData[0];
 						let tmpPath = rejectData[1];
-						console.log(rejectData);
 						debugERROR("This may be the one with unequal number of images.".red);
 						debugERROR(reason);
 						let rejectMetadata = new Metadata(checkStart, reason);
