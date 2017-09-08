@@ -66,6 +66,16 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 	if (quiet) {
 		debugGeneral = debugSlice = debugCompare = debugReassemble = debugERROR = null;
 	}
+	metadata = {
+		checkSuccessful: true,
+		images: [],
+		resultHTML: null,
+		timeOfCheck : {
+			start: null,
+			end: null
+		},
+		errorsEncountered: []
+	};
 
 	// set start date in check metadata
 	metadata.timeOfCheck.start = checkStart;
@@ -83,6 +93,7 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 		.all([readFileSync(originalHTMLPaperPath), readFileSync(reproducedHTMLPaperPath)])
 		.then(
 			// resolve  <=>  files were read successfully
+			// resolve parameter is a 2-D Array, holding both input files' contents as utf-8 Strings
 			function (readFilesArray) {
 
 				debugSlice("Extracting text chunks from original HTML String and saving them for later.");
@@ -110,7 +121,7 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 			}
 		)
 		.then(
-			// @param resizeOperationCode contains an array of 'image' objects, each holding a buffer for original and reproduced image each
+			// @param resizeOperationCode contains an array of 'image' objects, each holding a buffer for both original and reproduced image
 			function (resizeOperationCode) {
 				let preparedImages = resizeOperationCode.images;
 				debugGeneral("Preparation is done, move on to visual comparison.".green);
@@ -133,7 +144,16 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 				return reassembleDiffHTML(result[0].diffImages, textChunks);
 			},
 			function (reason) {
-				return Promise.reject(reason);
+
+				// 2 cases:
+				// error after diff analysis --> tmp directory exists and is passed along with error in an array
+				if (typeof reason == Array) {
+					return Promise.reject(reason);
+				}
+				// error happened before tmp directory was created, only error returned
+				else {
+					return Promise.reject([reason]);
+				}
 			}
 		)
 }
@@ -226,9 +246,7 @@ function getContentsOfImageTags(stringifiedHTML) {
 
 function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 
-
 	var resultingImageBuffers = { images: [] };
-
 
 	// Array of Integers; index represents position of image in paper
 	// i.e.: first image is represented by Integer at Array [0], and so forth
@@ -322,13 +340,14 @@ function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 }
 
 /**
- *
+ *  Function resizes images of same index that show pairwise differences
+ *  Images resized to dimensions 1344 x 960 (standard image size for html papers rendered from rmarkdown
  *
  * @param originalImageBuffer
  * @param reproducedImageBuffer
  * @param dimensionsOriginal
  * @param dimensionsReproduced
- * @param index
+ * @param index	 of images in their respective papers
  */
 function resizeImageIfNecessary(originalImageBuffer, reproducedImageBuffer, dimensionsOriginal, dimensionsReproduced, index) {
 
@@ -417,15 +436,20 @@ function resizeImageIfNecessary(originalImageBuffer, reproducedImageBuffer, dime
 			}
 		}
 	)
-
-
 }
 
+/**
+ *
+ * @param images	Array,  length = number of images in compared html papers;
+ * 							each element holds an image pair as 2-D Array
+ * @returns Promise :
+ * 		if image comparison run without errors :	resolved with resulting diff-Images Array and name of used tmp directory ,
+ * 		otherwise :		rejected with Error message and (if created) name of used tmp directory
+ */
 function runBlinkDiff(images) {
 
 	debugCompare("Starting visual comparison.".cyan);
 
-	// let outPath = outputPathTmp;
 	let countComparedImages = 0,
 		resultImages = {
 			diffImages: []
@@ -524,7 +548,6 @@ function reassembleDiffHTML (diffImageBufferArray, textChunkArray) {
 		}
 	);
 }
-
 
 module.exports = {
 	compareHTML: stringifyHTMLandCompare

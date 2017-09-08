@@ -19,7 +19,6 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('chai').assert;
 const expect = require('chai').expect;
-const debug = require('debug')('tester');
 const colors = require('colors');
 
 const checker = require('../index').ercChecker;
@@ -43,7 +42,8 @@ describe('Using ERC-Checker as node-module', function () {
 		testStringC = "test/TestPapers_2/paper_9_img_A.html",
 		testStringD = "test/TestPapers_2/paper_9_img_B.html",
 		testStringE = "test/TestPapers_2/paper_9_img_C.html",
-		testStringF = "./path/to/nothing";
+		testStringF = "./path/to/nothing",
+		testStringDirMode = "./test/dirModeTest";
 
 	it('should return a Promise', function () {
 		let config = checkConfig;
@@ -190,6 +190,7 @@ describe('Using ERC-Checker as node-module', function () {
 				let config = checkConfig;
 				config.pathToOriginalHTML = testStringD;
 				config.pathToReproducedHTML = testStringC;
+				config.saveMetadataJSON = false;
 
 				checker(config)
 					.then(
@@ -228,6 +229,7 @@ describe('Using ERC-Checker as node-module', function () {
 				 let config = checkConfig;
 				 config.pathToOriginalHTML = testStringD;
 				 config.pathToReproducedHTML = testStringE;
+				 config.saveMetadataJSON = false;
 
 				checker(config)
 					.then(
@@ -266,71 +268,104 @@ describe('Using ERC-Checker as node-module', function () {
 		describe('for a check on two papers containing equal amount of, but differing images, and "createParentDirectories" flag set', function () {
 
 			it('should successfully write a "metadata.json" file to the directory specified as Absolute Path', function (done) {
-				let config = checkConfig;
-				config.pathToOriginalHTML = testStringA;
-				config.pathToReproducedHTML = testStringB;
-				config.saveFilesOutputPath = "/tmp/erc-checker/test-saveMetadata";
-				config.saveMetadataJSON = true;
-				config.createParentDirectories = true;
+				let configSaveMeta = checkConfig;
+				configSaveMeta.pathToOriginalHTML = testStringA;
+				configSaveMeta.pathToReproducedHTML = testStringB;
+				configSaveMeta.saveFilesOutputPath = "/tmp/erc-checker/test-saveMetadata";
+				configSaveMeta.saveMetadataJSON = true;
+				configSaveMeta.saveDiffHTML = false;
+				configSaveMeta.createParentDirectories = true;
 
-				checker(config)
+				checker(configSaveMeta)
 					.then( function (resultMetadata) {
 						let outputFileCreated = false;
-						let errorReadingOutputFile = "";
-						let jsonOutpath = path.join(config.saveFilesOutputPath, "metadata.json");
-
+						let errorReadingOutputFile = false;
+						let jsonOutpath = path.join(configSaveMeta.saveFilesOutputPath, "metadata.json");
+						let savedJSONFileContent;
 						let resMeta = resultMetadata;
-
-						assert.strictEqual(resultMetadata.errorsEncountered.length, 0, "Check should not have produced Errors, yet it did: "+ resultMetadata.errorsEncountered);
 
 						try {
 							fs.accessSync(jsonOutpath);
 							outputFileCreated = true;
+							savedJSONFileContent = JSON.parse(fs.readFileSync(jsonOutpath, 'utf-8'));
 						}
 						catch (e) {
 							errorReadingOutputFile  = e;
 						}
 
+						assert.strictEqual(resultMetadata.errorsEncountered.length, 0, "Check should not have produced Errors, yet it did: "+ resultMetadata.errorsEncountered);
+
 						assert.isTrue(outputFileCreated, "Error: Output file was not created or could not be read: " + errorReadingOutputFile);
 
-						let savedJSONFileContent = JSON.parse(fs.readFileSync(jsonOutpath, 'utf-8'));
+						assert.deepEqual(resMeta, savedJSONFileContent, "Saved metadata.json file content varries from original check result metadata:");
 
-						assert.deepEqual(resMeta, savedJSONFileContent, "Saved metadata.json file content varries from original check result metadata:")
+						assert.isFalse(errorReadingOutputFile, "Error reading output file: "+ errorReadingOutputFile);
 
-					}, function (reason) {
-						done(new Error(reason.errorsEncountered));
 					})
 					.then( function (success) {
-						deleteFolderRecursive(config.saveFilesOutputPath);
 						done();
 					}, function (reason) {
-						done(new Error(reason));
+						done(new Error(JSON.stringify(reason)));
 					})
 			})
-
 		})
+	});
 
-	})
+	describe("Running the erc-checker in directory mode for a paper with 2 images each, one of which differing" , function () {
+		it("should work just as well as in file mode (see above)", function (done) {
+			let config = checkConfig;
+			config.directoryMode = true;
+			config.pathToMainDirectory = testStringDirMode;
+			checker(config)
+				.then(function (resultMetadata) {
+					let metadata = resultMetadata;
+					assert.isFalse(metadata.checkSuccessful, "Paper contains differences, check should find them and be unsuccessful.".red);
 
+					assert.isUndefined(metadata.errorsEncountered[0], "Encountered Errors should be empty, but contained  at least: "+metadata.errorsEncountered[0]+" and "+metadata.errorsEncountered[1]+" and "+metadata.errorsEncountered[2]);
+					assert.strictEqual(metadata.errorsEncountered.length, 0, "Encountered Errors should be empty, but contained "+metadata.errorsEncountered.length+" errors.");
+					assert.strictEqual(metadata.images.length, 2, "Paper contains 9 images, but only "+metadata.images.length+" were compared / featured in result object.");
+					assert.isString(metadata.resultHTML, "Resulting Diff HTML is not returned correctly (not a String)");
+
+					assert.strictEqual(metadata.images[0].compareResults.differences, 0, "Image #1 is equal in both test papers, but differences were found.");
+					assert.notStrictEqual(metadata.images[1].compareResults.differences, 0, "Images #2 in test papers are different, yet no differences were found.");
+				}, function (reason) {
+					return Promise.reject(reason);
+				})
+				.then(function () {
+					done();
+				},
+				function (reason) {
+					done(new Error(JSON.stringify(reason)));
+				})
+		})
+	});
+
+	describe("After successful Test execution", function () {
+		it("deletes temporary leftovers", function () {
+			let cleanUpWentWrong = false;
+			try {
+				deleteFolderRecursive("/tmp/erc-checker/test-saveMetadata");
+			} catch (e) {
+				cleanUpWentWrong = e;
+			}
+			expect(cleanUpWentWrong).to.equal(false);
+			assert.isFalse(cleanUpWentWrong, cleanUpWentWrong);
+
+			assert.isFalse(fs.existsSync("/tmp/erc-checker/test-saveMetadata"), "CleanUp went wrong, path still exists.");
+		});
+	});
 });
 
 var deleteFolderRecursive = function(pathParam) {
-
 	let tmpDirPath = pathParam;
-	try {
-		if( fs.existsSync(tmpDirPath) ) {
-			fs.readdirSync(tmpDirPath).forEach(function(file,index){
-				let curPath = path.join(tmpDirPath, file);
-				if(fs.lstatSync(curPath).isDirectory()) { // recurse
-					deleteFolderRecursive(curPath);
-				} else { // delete file
-					fs.unlinkSync(curPath);
-				}
-			});
-			fs.rmdirSync(tmpDirPath);
 
+	fs.readdirSync(tmpDirPath).forEach(function(file, index){
+		let curPath = path.join(tmpDirPath, file);
+		if(fs.lstatSync(curPath).isDirectory()) { // recurse
+			deleteFolderRecursive(curPath);
+		} else { // delete file
+			fs.unlinkSync(curPath);
 		}
-	} catch (e) {
-		debugERROR(e);
-	}
+	});
+	fs.rmdirSync(tmpDirPath);
 };

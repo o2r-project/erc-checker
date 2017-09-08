@@ -19,9 +19,31 @@ The erc-checker's `index.js` exports an object called `ercChecker`. This object 
 
 #### Current functional scope
 
-The ERC-Checker requires two valid paths as input. These MUST be either
- - pointing to locally stored HTML files (_Original_ and _Reproduced_ paper), or
- - pointing to a directory which MUST contain a "_Original_" and a "_Reproduced_" subdirectory holding an HTML paper each, i.e.:
+The ERC-Checker is executed with a `config` object (`JSON`).
+
+```javascript
+
+    var config = {
+    	directoryMode: Boolean, 			// read papers from directories automatically?  (false: paths for both papers MUST be specified
+    	pathToMainDirectory: String,
+    	pathToOriginalHTML: String,
+    	pathToReproducedHTML: String,
+    	saveFilesOutputPath: String,		// necessary if diff-HTML or check metadata should be saved
+    	saveDiffHTML: Boolean,
+    	saveMetadataJSON: Boolean,
+    	createParentDirectories: Boolean, 	// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
+    	quiet: Boolean
+    };
+
+```
+
+
+___Note:___ unused parameters may be left out of the config object
+ 
+One of the following configurations __MUST__ be made
+ - `directoryMode = false` and `pathToOriginalHTML` && `pathToReproducedHTML` valid paths to HTML files, _or_
+ - `directoryMode = true` && `pathToMainDirectory` valid path to a directory structure as seen below:
+ 
       ```
          target_directory    
          │
@@ -33,26 +55,28 @@ The ERC-Checker requires two valid paths as input. These MUST be either
               │   main.html
       ```
  
-    ___Note___: HTML files in directories are NOT REQUIRED to be named "_main.html_". However, erc-checker will pick the first `.html`file found _in alphabetical order_. 
+    In `directoryMode`, there __MUST__ be two subdirectories, `original` and `reproduced`.
+    
+    ___Note___: HTML files in directories are NOT REQUIRED to be named "_main.html_". However, erc-checker will pick the first `.html`file found _in alphabetical order_ . 
  
 The tool will compare both HTML files for images only. The images __MUST__ be __base64__-encoded, and encapsulated in an HTML img tag, as generated automatically when rendering an .Rmd file into HTML format. 
 
 If both HTML papers contain an equal number of images, erc-checker writes a new HTML files containing the results of the comparison between all images in the input files, as created by [`blink-diff`](http://yahoo.github.io/blink-diff/), as well as, currently, the text of the first (original) paper. 
 
 Further parameters (in order): 
-  - [String]  optional third path for the output created
-  - [String]  an ID for the current check, necessary when performing multiple parallel checks
-  - [Boolean] flag: create parent directories for output (if false and directories of path not yet created, output will not be created) 
-  - [Boolean] flag: silence loggers
-  - [Boolean] flag: save metadata (same directory and file-name as result html output)
+  - `saveFilesOutputPath: String` : optional third path for file output
+  - `saveDiffHTML: Boolean` : save diffHTML.html file to output directory
+  - `saveMetadataJSON: Boolean` : save metadata.json to output directory
+  - `createParentDirectories: Boolean` : create parent directories for output (if false and directories of path not yet created, output will not be created) 
+  - `quiet: Boolean` : silence loggers
 
 #### Errors
 Any Errors during execution cause the returned JSPromise to be __rejected__. Errors will be caught and
  - logged out to the console
  - saved in a check metadata JSON object, which is returned as _rejection argument_:
- ``` javascript
+ ```javascript
      ﻿{
-     	"differencesFound": ... ,
+     	"checkSuccessful": ... ,
      	"images": [ ... ],
      	"resultHTML": ... ,
         "timeOfCheck": {      // dates as milliseconds since 01.01.1970 00:00:00 UTC (UNIX time)
@@ -77,7 +101,7 @@ The ercChecker function returns a JSPromise.
 If execution is successful, the Promise will be __resolved__, containing a check metadata JSON object:
  ```javascript
     ﻿{
-    	"differencesFound": Boolean,
+    	"checkSuccessful": Boolean,
     	"images": [	
     		{
     			"imageIndex": Number,
@@ -105,13 +129,15 @@ prepResult codes (for images of same index in paper):
 - 1: images differed in size -- resized for comparison
 - 2: images differed in size -- not resized for comparison
 
+##### DEV
+For debugging purposes: When running the ERC-Checker with a NodeJS environment variable `DEV` set true, the result AND reject metadata will include an absolute path to the temp-directory used during the check.
 
 ### How to use the ERC-Checker module
 
 ```javascript
 const checker = require('<path>/<to>/erc-checker/index').ercChecker;  // import the ercChecker module, which is a function
 
-// head: checker(originalHTML, reproducedHTML, checkID, outputPath, saveDiffHTML, saveMetadataJSON, createParentDirectoriesInOutputPath, silenceDebuggers);    
+// head: checker(config);    
 ```
 
 The ercChecker function will return a Promise, which will be resolved on successful execution, or rejected on Error.
@@ -120,13 +146,20 @@ Thus, while the Checker will run asynchronously, it can be chained in a controll
 It can be used as follows: 
 
 ```javascript
-    // use with direct file paths:
-    let pathToFileA = "path/to/fileA.html",
-        pathToFileB = "path/to/fileB.html",
-        outputPath = "optional/output/path/and/new/[filename]";   // output will be named [filename].html (and [filename].json)
+    // use with direct file paths: 
+    let config = {
+        directoryMode: false, 
+        pathToOriginalHTML: "path/to/fileA.html",
+        pathToReproducedHTML: "path/to/fileB.html",
+        saveFilesOutputPath: "/optional/output/path/",
+        saveDiffHTML: true,
+        saveMetadataJSON: true,
+        createParentDirectories: true,
+        quiet: false
+    }
     
     // example
-    checker(pathToFileA, pathToFileB, "exampleCheckFiles", outputPath, true, true, true, false)
+    checker(config)
         .then(
             // successfully resolved: result contains metadata object
             function (resolveMetadata) {
@@ -139,14 +172,19 @@ It can be used as follows:
         );
         
     // in this example, independent of result handling, there will be files for resulting HTML and Metadata JSON saved to specified output location
+    // file names:  diffHTML.html , metadata.json 
 ```
 
 ```javascript
     // use with directories
-    let parentDir = "path/to/directory";
+     let config = {
+            directoryMode: true, 
+            pathToMainDirectory: "path/to/directory",
+            quiet: true
+        }
     
-    // leave second parameter empty to use first path as directory
-    checker(parentDir, null, "exampleCheckDir", null, false, false, true)
+    // example
+    checker(config)
         .then( /*...*/ );
         
     // in this example, no files will be written, and Debug loggers are silenced

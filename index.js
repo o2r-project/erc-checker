@@ -100,7 +100,7 @@ program
 			}
 		}
 		catch (e) {
-			debugERROR("\t\tThe path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
+			debugERROR("The path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
 			brokenPath = new Metadata(checkStart, e);
 		}
 		try {
@@ -112,7 +112,7 @@ program
 			}
 		}
 		catch (e) {
-			debugERROR("\t\tThe path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
+			debugERROR("The path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
 			brokenPath = new Metadata(checkStart, e);
 		}
 
@@ -125,7 +125,7 @@ program
 			return;
 		}
 
-		debug("\tFiles to be compared (w/ path): 	" + originalHTML + " - " + reproducedHTML);
+		debug("Files to be compared (w/ path): 	" + originalHTML + " - " + reproducedHTML);
 
 		try {
 			var originalHTMLBuffer = fs.readFileSync(pathOriginalHTML);
@@ -143,7 +143,7 @@ program
 		}
 
 		if (originalHTMLBuffer.equals(reproducedHTMLBuffer)) {
-			debug('\tThe compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ.'.green);
+			debug('The compared files, ' + originalHTML + ' and ' + reproducedHTML + ' do not differ.'.green);
 			let metadata = new Metadata(checkStart, null);
 			if (program.metadata) {
 				fs.writeFileSync('./resultMetadata.json', metadata);
@@ -151,7 +151,7 @@ program
 			debug(metadata);
 		}
 		else {
-			debug("\tDifferences were found; Calling compareHTML to create a HTML file highlighting these differences.");
+			debug("Differences were found; Calling compareHTML to create a HTML file highlighting these differences.");
 			return checker.compareHTML(pathOriginalHTML, pathReproducedHTML, fileOutputPath, createParentDirectoriesInOutputPath, silenceDebuggers, checkStart)
 				.then( function (resolve) {
 					if (program.metadata) {
@@ -175,30 +175,30 @@ program
 	.parse(process.argv);
 
 
-var checkConfig = {
-	directoryMode: Boolean, 			// read papers from directories automatically?  (false: paths for both papers MUST be specified
-	pathToMainDirectory: String,
-	pathToOriginalHTML: String,
-	pathToReproducedHTML: String,
-	saveFilesOutputPath: String,		// necessary if diff-HTML or check metadata should be saved
-	saveDiffHTML: Boolean,
-	ercID: String,
-	saveMetadataJSON: Boolean,
-	createParentDirectories: Boolean, 	// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
-	quiet: Boolean
-};
+/**
+ *  Config Object
+ *
+ * 	var checkConfig = {
+ * 		directoryMode: Boolean, 			// read papers from directory and subdirectories automatically?  (false: paths for both papers MUST be specified
+ *		pathToMainDirectory: String,
+ *		pathToOriginalHTML: String,
+ *		pathToReproducedHTML: String,
+ *		saveFilesOutputPath: String,		// necessary if diff-HTML or check metadata should be saved
+ *		saveDiffHTML: Boolean,
+ *		saveMetadataJSON: Boolean,
+ *		createParentDirectories: Boolean, 	// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
+ *		quiet: Boolean
+ * 	};
+ */
 
 /**
  *	node module:  function ercChecker  returns Promise
  */
-var ercChecker = function (config) {
+function ercChecker (config) {
 
 	let directoryMode = config.directoryMode,
 		pathToMainDirectory = config.pathToMainDirectory,
-		//pathToOriginalHTML = config.pathToOriginalHTML,
-		//pathToReproducedHTML: config.pathToReproducedHTML,
 		outputPath = config.saveFilesOutputPath,
-		ercID = config.ercID,
 		saveDiffHTML = config.saveDiffHTML,
 		saveMetadataJSON = config.saveMetadataJSON,
 		createParentDirectories = config.createParentDirectories,
@@ -211,10 +211,8 @@ var ercChecker = function (config) {
 
 	return new Promise( function (resolve, reject) {
 
-		var pathOriginalHTML = config.pathToOriginalHTML,
-			pathReproducedHTML = config.pathToReproducedHTML,
-			brokenPath = false,
-			checkStart = Date.now();
+		var checkStart = Date.now(),
+			pathOriginalHTML, pathReproducedHTML;
 
 		if ((saveDiffHTML || saveMetadataJSON) && (outputPath == null || outputPath == undefined)) {
 			debugERROR("Cannot save files without output path.".red);
@@ -265,52 +263,101 @@ var ercChecker = function (config) {
 			}
 		}
 
-		if (pathOriginalHTML != null && pathReproducedHTML == null) {
+		/*
+		 * DIRECTORY MODE
+		 */
+		if (directoryMode) {
+			if (pathToMainDirectory == null || pathToMainDirectory == undefined) {
+				prematureRejection(new Metadata(checkStart, "ERROR: directory mode chosen, but no directory specified."));
+			}
 			try {
-				var inputFilePaths = getInputFilePathsDirectoryMode(pathOriginalHTML);
+				fs.accessSync(pathToMainDirectory);
 			}
 			catch (e) {
-				debugERROR("Could not read data from directory: " + e);
-				reject(new Metadata(checkStart, e));
+				debugERROR("Error reading input directory: " + e);
+				prematureRejection(new Metadata(checkStart, e));
+			}
+			let absoluteMainDirPath = fs.realpathSync(pathToMainDirectory);
+			let absoluteOriginalDirPath = path.join(absoluteMainDirPath, "original");
+			let absoluteReproducedDirPath = path.join(absoluteMainDirPath, "reproduced");
+			let originalDirContent, reproducedDirContent;
+			try {
+				originalDirContent = fs.readdirSync(absoluteOriginalDirPath);
+				reproducedDirContent = fs.readdirSync(absoluteReproducedDirPath);
+				if (originalDirContent.length == 0) {
+					debugERROR("Error: no paper found in directory " + absoluteOriginalDirPath);
+					prematureRejection(new Metadata(checkStart, "Error: no paper found in directory " + absoluteOriginalDirPath));
+				}
+				if (reproducedDirContent.length == 0) {
+					debugERROR("Error: no paper found in directory " + absoluteReproducedDirPath);
+					prematureRejection(new Metadata(checkStart, "Error: no paper found in directory " + absoluteReproducedDirPath));
+				}
+			}
+			catch (e) {
+				debugERROR("Could not read directory: %s", e)
+				prematureRejection(new Promise(checkStart, e))
+			}
+			for (let file in originalDirContent) {
+				if(originalDirContent[file].includes(".html")) {
+					pathOriginalHTML = path.join(absoluteOriginalDirPath, originalDirContent[file]);
+					break;
+				}
+				if (file == originalDirContent.length-1) {
+					prematureRejection(new Metadata(checkStart, "Error: provided original paper direcory does not contain an .html file."))
+				}
+			}
+			for (let file in reproducedDirContent) {
+				if(reproducedDirContent[file].includes(".html")) {
+					pathReproducedHTML = path.join(absoluteReproducedDirPath, reproducedDirContent[file]);
+					break;
+				}
+				if (file == reproducedDirContent.length-1) {
+					prematureRejection(new Metadata(checkStart, "Error: provided reproduced paper direcory does not contain an .html file."))
+				}
 			}
 		}
 
-		try {
-			if (path.isAbsolute(pathOriginalHTML)) {
-				let originalFileExisting = fs.statSync(pathOriginalHTML);
-			} else {
-				let originalFileExisting = fs.statSync(path.join(process.cwd(), pathOriginalHTML));
-				pathOriginalHTML = path.join(process.cwd(), pathOriginalHTML);
-			}
-		}
-		catch (e) {
-			debugERROR("\t\tThe path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
-
-			brokenPath = new Metadata(checkStart, e);
-		}
-		try {
-			if (!path.isAbsolute(pathReproducedHTML)) {
-				let reproducedFileExisting = fs.statSync(path.join(process.cwd(), pathReproducedHTML));
-				pathReproducedHTML = path.join(process.cwd(), pathReproducedHTML);
-			} else {
-				let reproducedFileExisting = fs.statSync(pathReproducedHTML);
-			}
-		}
-		catch (e) {
-			debugERROR("\t\tThe path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
-
-			brokenPath = new Metadata(checkStart, e);
-		}
 		/*
-		function prematureRejection (rejectionMetadata) {
-			if (saveMetadataJSON) {
-				writeOutputFiles(rejectionMetadata, outputPath, ercID, )
-			}
-		}
-		*/
+		 *  '2-FILE-PATH' MODE
+		 */
+		else {
+			pathOriginalHTML = config.pathToOriginalHTML,
+			pathReproducedHTML = config.pathToReproducedHTML;
 
-		if (brokenPath) {
-			reject(brokenPath);
+			try {
+				if (path.isAbsolute(pathOriginalHTML)) {
+					let originalFileExisting = fs.statSync(pathOriginalHTML);
+				} else {
+					let originalFileExisting = fs.statSync(path.join(process.cwd(), pathOriginalHTML));
+					pathOriginalHTML = path.join(process.cwd(), pathOriginalHTML);
+				}
+			}
+			catch (e) {
+				debugERROR("The path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
+
+				return prematureRejection(new Metadata(checkStart, e));
+			}
+			try {
+				if (!path.isAbsolute(pathReproducedHTML)) {
+					let reproducedFileExisting = fs.statSync(path.join(process.cwd(), pathReproducedHTML));
+					pathReproducedHTML = path.join(process.cwd(), pathReproducedHTML);
+				} else {
+					let reproducedFileExisting = fs.statSync(pathReproducedHTML);
+				}
+			}
+			catch (e) {
+				debugERROR("The path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
+
+				prematureRejection(new Metadata(checkStart, e));
+			}
+
+		}
+
+		function prematureRejection(rejectionMetadata) {
+			if (saveMetadataJSON) {
+				writeOutputFiles(rejectionMetadata, outputPath, null, saveMetadataJSON)
+			}
+			reject(rejectionMetadata);
 		}
 
 		try {
@@ -320,17 +367,17 @@ var ercChecker = function (config) {
 		catch (e) {
 			debugERROR("Failed to read HTML file.".red);
 			debugERROR(e);
-				reject(new Metadata(checkStart, e));
+			prematureRejection(new Metadata(checkStart, "wrong path here: "+e));
 		}
 
 		if (originalHTMLBuffer.equals(reproducedHTMLBuffer)) {
-			debug('\tThe compared files, ' + pathOriginalHTML + ' and ' + pathReproducedHTML + ' do not differ.'.green + '\n' + 'Congrats!'.green);
+			debug('The compared files, ' + pathOriginalHTML + ' and ' + pathReproducedHTML + ' do not differ.'.green + '\n' + 'Congrats!'.green);
 			let resolveMetadataEqualPapers = new Metadata(checkStart);
 			resolveMetadataEqualPapers.checkSuccessful = true;
 			resolve(resolveMetadataEqualPapers);
 		}
 		else {
-			debug("\tDifferences were found; Calling compareHTML to create a HTML file highlighting these differences.");
+			debug("Differences were found; Calling compareHTML to create a HTML file highlighting these differences.");
 
 			checker.compareHTML(pathOriginalHTML, pathReproducedHTML, quiet, checkStart)
 				.then(
@@ -353,10 +400,17 @@ var ercChecker = function (config) {
 
 						if (saveDiffHTML || saveMetadataJSON) {
 							try {
-								writeOutputFiles(resultMetadata, fileOutputPath, saveDiffHTML, saveMetadataJSON);
-							}
+								if (saveMetadataJSON) {
+									fs.writeFileSync(path.join(fileOutputPath, 'metadata.json'), JSON.stringify(resultMetadata));
+									debug("Metadata JSON file written successfully".green);
+								}
+
+								if (saveDiffHTML) {
+									fs.writeFileSync(path.join(fileOutputPath, "diffHTML.html"), resultMetadata.resultHTML);
+									debug("Diff-HTML file written successfully".green);
+								}							}
 							catch (e) {
-								debugERROR("Failed to write result HTML file.".red);
+								debugERROR("Failed to write output file.".red);
 								resultMetadata.errorsEncountered.push(e);
 								debugERROR(e);
 								/*
@@ -392,13 +446,13 @@ var ercChecker = function (config) {
 						} else {
 							rejectMetadata.tmpPath = tmpPath;
 						}
-
-						try {
-							writeOutputFiles(rejectMetadata, outputPath, false, saveMetadataJSON);
-						}
-						catch (e) {
-							rejectMetadata.errorsEncountered.push(e);
-							debugERROR("Failure writing metadata.json file:", e);
+						if (saveMetadataJSON) {
+							try {
+								fs.writeFileSync(path.join(fileOutputPath, 'metadata.json'), JSON.stringify(rejectMetadata));							}
+							catch (e) {
+								rejectMetadata.errorsEncountered.push(e);
+								debugERROR("Failure writing metadata.json file:", e);
+							}
 						}
 						/*
 							let fileMeta = rejectMetadata;
@@ -414,12 +468,7 @@ var ercChecker = function (config) {
 		}
 	});
 
-};
-
-// Work In Progress - DirMode
-var checkPathsFileModeAndReturnAbsolutePaths = function () {
-	
-};
+}
 
 
 var writeOutputFiles = function (data, outputPath, saveDiffHTML, saveMetadataJSON) {
