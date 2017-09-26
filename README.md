@@ -2,7 +2,7 @@
 
  - [NodeJS module usage](#nodejs-module-usage)
    - [Installation](installation)
-   - [Current functional scope](Current functional scope)
+   - [Current functional scope](current-functional-scope)
    - [Errors](#errors)
    - [Returns](#returns)
    - [DEV](dev)
