@@ -1,25 +1,25 @@
 # erc-checker
 
  - [NodeJS module usage](#nodejs-module-usage)
-   - [Installation](installation)
-   - [Current functional scope](current-functional-scope)
+   - [Installation](#installation)
+   - [Current functional scope](#current-functional-scope)
    - [Errors](#errors)
    - [Returns](#returns)
-   - [DEV](dev)
-   - [Usage](how-to-use-the-erc-checker-module)
-   - [Debug](debug)
+   - [DEV](#dev)
+   - [Usage](#how-to-use-the-erc-checker-module)
+   - [Debug](#debug)
  
  
- - [Command Line Interface (WORK IN PROGRESS)](command-line-interface-(work-in-progress))
-   - [Installation](installation)
-   - [Usage](usage)
-   - [Options](options)
-   - [Debug](debug)
+ - [Command Line Interface (WORK IN PROGRESS)](#command-line-interface-(work-in-progress))
+   - [Installation](#installation)
+   - [Usage](#usage)
+   - [Options](#options)
+   - [Debug](#debug)
  
  
- - [Debug Loggers](debug-loggers)
- - [Dependencies](dependencies)
- - [License](license)
+ - [Debug Loggers](#debug-loggers)
+ - [Dependencies](#dependencies)
+ - [License](#license)
 
 -------------------------------------------------
 
