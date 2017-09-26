@@ -10,7 +10,7 @@
    - [Debug](#debug)
  
  
- - [Command Line Interface (WORK IN PROGRESS)](#command-line-interface-(work-in-progress))
+ - [Command Line Interface (WORK IN PROGRESS)](#command-line-interface-work-in-progress)
    - [Installation](#installation)
    - [Usage](#usage)
    - [Options](#options)
