@@ -1,5 +1,28 @@
 # erc-checker
 
+ - [NodeJS module usage](#nodejs-module-usage)
+   - [Installation](installation)
+   - [Current functional scope](Current functional scope)
+   - [Errors](#errors)
+   - [Returns](#returns)
+   - [DEV](dev)
+   - [Usage](how-to-use-the-erc-checker-module)
+   - [Debug](debug)
+ 
+ 
+ - [Command Line Interface (WORK IN PROGRESS)](command-line-interface-(work-in-progress))
+   - [Installation](installation)
+   - [Usage](usage)
+   - [Options](options)
+   - [Debug](debug)
+ 
+ 
+ - [Debug Loggers](debug-loggers)
+ - [Dependencies](dependencies)
+ - [License](license)
+
+-------------------------------------------------
+
 A JavaScript library and CLI tool for [ERC](https://github.com/o2r-project/erc-spec) metadata, execution, and result checking.  
 
  
@@ -16,6 +39,32 @@ It further implements a [command line interface](#command-line-interface) (WORK 
 ## NodeJS module usage
 
 The erc-checker's `index.js` exports an object called `ercChecker`. This object contains a function that takes two paths to HTML files and optional further parameters, and returns a JavaScript Promise. 
+
+#### Installation
+
+The erc-checker is currently not featured as an official npm module in the [node package repository](https://www.npmjs.com/). 
+
+Instead, it is best installed directly from GitHub:
+ 
+`npm install --save git+https://github.com/o2r-project/erc-checker.git`
+
+( currently: `npm install --save git+https://github.com/timmimim/erc-validator.git` )
+
+Alternatively, the Git repository may be cloned and packed into an npm package locally using the following console commands. 
+
+```bash
+    $  git init && git clone https://github.com/o2r-project/erc-checker.git
+    $  cd erc-checker
+    $  npm pack          
+```
+
+The `npm pack` command creates a tarball named erc-checker-x.y.z.tgz (x.y.z represents current version) in the same directory 
+
+This resulting tarball is a fully functioning npm package. It may then be installed into any project with:
+
+```bash
+    $  npm install --save /path/to/tarball/erc-checker-x.y.z.tgz`
+```
 
 #### Current functional scope
 
