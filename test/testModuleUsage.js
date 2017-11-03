@@ -74,7 +74,7 @@ describe('Using ERC-Checker as node-module', function () {
 				.then(function (resolve) {
 					expect(resolve).to.equal(null);
 				}, function (reason) {
-					expect(reason.errorsEncountered[0]).to.not.equal(null);
+					expect(reason.errors[0]).to.not.equal(null);
 				});
 
 			config.pathToOriginalHTML = testStringF;
@@ -83,7 +83,7 @@ describe('Using ERC-Checker as node-module', function () {
 				.then(function (resolve) {
 					expect(resolve).to.equal(null);
 				}, function (reason) {
-					expect(reason.errorsEncountered[0]).to.not.equal(null);
+					expect(reason.errors[0]).to.not.equal(null);
 				});
 
 			config.pathToReproducedHTML = testStringF;
@@ -91,7 +91,7 @@ describe('Using ERC-Checker as node-module', function () {
 				.then(function (resolve) {
 					expect(resolve).to.equal(null);
 				}, function (reason) {
-					expect(reason.errorsEncountered[0]).to.not.equal(null);
+					expect(reason.errors[0]).to.not.equal(null);
 				});
 		});
 
@@ -104,7 +104,7 @@ describe('Using ERC-Checker as node-module', function () {
 						expect(resolve).to.equal(null)
 					},
 					function (rejectMetadata) {
-						expect(rejectMetadata.errorsEncountered[0]).to.not.equal(null);
+						expect(rejectMetadata.errors[0]).to.not.equal(null);
 					});
 
 			config.pathToOriginalHTML = testStringC;
@@ -114,7 +114,7 @@ describe('Using ERC-Checker as node-module', function () {
 						expect(resolve).to.equal(null)
 					},
 					function (rejectMetadata) {
-						expect(rejectMetadata.errorsEncountered[0]).to.not.equal(null);
+						expect(rejectMetadata.errors[0]).to.not.equal(null);
 					});
 		})
 	});
@@ -136,7 +136,7 @@ describe('Using ERC-Checker as node-module', function () {
 							assert.isDefined(metadata, "No resolve metadata");
 
 							assert.isTrue(metadata.checkSuccessful, "check should not have found differences, yet it did");
-							assert.isUndefined(metadata.errorsEncountered[0], "There should have been no errors, instead: " + JSON.stringify(metadata.errorsEncountered));
+							assert.isUndefined(metadata.errors[0], "There should have been no errors, instead: " + JSON.stringify(metadata.errors));
 
 						}
 					)
@@ -165,10 +165,10 @@ describe('Using ERC-Checker as node-module', function () {
 
 							assert.isFalse(metadata.checkSuccessful, "Paper contains differences, check should find them and be unsuccessful.".red);
 
-							assert.isUndefined(metadata.errorsEncountered[0], "Encountered Errors should be empty, but contained  at least: "+metadata.errorsEncountered[0]+" and "+metadata.errorsEncountered[1]+" and "+metadata.errorsEncountered[2]);
-							assert.strictEqual(metadata.errorsEncountered.length, 0, "Encountered Errors should be empty, but contained "+metadata.errorsEncountered.length+" errors.");
+							assert.isUndefined(metadata.errors[0], "Encountered Errors should be empty, but contained  at least: "+metadata.errors[0]+" and "+metadata.errors[1]+" and "+metadata.errors[2]);
+							assert.strictEqual(metadata.errors.length, 0, "Encountered Errors should be empty, but contained "+metadata.errors.length+" errors.");
 							assert.strictEqual(metadata.images.length, 2, "Paper contains 9 images, but only "+metadata.images.length+" were compared / featured in result object.");
-							assert.isString(metadata.resultHTML, "Resulting Diff HTML is not returned correctly (not a String)");
+							assert.isString(metadata.display.diff, "Resulting Diff HTML is not returned correctly (not a String)");
 
 							assert.strictEqual(metadata.images[0].compareResults.differences, 0, "Image #1 is equal in both test papers, but differences were found.");
 							assert.notStrictEqual(metadata.images[1].compareResults.differences, 0, "Images #2 in test papers are different, yet no differences were found.");
@@ -204,10 +204,10 @@ describe('Using ERC-Checker as node-module', function () {
 
 							assert.isFalse(metadata.checkSuccessful, "Paper contains differences, check should find them and be unsuccessful.".red);
 
-							assert.isUndefined(metadata.errorsEncountered[0], "Encountered Errors should be empty, but contained  at least: "+metadata.errorsEncountered[0]);
-							assert.strictEqual(metadata.errorsEncountered.length, 0, "Encountered Errors should be empty, but contained "+metadata.errorsEncountered.length+" errors.");
+							assert.isUndefined(metadata.errors[0], "Encountered Errors should be empty, but contained  at least: "+metadata.errors[0]);
+							assert.strictEqual(metadata.errors.length, 0, "Encountered Errors should be empty, but contained "+metadata.errors.length+" errors.");
 							assert.strictEqual(metadata.images.length, 9, "Paper contains 9 images, but only "+metadata.images.length+" were compared / featured in result object.");
-							assert.isString(metadata.resultHTML, "Resulting Diff HTML is not returned correctly (not a String)");
+							assert.isString(metadata.display.diff, "Resulting Diff HTML is not returned correctly (not a String)");
 						},
 						function (reason) {
 							done(new Error(reason));
@@ -246,10 +246,10 @@ describe('Using ERC-Checker as node-module', function () {
 
 							assert.isFalse(metadata.checkSuccessful, "Paper contains differences, check should find them and be unsuccessful.".red);
 
-							assert.isUndefined(metadata.errorsEncountered[0], "Encountered Errors should be empty, but contained  at least: "+metadata.errorsEncountered[0]);
-							assert.strictEqual(metadata.errorsEncountered.length, 0, "Encountered Errors should be empty, but contained "+metadata.errorsEncountered.length+" errors.");
+							assert.isUndefined(metadata.errors[0], "Encountered Errors should be empty, but contained  at least: "+metadata.errors[0]);
+							assert.strictEqual(metadata.errors.length, 0, "Encountered Errors should be empty, but contained "+metadata.errors.length+" errors.");
 							assert.strictEqual(metadata.images.length, 9, "Paper contains 9 images, but only "+metadata.images.length+" were compared / featured in result object.");
-							assert.isString(metadata.resultHTML, "Resulting Diff HTML is not returned correctly (not a String)");
+							assert.isString(metadata.display.diff, "Resulting Diff HTML is not returned correctly (not a String)");
 						}
 					)
 					.then(
@@ -293,7 +293,7 @@ describe('Using ERC-Checker as node-module', function () {
 							errorReadingOutputFile  = e;
 						}
 
-						assert.strictEqual(resultMetadata.errorsEncountered.length, 0, "Check should not have produced Errors, yet it did: "+ resultMetadata.errorsEncountered);
+						assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: "+ resultMetadata.errors);
 
 						assert.isTrue(outputFileCreated, "Error: Output file was not created or could not be read: " + errorReadingOutputFile);
 
@@ -321,10 +321,10 @@ describe('Using ERC-Checker as node-module', function () {
 					let metadata = resultMetadata;
 					assert.isFalse(metadata.checkSuccessful, "Paper contains differences, check should find them and be unsuccessful.".red);
 
-					assert.isUndefined(metadata.errorsEncountered[0], "Encountered Errors should be empty, but contained  at least: "+metadata.errorsEncountered[0]+" and "+metadata.errorsEncountered[1]+" and "+metadata.errorsEncountered[2]);
-					assert.strictEqual(metadata.errorsEncountered.length, 0, "Encountered Errors should be empty, but contained "+metadata.errorsEncountered.length+" errors.");
+					assert.isUndefined(metadata.errors[0], "Encountered Errors should be empty, but contained  at least: "+metadata.errors[0]+" and "+metadata.errors[1]+" and "+metadata.errors[2]);
+					assert.strictEqual(metadata.errors.length, 0, "Encountered Errors should be empty, but contained "+metadata.errors.length+" errors.");
 					assert.strictEqual(metadata.images.length, 2, "Paper contains 9 images, but only "+metadata.images.length+" were compared / featured in result object.");
-					assert.isString(metadata.resultHTML, "Resulting Diff HTML is not returned correctly (not a String)");
+					assert.isString(metadata.display.diff, "Resulting Diff HTML is not returned correctly (not a String)");
 
 					assert.strictEqual(metadata.images[0].compareResults.differences, 0, "Image #1 is equal in both test papers, but differences were found.");
 					assert.notStrictEqual(metadata.images[1].compareResults.differences, 0, "Images #2 in test papers are different, yet no differences were found.");

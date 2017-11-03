@@ -49,7 +49,7 @@ describe('Testing erc-checker', function () {
 					expect(resolve).to.equal(undefined)
 				},
 				function (rejectMetadata) {
-					expect(rejectMetadata.errorsEncountered[0]).to.not.equal(0);
+					expect(rejectMetadata.errors[0]).to.not.equal(0);
 				})
 		});
 
@@ -64,7 +64,7 @@ describe('Testing erc-checker', function () {
 					expect(resolve).to.equal(undefined);
 				},
 				function (rejectMetadata) {
-					expect(rejectMetadata.errorsEncountered[0]).to.not.equal(0);
+					expect(rejectMetadata.errors[0]).to.not.equal(0);
 				})
 		});
 
@@ -76,7 +76,7 @@ describe('Testing erc-checker', function () {
 
 			checker(config)
 				.then(function (resolve) {
-						if ( resolve.checkSuccessful == true && resolve.errorsEncountered[0] == null) {done()}
+						if ( resolve.checkSuccessful == true && resolve.errors[0] == null) {done()}
 						else { done(new Error ("Failed to handle equal papers")) }
 				},
 				function (reject) {
