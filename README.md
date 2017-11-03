@@ -128,12 +128,12 @@ Any errors during execution cause the returned JSPromise to be __rejected__. Err
      ﻿{
      	"checkSuccessful": ... ,
      	"images": [ ... ],
-     	"resultHTML": ... ,
-        "timeOfCheck": {      // dates as milliseconds since 01.01.1970 00:00:00 UTC (UNIX time)
-             "start": Number,
-             "end": Number
-        },
-        "errorsEncountered": [ <Error description> ] 
+     	"display": {
+     	    "diff": "[merged diff-HTML]"
+     	},
+        "start": Date,
+        "end": Date,
+        "errors": [ <Error description> ] 
      }
   ```
 Metadata may contain a varying amount of data, depending on where in the process an error occurred.
@@ -162,15 +162,14 @@ If execution is successful, the Promise will be __resolved__, containing a check
     			}
     		}, ...
     	],
-    	"resultHTML": String, // contains the entire result HTML, 
-    	                      // with images swapped for diff-Images where differences were found;
-    	                      // currently contains text from 'Original' paper
-    	                      
-        "timeOfCheck": {      // dates as milliseconds since 01.01.1970 00:00:00 UTC (UNIX time)
-            "start": Number,
-            "end": Number
-        },
-        "errorsEncountered": [] 
+    	"display": {
+    	    "diff": String // contains the entire result HTML, 
+    	                    // with images swapped for diff-Images where differences were found;
+    	                    // currently contains text from 'Original' paper
+        },             
+        "start": Number,
+        "end": Number,
+        "errors": [] 
     }
  ```
 

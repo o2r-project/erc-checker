@@ -43,12 +43,12 @@ const regexSplitCuttingImages = /<img src="data:image\/png;base64,.*" \/>/g;
 var metadata = {
 	checkSuccessful: true,
 	images: [],
-	resultHTML: null,
-	timeOfCheck : {
-		start: null,
-		end: null
+	display: {
+		diff: null
 	},
-	errorsEncountered: []
+	start: null,
+	end: null,
+	errors: []
 };
 
 /**
@@ -64,21 +64,21 @@ var metadata = {
 function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, quiet, checkStart) {
 
 	if (quiet) {
-		debugGeneral = debugSlice = debugCompare = debugReassemble = debugERROR = null;
+		debugGeneral.enabled = debugSlice.enabled = debugCompare.enabled = debugReassemble.enabled = debugERROR.enabled = false;
 	}
 	metadata = {
 		checkSuccessful: true,
 		images: [],
-		resultHTML: null,
-		timeOfCheck : {
-			start: null,
-			end: null
+		display: {
+			diff: null
 		},
-		errorsEncountered: []
+		start: null,
+		end: null,
+		errors: []
 	};
 
 	// set start date in check metadata
-	metadata.timeOfCheck.start = checkStart;
+	metadata.start = checkStart;
 
 	// if tmp directory for erc-checker does not exist already, create it
 	try {
@@ -166,7 +166,7 @@ function readFileSync(paperPath) {
 		}
 		catch (e) {
 			debugERROR("Error: Could not read file %s.".red, paperPath);
-			metadata.errorsEncountered.push(e);
+			metadata.errors.push(e);
 			reject(e);
 		}
 	})
@@ -229,7 +229,7 @@ function sliceImagesOutOfHTMLStringsAndCreateBuffers(readFilesArray) {
 			}
 			catch (e) {
 				debugERROR("Failed to create Buffer for at least one base64 encoded image.");
-				metadata.errorsEncountered.push(e);
+				metadata.errors.push(e);
 				reject(e);
 			}
 
@@ -301,7 +301,7 @@ function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 					}
 					catch (e) {
 						debugERROR("Failed to get size on image %s. Buffer may be broken.".red, index);
-						metadata.errorsEncountered.push(e);
+						metadata.errors.push(e);
 						reject(e);
 					}
 
@@ -390,14 +390,14 @@ function resizeImageIfNecessary(originalImageBuffer, reproducedImageBuffer, dime
 									})
 									.catch(e => {
 										debugERROR("Failure resizing Reproduced image No.%s.".red, index);
-										metadata.errorsEncountered.push(e);
+										metadata.errors.push(e);
 										resultHandler(false, e);
 									});
 							}
 						})
 						.catch(e => {
 							debugERROR("Failure resizing Original image No.%s.".red, index);
-							metadata.errorsEncountered.push(e);
+							metadata.errors.push(e);
 							resultHandler(false, e)
 						});
 				}
@@ -414,7 +414,7 @@ function resizeImageIfNecessary(originalImageBuffer, reproducedImageBuffer, dime
 							})
 							.catch(e => {
 								debugERROR("Failure resizing Reproduced image No.%s.".red, index);
-								metadata.errorsEncountered.push(e);
+								metadata.errors.push(e);
 								resultHandler(false, e);
 							});
 					}
@@ -486,7 +486,7 @@ function runBlinkDiff(images) {
 						function (err, result) {
 							if (err) {
 								debugERROR("Error comparing images with index %s.".red, index);
-								metadata.errorsEncountered.push(err);
+								metadata.errors.push(err);
 								reject([new Error("Error reading file", err), tmpBlinkOutputPath]);
 							}
 
@@ -542,7 +542,7 @@ function reassembleDiffHTML (diffImageBufferArray, textChunkArray) {
 			reassembledDiffHTMLString += textChunkArray.pop();
 			debugReassemble("Reassembly done.".green);
 
-			metadata.resultHTML = reassembledDiffHTMLString;
+			metadata.display.diff = reassembledDiffHTMLString;
 			resolve(metadata);
 
 		}

@@ -30,17 +30,15 @@ const os = require('os');
 const path = require('path');
 const program = require('commander');
 
-function Metadata (dateStart, errorEncountered) {
+function Metadata (dateStart, error) {
 	this.checkSuccessful = false;
-	this.timeOfCheck = {
-		start:  dateStart,
-		end: Date.now()
-	};
+	this.start = dateStart;
+	this.end = Date.now();
 	this.images = null;
-	this.resultHTML = null;
-	this.errorsEncountered = new Array (0);
-	if (errorEncountered != null && errorEncountered != undefined) {
-		this.errorsEncountered.push(errorEncountered.toString());
+	this.display = { diff: null };
+	this.errors = new Array (0);
+	if (error != null && error != undefined) {
+		this.errors.push(error.toString());
 		this.checkSuccessful = false;
 	}
 }
@@ -80,7 +78,7 @@ program
 
 		if (program.quiet)
 		{
-			debug = debugERROR = require('debug')('quiet');
+			debug.enabled = debugERROR.enabled = false;
 		}
 
 		var pathOriginalHTML = originalHTML,
@@ -206,7 +204,7 @@ function ercChecker (config) {
 
 
 	if (quiet) {
-		debug = debugERROR = null;
+		debug.enabled = debugERROR.enabled = false;
 	}
 
 	return new Promise( function (resolve, reject) {
@@ -386,7 +384,7 @@ function ercChecker (config) {
 
 						let resultMetadata = result;
 
-						resultMetadata.timeOfCheck.end = Date.now();
+						resultMetadata.end = Date.now();
 
 						if (!process.env.DEV && resultMetadata.images.length != 0) {
 							try {
@@ -406,27 +404,17 @@ function ercChecker (config) {
 								}
 
 								if (saveDiffHTML) {
-									fs.writeFileSync(path.join(fileOutputPath, "diffHTML.html"), resultMetadata.resultHTML);
+									fs.writeFileSync(path.join(fileOutputPath, "diffHTML.html"), resultMetadata.display.diff);
 									debug("Diff-HTML file written successfully".green);
 								}							}
 							catch (e) {
 								debugERROR("Failed to write output file.".red);
-								resultMetadata.errorsEncountered.push(e);
+								resultMetadata.errors.push(e);
 								debugERROR(e);
-								/*
-								let fileMeta = resultMetadata;
-								fileMeta.resultHTML = '';
-								fs.writeFileSync("./testing"+checkStart+".json", JSON.stringify(fileMeta));
-								*/
 								reject(resultMetadata);
 							}
 						}
 
-						/*
-						let fileMeta = resultMetadata;
-						fileMeta.resultHTML = '';
-						fs.writeFileSync("./testing"+checkStart+".json", JSON.stringify(fileMeta));
-						*/
 						resolve(resultMetadata);
 					},
 					function (rejectData) {
@@ -441,7 +429,7 @@ function ercChecker (config) {
 								deleteFolderRecursive(tmpPath);
 							} catch (e) {
 								debugERROR ("Failed to delete temp path: " + e);
-								rejectMetadata.errorsEncountered.push(e);
+								rejectMetadata.errors.push(e);
 							}
 						} else {
 							rejectMetadata.tmpPath = tmpPath;
@@ -450,15 +438,10 @@ function ercChecker (config) {
 							try {
 								fs.writeFileSync(path.join(fileOutputPath, 'metadata.json'), JSON.stringify(rejectMetadata));							}
 							catch (e) {
-								rejectMetadata.errorsEncountered.push(e);
+								rejectMetadata.errors.push(e);
 								debugERROR("Failure writing metadata.json file:", e);
 							}
 						}
-						/*
-							let fileMeta = rejectMetadata;
-							fileMeta.resultHTML = config;
-							fs.writeFileSync("./testing"+checkStart+".json", JSON.stringify(fileMeta));
-						*/
 
 						reject(rejectMetadata);
 					}
@@ -477,7 +460,7 @@ var writeOutputFiles = function (data, outputPath, saveDiffHTML, saveMetadataJSO
 	}
 
 	if (saveDiffHTML) {
-		fs.writeFileSync(path.join(outputPath, "diffHTML.html"), data.resultHTML);
+		fs.writeFileSync(path.join(outputPath, "diffHTML.html"), data.display.diff);
 		debugGeneral("Output Diff-HTML file written successfully".green);
 	}
 };
