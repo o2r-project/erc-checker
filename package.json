@@ -1,0 +1,51 @@
+{
+  "name": "erc-checker",
+  "version": "1.0.0",
+  "description": "CLI tool to validate an ERC (following the o2r specification)",
+  "main": "index.js",
+  "scripts": {
+    "start": "DEBUG='index:*,checker:general,checker:ERROR' node index.js",
+    "debug": "DEBUG=* node index.js",
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Timmimim/erc-validator.git"
+  },
+  "keywords": [
+    "cli",
+    "erc",
+    "o2r",
+    "o2r-project",
+    "opening reproducible research",
+    "ifgi",
+    "ifgi-muenster",
+    "validating",
+    "compare",
+    "html"
+  ],
+  "author": "Timm Kühnel",
+  "license": "Apache-2.0",
+  "bin": {
+    "erc-checker": "./index.js"
+  },
+  "bugs": {
+    "url": "https://github.com/Timmimim/erc-validator/issues"
+  },
+  "homepage": "https://github.com/Timmimim/erc-validator#readme",
+  "dependencies": {
+    "base64-arraybuffer": "^0.1.5",
+    "blink-diff": "^1.0.13",
+    "chai": "^4.0.2",
+    "colors": "^1.1.2",
+    "commander": "^2.9.0",
+    "debug": "^2.6.8",
+    "image-size": "^0.6.0",
+    "leven": "^2.1.0",
+    "levenshtein": "^1.0.5",
+    "mocha": "^3.4.2",
+    "promise": "^7.1.1",
+    "rewire": "^2.5.2",
+    "sharp": "^0.18.2"
+  }
+}

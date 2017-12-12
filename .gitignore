@@ -36,4 +36,25 @@ jspm_packages
 # Optional REPL history
 .node_repl_history
 
+# IDE metadata
+.idea
+
+# JS Test Files
+rewriting_checker_w_promises.js
+img_magick.js
+
+# unused html test-files
+test-files/InteractionsAmongTemperature_-_copy__csv-files_altered_slightly_for_reproduction/
+
+# original_paper directory, as that is created automatically
+original_papers/
+
+# any (tmp) HTML files, there is no HTML interface yet
+/*.html
+
+# any backup files created by gedit editor
+*~
+
+.vscode
+
 \.vscode/
