@@ -20,34 +20,68 @@ const expect = require('chai').expect;
 const debug = require('debug')('tester');
 const colors = require('colors');
 
-//const checker = require('../index').ercChecker;
+const checker = require('../index').ercChecker;
 
-describe.skip('Testing erc-checker', function () {
+var checkConfig = {
+	directoryMode: false, 			// read papers from directories automatically?  (false: paths for both papers MUST be specified
+	pathToMainDirectory: "",
+	pathToOriginalHTML: "",
+	pathToReproducedHTML: "",
+	saveFilesOutputPath: "",		// necessary if diff-HTML or check metadata should be saved
+	saveDiffHTML: false,
+	ercID: "",
+	saveMetadataJSON: false,
+	createParentDirectories: false, 	// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
+	quiet: false
+};
+
+describe('Testing erc-checker', function () {
 
 	describe('Compare HTML function', function () {
-		it('called with invalid path', function () {
-			let testStringA = "path/to/nothing.html",
-				testStringB = "path/to/more/nothing.html";
-			debug("Test run with invalid path Strings: \n".cyan, testStringA.cyan, ",",  testStringB.cyan);
-			expect(checker(testStringA, testStringB)).to.not.equal(0);
-			debug(checker(testStringA, testStringB));
+		it('called with two invalid paths should return metadata containing an Error', function () {
+
+			let config = checkConfig;
+			config.pathToOriginalHTML = "path/to/nothing.html";
+			config.pathToReproducedHTML = "path/to/more/nothing.html";
+
+			checker(config)
+				.then( function (resolve) {
+					expect(resolve).to.equal(undefined)
+				},
+				function (rejectMetadata) {
+					expect(rejectMetadata.errors[0]).to.not.equal(0);
+				})
 		});
 
-		it('called with only one invalid path', function () {
-			let testStringA = "path/to/nothing.html",
-				testStringB = "test/TestPapers_1/testPaper_1_shortened_a.html";
-			debug("Test run with invalid path Strings: \n".cyan, testStringA.cyan, ",",  testStringB.cyan);
-			expect(checker(testStringA, testStringB)).to.not.equal(0);
-			debug(checker(testStringA, testStringB));
+		it('called with only one invalid path should return metadata containing an Error', function () {
+
+			let config = checkConfig;
+			config.pathToOriginalHTML = "path/to/nothing.html";
+			config.pathToReproducedHTML = "test/TestPapers_1/testPaper_1_shortened_a.html";
+
+			checker(config)
+				.then(function(resolve) {
+					expect(resolve).to.equal(undefined);
+				},
+				function (rejectMetadata) {
+					expect(rejectMetadata.errors[0]).to.not.equal(0);
+				})
 		});
 
-		it('comparing papers with equal images reaches diff tool', function () {
-			let testStringA = "test/TestPapers_1/testPaper_1_shortened_a.html",
-				testStringB = "test/TestPapers_1/testPaper_1_shortened_b.html";
-			debug("Test run with invalid path Strings: \n".cyan, testStringA.cyan, ",",  testStringB.cyan);
-			expect(checker(testStringA, testStringB)).to.equal(0);
-			debug(checker(testStringA, testStringB));
+		it('called with equal papers should return Promise state *resolved* with metadata containing no Errors, but also value 0 for differences', function (done) {
+
+			let config = checkConfig;
+			config.pathToOriginalHTML = "test/TestPapers_1/testPaper_1_shortened_a.html";
+			config.pathToReproducedHTML = "test/TestPapers_1/testPaper_1_shortened_a.html";
+
+			checker(config)
+				.then(function (resolve) {
+						if ( resolve.checkSuccessful == true && resolve.errors[0] == null) {done()}
+						else { done(new Error ("Failed to handle equal papers")) }
+				},
+				function (reject) {
+					throw new Error (reject);
+				})
 		});
 	})
-
 });
