@@ -237,11 +237,18 @@ function sliceImagesOutOfHTMLStringsAndCreateBuffers(readFilesArray) {
 	);
 }
 
+
 function getContentsOfImageTags(stringifiedHTML) {
-	// searches String for patterns matching RegEx, automatically
-	return stringifiedHTML.match(allImgTagsAsStrings).map(function (finding) {
-		return finding.substr(32, finding.length - 48);
-	});
+	let contents = [];
+
+	// searches String for patterns matching RegEx
+	let imageTags = stringifiedHTML.match(allImgTagsAsStrings);
+	if (imageTags) {
+		contents = imageTags.map(function (finding) {
+			return finding.substr(32, finding.length - 48);
+		});
+	}
+	return contents;
 }
 
 function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
@@ -261,8 +268,10 @@ function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 			var originalImageBuffers = twoDimensionalArrayOfBuffers[0],
 				reproducedImageBuffers = twoDimensionalArrayOfBuffers[1];
 
-
 			let countPreparedImages = 0;
+			if (countPreparedImages == originalImageBuffers.length) {
+				resolver();
+			}
 
 			// if images of equal index in their papers differ, compare them
 			originalImageBuffers.map(
