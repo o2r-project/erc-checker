@@ -183,6 +183,7 @@ program
  *		pathToReproducedHTML: String,
  *		saveFilesOutputPath: String,		// necessary if diff-HTML or check metadata should be saved
  *		saveDiffHTML: Boolean,
+ *		outFileName: String					// default: "diffHTML.html"
  *		saveMetadataJSON: Boolean,
  *		createParentDirectories: Boolean, 	// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
  *		quiet: Boolean
@@ -199,6 +200,7 @@ function ercChecker (config) {
 		outputPath = config.saveFilesOutputPath,
 		saveDiffHTML = config.saveDiffHTML,
 		saveMetadataJSON = config.saveMetadataJSON,
+		outFileName = config.outFileName || "diffHTML.html",
 		createParentDirectories = config.createParentDirectories,
 		quiet = config.quiet;
 
@@ -404,7 +406,7 @@ function ercChecker (config) {
 								}
 
 								if (saveDiffHTML) {
-									fs.writeFileSync(path.join(fileOutputPath, "diffHTML.html"), resultMetadata.display.diff);
+									fs.writeFileSync(path.join(fileOutputPath, outFileName), resultMetadata.display.diff);
 									debug("Diff-HTML file written successfully".green);
 								}							}
 							catch (e) {

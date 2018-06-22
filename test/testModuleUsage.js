@@ -308,10 +308,97 @@ describe('Using ERC-Checker as node-module', function () {
 						done(new Error(JSON.stringify(reason)));
 					})
 			})
-		})
-	});
+        })
+    });
 
-	describe("Running the erc-checker in directory mode for a paper with 2 images each, one of which differing" , function () {
+    describe('With "saveDiffHTML" flag set to "true", and "saveFilesOutputPath" given in the config object', function () {
+
+        describe('for a check on two papers containing equal amount of, but differing images, and "createParentDirectories" flag set', function () {
+
+            it('should successfully write a "diffHTML.html" file to the directory specified as Absolute Path', function (done) {
+                let configSaveMeta = checkConfig;
+                configSaveMeta.pathToOriginalHTML = testStringA;
+                configSaveMeta.pathToReproducedHTML = testStringB;
+                configSaveMeta.saveFilesOutputPath = "/tmp/erc-checker/test-saveHTML";
+                configSaveMeta.saveMetadataJSON = false;
+                configSaveMeta.saveDiffHTML = true;
+                configSaveMeta.createParentDirectories = true;
+
+                checker(configSaveMeta)
+                    .then(function (resultMetadata) {
+                        let outputFileCreated = false;
+                        let errorReadingOutputFile = false;
+                        let htmlOutpath = path.join(configSaveMeta.saveFilesOutputPath, "diffHTML.html");
+                        let resMeta = resultMetadata;
+
+                        try {
+                            fs.accessSync(htmlOutpath);
+                            outputFileCreated = true;
+                        }
+                        catch (e) {
+                            errorReadingOutputFile = e;
+                        }
+
+                        assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: " + resultMetadata.errors);
+
+                        assert.isTrue(outputFileCreated, "Error: Output file was not created or could not be read: " + errorReadingOutputFile);
+
+                        assert.isFalse(errorReadingOutputFile, "Error reading output file: " + errorReadingOutputFile);
+
+                    })
+                    .then(function (success) {
+                        done();
+                    }, function (reason) {
+                        done(new Error(JSON.stringify(reason)));
+                    })
+            })
+        });
+
+        describe('for a check on two papers containing equal amount of, but differing images, a output file name passed in the config object, and "createParentDirectories" flag set', function () {
+            it('should successfully write an HTML file with the specified name to the directory specified as Absolute Path', function (done) {
+                let configSaveMeta = checkConfig;
+                configSaveMeta.pathToOriginalHTML = testStringA;
+                configSaveMeta.pathToReproducedHTML = testStringB;
+                configSaveMeta.saveFilesOutputPath = "/tmp/erc-checker/test-saveHTML";
+                configSaveMeta.saveMetadataJSON = false;
+                configSaveMeta.saveDiffHTML = true;
+                configSaveMeta.outFileName = "specifiedName.html";
+                configSaveMeta.createParentDirectories = true;
+
+                checker(configSaveMeta)
+                    .then( function (resultMetadata) {
+                        let outputFileCreated = false;
+                        let errorReadingOutputFile = false;
+                        let htmlOutpath = path.join(configSaveMeta.saveFilesOutputPath, "specifiedName.html");
+                        let resMeta = resultMetadata;
+
+                        try {
+                            fs.accessSync(htmlOutpath);
+                            outputFileCreated = true;
+                        }
+                        catch (e) {
+                            errorReadingOutputFile  = e;
+                        }
+
+                        assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: "+ resultMetadata.errors);
+
+                        assert.isTrue(outputFileCreated, "Error: Output file was not created or could not be read: " + errorReadingOutputFile);
+
+                        assert.isFalse(errorReadingOutputFile, "Error reading output file: "+ errorReadingOutputFile);
+
+                    })
+                    .then( function (success) {
+                        done();
+                    }, function (reason) {
+                        done(new Error(JSON.stringify(reason)));
+                    })
+            })
+        })
+    });
+
+
+
+            describe("Running the erc-checker in directory mode for a paper with 2 images each, one of which differing" , function () {
 		it("should work just as well as in file mode (see above)", function (done) {
 			let config = checkConfig;
 			config.directoryMode = true;
