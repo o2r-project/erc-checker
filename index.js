@@ -34,8 +34,8 @@ function Metadata (dateStart, error) {
 	this.checkSuccessful = false;
 	this.start = dateStart;
 	this.end = Date.now();
-	this.images = null;
-	this.display = { diff: null };
+	this.images = [];
+	this.display = {};
 	this.errors = new Array (0);
 	if (error != null && error != undefined) {
 		this.errors.push(error.toString());

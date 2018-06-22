@@ -43,9 +43,7 @@ const regexSplitCuttingImages = /<img src="data:image\/png;base64,.*" \/>/g;
 var metadata = {
 	checkSuccessful: true,
 	images: [],
-	display: {
-		diff: null
-	},
+	display: {},
 	start: null,
 	end: null,
 	errors: []
@@ -69,9 +67,7 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 	metadata = {
 		checkSuccessful: true,
 		images: [],
-		display: {
-			diff: null
-		},
+		display: {},
 		start: null,
 		end: null,
 		errors: []
