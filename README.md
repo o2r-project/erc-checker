@@ -1,6 +1,6 @@
 # erc-checker
 
-![Travis CI](https://travis-ci.org/Timmimim/erc-validator.svg?branch=master)
+![Travis CI](https://travis-ci.org/Timmimim/erc-checker.svg?branch=master)
 
  - [NodeJS module usage](#nodejs-module-usage)
    - [Installation](#installation)
