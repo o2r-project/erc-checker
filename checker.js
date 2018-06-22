@@ -261,7 +261,7 @@ function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 			let countPreparedImages = 0;
 
 			// if images of equal index in their papers differ, compare them
-			originalImageBuffers.map(
+			originalImageBuffers.forEach(
 				function (current, index) {
 
 					let dimensionsOriginal, dimensionsReproduced;
@@ -317,7 +317,7 @@ function prepareImagesForComparison(twoDimensionalArrayOfBuffers) {
 						});
 				});
 			function resolver() {
-				intArrayImagesCompared.map(
+				intArrayImagesCompared.forEach(
 					function (current, index) {
 						(current != 0) ? metadata.checkSuccessful = false : null ;
 						metadata.images[index] = (
@@ -462,7 +462,7 @@ function runBlinkDiff(images) {
 				reject(e);
 			}
 
-			images.map(
+			images.forEach(
 				function (current, index) {
 					let currImageName = 'diffImage'+index+'.png';
 					let blinkOutputPath = path.join(tmpBlinkOutputPath, currImageName);
@@ -527,7 +527,7 @@ function reassembleDiffHTML (diffImageBufferArray, textChunkArray) {
 
 			let reassembledDiffHTMLString = "";
 			debugReassemble("Piecing together text chunks and images.");
-			diffImageBufferArray.map(
+			diffImageBufferArray.forEach(
 				function (currentImage, index) {
 					reassembledDiffHTMLString += textChunkArray[index]
 						+ "<img src=\"data:image/png;base64,"

@@ -235,7 +235,7 @@ function ercChecker (config) {
 					let pathString = delimiter;
 
 					try {
-						dirs.map(function (current, index) {
+						dirs.forEach(function (current, index) {
 							pathString = path.join(pathString, current);
 							let err;
 							try {
