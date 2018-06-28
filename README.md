@@ -224,7 +224,7 @@ It can be used as follows:
         );
         
     // in this example, independent of result handling, there will be files for resulting HTML and Metadata JSON saved to specified output location
-    // file names:  diffHTML.html , metadata.json 
+    // file names:  customNameForDiff.html , metadata.json 
 ```
 
 ```javascript
