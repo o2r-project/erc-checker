@@ -78,6 +78,7 @@ The checker is executed with a `config` object (`JSON`).
     	pathToReproducedHTML: String,
     	saveFilesOutputPath: String,		// necessary if diff-HTML or check metadata should be saved
     	saveDiffHTML: Boolean,              // default: false
+    	outFileName: String,                // choose a name for diff-HTML (defaults to "diffHTML.html")
     	saveMetadataJSON: Boolean,          // default: false
     	createParentDirectories: Boolean, 	// default: false --- IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
     	quiet: Boolean                      // default: false
@@ -115,7 +116,8 @@ If both HTML papers contain an equal number of images, the checker writes a new 
 
 Further parameters (in order): 
   - `saveFilesOutputPath: String` : third path for file output; necessary if either parameter `saveDiffHTML` or `saveMetadataJSON` is set, otherwise ignored
-  - `saveDiffHTML: Boolean` : save diffHTML.html file to output directory
+  - `saveDiffHTML: Boolean` : save diffHTML file to output directory
+  - `outFileName: String` : choose a custom name for diffHTML (default is "diffHTML.html")
   - `saveMetadataJSON: Boolean` : save metadata.json to output directory
   - `createParentDirectories: Boolean` : create parent directories for output (if false and directories of path not yet created, output will not be created) 
   - `quiet: Boolean` : silence loggers
@@ -202,6 +204,7 @@ It can be used as follows:
         pathToReproducedHTML: "path/to/fileB.html",
         saveFilesOutputPath: "/optional/output/path/",
         saveDiffHTML: true,
+        outFileName: "customNameForDiff.html",
         saveMetadataJSON: true,
         createParentDirectories: true,
         quiet: false
