@@ -19,7 +19,7 @@
 if(process.env.DEBUG === undefined) process.env['DEBUG']='index:requestHandling,index:ERROR,checker:ERROR';
 
 
-var checker = require('./checker');
+var checker = require('./lib/checker');
 
 var debug = require('debug')('index:requestHandling');
 var debugERROR = require('debug')('index:ERROR');
@@ -30,7 +30,7 @@ const os = require('os');
 const path = require('path');
 const program = require('commander');
 
-const globWithXignore = require('./etc/glob-with-X_ignore').globWithXignore;
+const globWithXignore = require('./lib/glob-with-X_ignore').globWithXignore;
 
 function Metadata (dateStart, comparisonSet, error) {
 	this.checkSuccessful = false;
@@ -431,7 +431,7 @@ function ercChecker (config) {
 						if (saveDiffHTML || saveMetadataJSON) {
 							try {
 								if (saveMetadataJSON) {
-									fs.writeFileSync(path.join(fileOutputPath, 'metadata.json'), JSON.stringify(resultMetadata));
+									fs.writeFileSync(path.join(fileOutputPath, 'metadata.json'), JSON.stringify(resultMetadata, null, 4));
 									debug("Metadata JSON file written successfully".green);
 								}
 
@@ -468,7 +468,7 @@ function ercChecker (config) {
 						}
 						if (saveMetadataJSON) {
 							try {
-								fs.writeFileSync(path.join(fileOutputPath, 'metadata.json'), JSON.stringify(rejectMetadata));							}
+								fs.writeFileSync(path.join(fileOutputPath, 'metadata.json'), JSON.stringify(rejectMetadata, null, 4));							}
 							catch (e) {
 								rejectMetadata.errors.push(e);
 								debugERROR("Failure writing metadata.json file:", e);
@@ -488,7 +488,7 @@ function ercChecker (config) {
 
 var writeOutputFiles = function (data, outputPath, saveDiffHTML, saveMetadataJSON) {
 	if (saveMetadataJSON) {
-		fs.writeFileSync(path.join(outputPath, 'metadata.json'), JSON.stringify(data));
+		fs.writeFileSync(path.join(outputPath, 'metadata.json'), JSON.stringify(data, null, 4));
 	}
 
 	if (saveDiffHTML) {

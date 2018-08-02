@@ -114,7 +114,7 @@ One of the following configurations __MUST__ be made
  
 The tool will compare both HTML files for images only. The images __MUST__ be __base64__-encoded, and encapsulated in an HTML img tag, as generated automatically when rendering an .Rmd file into HTML format. 
 
-If both HTML papers contain an equal number of images, the checker writes a new HTML files containing the results of the comparison between all images in the input files, as created by [`blink-diff`](http://yahoo.github.io/blink-diff/), as well as, currently, the text of the first (original) paper. 
+If both HTML papers contain an equal number of images, the checker may write a new HTML file, containing the results of the comparison between all images in the input files, as created by [`blink-diff`](http://yahoo.github.io/blink-diff/), as well as highlighted text differences between both Papers. 
 
 Further parameters (in order): 
   - `saveFilesOutputPath: String` : third path for file output; necessary if either parameter `saveDiffHTML` or `saveMetadataJSON` is set, otherwise ignored
@@ -171,7 +171,7 @@ If execution is successful, the Promise will be __resolved__, containing a check
     	"display": {
     	    "diff": String // contains the entire result HTML, 
     	                    // with images swapped for diff-Images where differences were found;
-    	                    // currently contains text from 'Original' paper
+    	                    // contains merged text of both papers, with differences highlighted
         },
         "comparisonSet": [String],  // contains relative paths of all files with file type ending 
                                      // matching the specified in config file using the `checkFileTypes` attribute              
