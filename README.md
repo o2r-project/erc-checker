@@ -81,6 +81,8 @@ The checker is executed with a `config` object (`JSON`).
     	outFileName: String,                // choose a name for diff-HTML (defaults to "diffHTML.html")
     	saveMetadataJSON: Boolean,          // default: false
     	createParentDirectories: Boolean, 	// default: false --- IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
+    	comparisonSetBaseDir: String,       // base directory of repository to be checked, used to create a file list (glob)
+        checkFileTypes: [String],			// case insensitive list of file endings to be included; currently defaults to ["htm", "html"]
     	quiet: Boolean                      // default: false
     };
 
@@ -120,6 +122,8 @@ Further parameters (in order):
   - `outFileName: String` : choose a custom name for diffHTML (default is "diffHTML.html")
   - `saveMetadataJSON: Boolean` : save metadata.json to output directory
   - `createParentDirectories: Boolean` : create parent directories for output (if false and directories of path not yet created, output will not be created) 
+  - `comparisonSetBaseDir: String`: path to the base directory of the repository to be checked, may be absolute or relative
+  - `checkFileTypes: [String]`:	case insensitive list of file endings to be included in the comparison set for the check
   - `quiet: Boolean` : silence loggers
 
 #### Errors
@@ -168,7 +172,9 @@ If execution is successful, the Promise will be __resolved__, containing a check
     	    "diff": String // contains the entire result HTML, 
     	                    // with images swapped for diff-Images where differences were found;
     	                    // currently contains text from 'Original' paper
-        },             
+        },
+        "comparisonSet": [String],  // contains relative paths of all files with file type ending 
+                                     // matching the specified in config file using the `checkFileTypes` attribute              
         "start": Number,
         "end": Number,
         "errors": [] 
@@ -207,6 +213,8 @@ It can be used as follows:
         outFileName: "customNameForDiff.html",
         saveMetadataJSON: true,
         createParentDirectories: true,
+        comparisonSetBaseDir: "/path/of/files/toBeChecked",
+        checkFileTypes: ["htm", "html"],				// case insensitive list of file endings to be included
         quiet: false
     }
     

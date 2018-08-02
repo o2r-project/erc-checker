@@ -31,6 +31,15 @@ const colors = require('colors');
 const Promise = require('promise');
 
 const sizeOf = require('image-size');
+
+var textualDiff = require('node-htmldiff');
+var textDiffCSS = "<body>\n<style type=\"text/css\">\n" +
+    "\n" +
+    "ins { background-color: #aaffaa; text-decoration: none }\n" +
+    "del { background-color: #ff8888; text-decoration: none }\n" +
+    "\n" +
+    "</style>";
+
 var sharp = require('sharp');
 var BlinkDiff = require('blink-diff');
 var toBase64 = require('base64-arraybuffer');
@@ -60,7 +69,6 @@ var metadata = {
  * @param checkStart				timestamp of check start (UTC time)
  */
 function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath, quiet, checkStart) {
-
 	if (quiet) {
 		debugGeneral.enabled = debugSlice.enabled = debugCompare.enabled = debugReassemble.enabled = debugERROR.enabled = false;
 	}
@@ -86,12 +94,17 @@ function stringifyHTMLandCompare(originalHTMLPaperPath, reproducedHTMLPaperPath,
 
 	// Main process
 	return Promise
-		.all([readFileSync(originalHTMLPaperPath), readFileSync(reproducedHTMLPaperPath)])
+		.all([readFileSync(originalHTMLPaperPath, 'utf8'), readFileSync(reproducedHTMLPaperPath, 'utf8')])
 		.then(
 			// resolve  <=>  files were read successfully
 			// resolve parameter is a 2-D Array, holding both input files' contents as utf-8 Strings
 			function (readFilesArray) {
 
+				debugGeneral("Comparing HTML tags usually containing Text and including differences.");
+				// check html for differences in text tags, and specifically exclude tags listed in 5th parameter
+				readFilesArray[0] = textualDiff(readFilesArray[1], readFilesArray[0], 'erc-checker', null, "iframe,object,math,svg,script,video,head,style,img");
+				// add CSS to `<body>` to highlight differences an a more pleasant and obvious way.
+                readFilesArray[0] = readFilesArray[0].replace("<body>", textDiffCSS);
 				debugSlice("Extracting text chunks from original HTML String and saving them for later.");
 				textChunks = readFilesArray[0].split(regexSplitCuttingImages);
 
