@@ -24,7 +24,7 @@ const debug = require('debug')('tester');
 const colors = require('colors');
 
 var rewire = require('rewire'); // for testing unexported functions, see https://stackoverflow.com/questions/14874208/how-to-access-and-test-an-internal-non-exports-function-in-a-node-js-module
-var checkerCore = rewire('../checker.js');
+var checkerCore = rewire('../lib/checker.js');
 
 runBlinkDiff = checkerCore.__get__('runBlinkDiff');
 sliceImagesOutOfHTMLStringsAndCreateBuffers = checkerCore.__get__('sliceImagesOutOfHTMLStringsAndCreateBuffers');

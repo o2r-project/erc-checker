@@ -19,7 +19,7 @@
 if(process.env.DEBUG === undefined) process.env['DEBUG']='index:requestHandling,index:ERROR,checker:ERROR';
 
 
-var checker = require('./checker');
+var checker = require('./lib/checker');
 
 var debug = require('debug')('index:requestHandling');
 var debugERROR = require('debug')('index:ERROR');
@@ -30,12 +30,15 @@ const os = require('os');
 const path = require('path');
 const program = require('commander');
 
-function Metadata (dateStart, error) {
+const globWithXignore = require('./lib/glob-with-X_ignore').globWithXignore;
+
+function Metadata (dateStart, comparisonSet, error) {
 	this.checkSuccessful = false;
 	this.start = dateStart;
 	this.end = Date.now();
-	this.images = null;
-	this.display = { diff: null };
+	this.comparisonSet = comparisonSet;
+	this.images = [];
+	this.display = {};
 	this.errors = new Array (0);
 	if (error != null && error != undefined) {
 		this.errors.push(error.toString());
@@ -183,8 +186,11 @@ program
  *		pathToReproducedHTML: String,
  *		saveFilesOutputPath: String,		// necessary if diff-HTML or check metadata should be saved
  *		saveDiffHTML: Boolean,
+ *		outFileName: String					// default: "diffHTML.html"
  *		saveMetadataJSON: Boolean,
  *		createParentDirectories: Boolean, 	// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
+ *		comparisonSetBaseDir: String
+ *		checkFileTypes: Array				// case insensitive list of file endings to be included in Check File List
  *		quiet: Boolean
  * 	};
  */
@@ -199,7 +205,10 @@ function ercChecker (config) {
 		outputPath = config.saveFilesOutputPath,
 		saveDiffHTML = config.saveDiffHTML,
 		saveMetadataJSON = config.saveMetadataJSON,
+		outFileName = config.outFileName || "diffHTML.html",
 		createParentDirectories = config.createParentDirectories,
+		checkFileTypes = config.checkFileTypes || ['html','htm'],
+		comparisonSetBaseDir = config.comparisonSetBaseDir,
 		quiet = config.quiet;
 
 
@@ -207,14 +216,36 @@ function ercChecker (config) {
 		debug.enabled = debugERROR.enabled = false;
 	}
 
+	var comparisonSet = [];
+
 	return new Promise( function (resolve, reject) {
 
 		var checkStart = Date.now(),
 			pathOriginalHTML, pathReproducedHTML;
 
+
+        async function getGlob () {
+            try {
+
+                // get comparison set as glob
+                // exclude files and directories listed in `.ercignore`
+                // exclude files with ending listed in `checkFileTypes`
+                comparisonSet = await globWithXignore({
+                    checkFileTypes: checkFileTypes,
+                    comparisonSetBaseDir: comparisonSetBaseDir,
+                    ignoreFile: '.ercignore',
+					findRoot: false
+                });
+            }
+            catch (reason) {
+				reject(new Metadata(checkStart, comparisonSet, new Error("Failed to get Glob with .ercignore : ", reason)))
+            }
+        }
+		getGlob();
+
 		if ((saveDiffHTML || saveMetadataJSON) && (outputPath == null || outputPath == undefined)) {
 			debugERROR("Cannot save files without output path.".red);
-			reject(new Metadata(checkStart, new Error("Requested saving check files without specifying an output path.")));
+			reject(new Metadata(checkStart, comparisonSet, new Error("Requested saving check files without specifying an output path.")));
 		}
 
 		// if output data requested, try define the output path, and if requested, create parent directories
@@ -235,7 +266,7 @@ function ercChecker (config) {
 					let pathString = delimiter;
 
 					try {
-						dirs.map(function (current, index) {
+						dirs.forEach(function (current, index) {
 							pathString = path.join(pathString, current);
 							let err;
 							try {
@@ -249,14 +280,14 @@ function ercChecker (config) {
 					}
 					catch(e) {
 						debugERROR(e);
-						reject( new Metadata(checkStart, "Error creating output directory: "+e))
+						reject( new Metadata(checkStart, comparisonSet, "Error creating output directory: "+e))
 					}
 
 					fileOutputPath = fs.realpathSync(pathString);
 				}
 				else {
 					debugERROR("Absolute output path could not be determined".red, e);
-					reject( new Metadata(checkStart, "Absolute output path could not be determined. " + e))
+					reject( new Metadata(checkStart, comparisonSet, "Absolute output path could not be determined. " + e))
 				}
 			}
 		}
@@ -266,14 +297,14 @@ function ercChecker (config) {
 		 */
 		if (directoryMode) {
 			if (pathToMainDirectory == null || pathToMainDirectory == undefined) {
-				prematureRejection(new Metadata(checkStart, "ERROR: directory mode chosen, but no directory specified."));
+				prematureRejection(new Metadata(checkStart, comparisonSet, "ERROR: directory mode chosen, but no directory specified."));
 			}
 			try {
 				fs.accessSync(pathToMainDirectory);
 			}
 			catch (e) {
 				debugERROR("Error reading input directory: " + e);
-				prematureRejection(new Metadata(checkStart, e));
+				prematureRejection(new Metadata(checkStart, comparisonSet, e));
 			}
 			let absoluteMainDirPath = fs.realpathSync(pathToMainDirectory);
 			let absoluteOriginalDirPath = path.join(absoluteMainDirPath, "original");
@@ -284,11 +315,11 @@ function ercChecker (config) {
 				reproducedDirContent = fs.readdirSync(absoluteReproducedDirPath);
 				if (originalDirContent.length == 0) {
 					debugERROR("Error: no paper found in directory " + absoluteOriginalDirPath);
-					prematureRejection(new Metadata(checkStart, "Error: no paper found in directory " + absoluteOriginalDirPath));
+					prematureRejection(new Metadata(checkStart, comparisonSet, "Error: no paper found in directory " + absoluteOriginalDirPath));
 				}
 				if (reproducedDirContent.length == 0) {
 					debugERROR("Error: no paper found in directory " + absoluteReproducedDirPath);
-					prematureRejection(new Metadata(checkStart, "Error: no paper found in directory " + absoluteReproducedDirPath));
+					prematureRejection(new Metadata(checkStart, comparisonSet, "Error: no paper found in directory " + absoluteReproducedDirPath));
 				}
 			}
 			catch (e) {
@@ -301,7 +332,7 @@ function ercChecker (config) {
 					break;
 				}
 				if (file == originalDirContent.length-1) {
-					prematureRejection(new Metadata(checkStart, "Error: provided original paper direcory does not contain an .html file."))
+					prematureRejection(new Metadata(checkStart, comparisonSet, "Error: provided original paper directory does not contain an .html file."))
 				}
 			}
 			for (let file in reproducedDirContent) {
@@ -310,7 +341,7 @@ function ercChecker (config) {
 					break;
 				}
 				if (file == reproducedDirContent.length-1) {
-					prematureRejection(new Metadata(checkStart, "Error: provided reproduced paper direcory does not contain an .html file."))
+					prematureRejection(new Metadata(checkStart, comparisonSet, "Error: provided reproduced paper directory does not contain an .html file."))
 				}
 			}
 		}
@@ -333,7 +364,7 @@ function ercChecker (config) {
 			catch (e) {
 				debugERROR("The path to your Original HTML file is invalid. Please check if the file exists.".red, e.message);
 
-				return prematureRejection(new Metadata(checkStart, e));
+				return prematureRejection(new Metadata(checkStart, comparisonSet, e));
 			}
 			try {
 				if (!path.isAbsolute(pathReproducedHTML)) {
@@ -346,7 +377,7 @@ function ercChecker (config) {
 			catch (e) {
 				debugERROR("The path to your Reproduced HTML file is invalid. Please check if the file exists.".red, e.message);
 
-				prematureRejection(new Metadata(checkStart, e));
+				prematureRejection(new Metadata(checkStart, comparisonSet, e));
 			}
 
 		}
@@ -365,12 +396,12 @@ function ercChecker (config) {
 		catch (e) {
 			debugERROR("Failed to read HTML file.".red);
 			debugERROR(e);
-			prematureRejection(new Metadata(checkStart, "wrong path here: "+e));
+			prematureRejection(new Metadata(checkStart, comparisonSet, "wrong path here: "+e));
 		}
 
 		if (originalHTMLBuffer.equals(reproducedHTMLBuffer)) {
 			debug('The compared files, ' + pathOriginalHTML + ' and ' + pathReproducedHTML + ' do not differ.'.green + '\n' + 'Congrats!'.green);
-			let resolveMetadataEqualPapers = new Metadata(checkStart);
+			let resolveMetadataEqualPapers = new Metadata(checkStart, comparisonSet);
 			resolveMetadataEqualPapers.checkSuccessful = true;
 			resolve(resolveMetadataEqualPapers);
 		}
@@ -385,6 +416,7 @@ function ercChecker (config) {
 						let resultMetadata = result;
 
 						resultMetadata.end = Date.now();
+						resultMetadata.comparisonSet = comparisonSet;
 
 						if (!process.env.DEV && resultMetadata.images.length != 0) {
 							try {
@@ -399,12 +431,12 @@ function ercChecker (config) {
 						if (saveDiffHTML || saveMetadataJSON) {
 							try {
 								if (saveMetadataJSON) {
-									fs.writeFileSync(path.join(fileOutputPath, 'metadata.json'), JSON.stringify(resultMetadata));
+									fs.writeFileSync(path.join(fileOutputPath, 'metadata.json'), JSON.stringify(resultMetadata, null, 4));
 									debug("Metadata JSON file written successfully".green);
 								}
 
 								if (saveDiffHTML) {
-									fs.writeFileSync(path.join(fileOutputPath, "diffHTML.html"), resultMetadata.display.diff);
+									fs.writeFileSync(path.join(fileOutputPath, outFileName), resultMetadata.display.diff);
 									debug("Diff-HTML file written successfully".green);
 								}							}
 							catch (e) {
@@ -422,7 +454,7 @@ function ercChecker (config) {
 						let tmpPath = rejectData[1];
 						debugERROR("This may be the one with unequal number of images.".red);
 						debugERROR(reason);
-						let rejectMetadata = new Metadata(checkStart, reason);
+						let rejectMetadata = new Metadata(checkStart, comparisonSet, reason);
 
 						if (!process.env.DEV && tmpPath) {
 							try {
@@ -436,7 +468,7 @@ function ercChecker (config) {
 						}
 						if (saveMetadataJSON) {
 							try {
-								fs.writeFileSync(path.join(fileOutputPath, 'metadata.json'), JSON.stringify(rejectMetadata));							}
+								fs.writeFileSync(path.join(fileOutputPath, 'metadata.json'), JSON.stringify(rejectMetadata, null, 4));							}
 							catch (e) {
 								rejectMetadata.errors.push(e);
 								debugERROR("Failure writing metadata.json file:", e);
@@ -456,7 +488,7 @@ function ercChecker (config) {
 
 var writeOutputFiles = function (data, outputPath, saveDiffHTML, saveMetadataJSON) {
 	if (saveMetadataJSON) {
-		fs.writeFileSync(path.join(outputPath, 'metadata.json'), JSON.stringify(data));
+		fs.writeFileSync(path.join(outputPath, 'metadata.json'), JSON.stringify(data, null, 4));
 	}
 
 	if (saveDiffHTML) {

@@ -1,6 +1,6 @@
 # erc-checker
 
-![Travis CI](https://travis-ci.org/Timmimim/erc-validator.svg?branch=master)
+![Travis CI](https://travis-ci.org/Timmimim/erc-checker.svg?branch=master)
 
  - [NodeJS module usage](#nodejs-module-usage)
    - [Installation](#installation)
@@ -78,8 +78,11 @@ The checker is executed with a `config` object (`JSON`).
     	pathToReproducedHTML: String,
     	saveFilesOutputPath: String,		// necessary if diff-HTML or check metadata should be saved
     	saveDiffHTML: Boolean,              // default: false
+    	outFileName: String,                // choose a name for diff-HTML (defaults to "diffHTML.html")
     	saveMetadataJSON: Boolean,          // default: false
     	createParentDirectories: Boolean, 	// default: false --- IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
+    	comparisonSetBaseDir: String,       // base directory of repository to be checked, used to create a file list (glob)
+        checkFileTypes: [String],			// case insensitive list of file endings to be included; currently defaults to ["htm", "html"]
     	quiet: Boolean                      // default: false
     };
 
@@ -111,13 +114,16 @@ One of the following configurations __MUST__ be made
  
 The tool will compare both HTML files for images only. The images __MUST__ be __base64__-encoded, and encapsulated in an HTML img tag, as generated automatically when rendering an .Rmd file into HTML format. 
 
-If both HTML papers contain an equal number of images, the checker writes a new HTML files containing the results of the comparison between all images in the input files, as created by [`blink-diff`](http://yahoo.github.io/blink-diff/), as well as, currently, the text of the first (original) paper. 
+If both HTML papers contain an equal number of images, the checker may write a new HTML file, containing the results of the comparison between all images in the input files, as created by [`blink-diff`](http://yahoo.github.io/blink-diff/), as well as highlighted text differences between both Papers. 
 
 Further parameters (in order): 
   - `saveFilesOutputPath: String` : third path for file output; necessary if either parameter `saveDiffHTML` or `saveMetadataJSON` is set, otherwise ignored
-  - `saveDiffHTML: Boolean` : save diffHTML.html file to output directory
+  - `saveDiffHTML: Boolean` : save diffHTML file to output directory
+  - `outFileName: String` : choose a custom name for diffHTML (default is "diffHTML.html")
   - `saveMetadataJSON: Boolean` : save metadata.json to output directory
   - `createParentDirectories: Boolean` : create parent directories for output (if false and directories of path not yet created, output will not be created) 
+  - `comparisonSetBaseDir: String`: path to the base directory of the repository to be checked, may be absolute or relative
+  - `checkFileTypes: [String]`:	case insensitive list of file endings to be included in the comparison set for the check
   - `quiet: Boolean` : silence loggers
 
 #### Errors
@@ -165,8 +171,10 @@ If execution is successful, the Promise will be __resolved__, containing a check
     	"display": {
     	    "diff": String // contains the entire result HTML, 
     	                    // with images swapped for diff-Images where differences were found;
-    	                    // currently contains text from 'Original' paper
-        },             
+    	                    // contains merged text of both papers, with differences highlighted
+        },
+        "comparisonSet": [String],  // contains relative paths of all files with file type ending 
+                                     // matching the specified in config file using the `checkFileTypes` attribute              
         "start": Number,
         "end": Number,
         "errors": [] 
@@ -202,8 +210,11 @@ It can be used as follows:
         pathToReproducedHTML: "path/to/fileB.html",
         saveFilesOutputPath: "/optional/output/path/",
         saveDiffHTML: true,
+        outFileName: "customNameForDiff.html",
         saveMetadataJSON: true,
         createParentDirectories: true,
+        comparisonSetBaseDir: "/path/of/files/toBeChecked",
+        checkFileTypes: ["htm", "html"],				// case insensitive list of file endings to be included
         quiet: false
     }
     
@@ -221,7 +232,7 @@ It can be used as follows:
         );
         
     // in this example, independent of result handling, there will be files for resulting HTML and Metadata JSON saved to specified output location
-    // file names:  diffHTML.html , metadata.json 
+    // file names:  customNameForDiff.html , metadata.json 
 ```
 
 ```javascript

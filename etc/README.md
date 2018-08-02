@@ -44,7 +44,7 @@ The tool will create, _in the current working directory from which it is called_
 * **_original\_papers_**:   The extracted Paper / target file will be saved into this directory,
 	              within a directory named after the passed ERC name / id.
 		      
-
+		     
 ## License
 o2r checker is licensed under Apache License, Version 2.0, see file LICENSE.
 

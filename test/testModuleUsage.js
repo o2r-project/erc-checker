@@ -30,6 +30,7 @@ var checkConfig = {
 	pathToReproducedHTML: "",
 	saveFilesOutputPath: "",		// necessary if diff-HTML or check metadata should be saved
 	saveDiffHTML: false,
+	comparisonSetBaseDir: "./",
 	ercID: "",
 	saveMetadataJSON: false,
 	createParentDirectories: false, 	// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
@@ -37,12 +38,14 @@ var checkConfig = {
 };
 
 describe('Using ERC-Checker as node-module', function () {
-	let testStringA = "test/TestPapers_1/testPaper_1_shortened_a.html",
+	var testStringA = "test/TestPapers_1/testPaper_1_shortened_a.html",
 		testStringB = "test/TestPapers_1/testPaper_1_shortened_b.html",
 		testStringC = "test/TestPapers_2/paper_9_img_A.html",
 		testStringD = "test/TestPapers_2/paper_9_img_B.html",
 		testStringE = "test/TestPapers_2/paper_9_img_C.html",
 		testStringF = "./path/to/nothing",
+		testStringText1 = "test/TestPapers_TextDiff/textDiffTest_A.html",
+    	testStringText2 = "test/TestPapers_TextDiff/textDiffTest_B.html",
 		testStringDirMode = "./test/dirModeTest";
 
 	it('should return a Promise', function () {
@@ -95,29 +98,40 @@ describe('Using ERC-Checker as node-module', function () {
 				});
 		});
 
-		it('is called on papers containing a differing number of images', function () {
+		it('is called on papers containing a differing number of images', function (done) {
 			let config = checkConfig;
 			config.pathToOriginalHTML = testStringA;
 			config.pathToReproducedHTML = testStringC;
 			checker(config)
 				.then(function (resolve) {
-						expect(resolve).to.equal(null)
 					},
 					function (rejectMetadata) {
 						expect(rejectMetadata.errors[0]).to.not.equal(null);
-					});
+					})
+				.then(done, done);
 
-			config.pathToOriginalHTML = testStringC;
-			config.pathToReproducedHTML = testStringA;
-			checker(testStringC, testStringA)
-				.then(function (resolve) {
-						expect(resolve).to.equal(null)
-					},
-					function (rejectMetadata) {
-						expect(rejectMetadata.errors[0]).to.not.equal(null);
-					});
 		})
 	});
+
+    describe.only('Returned Promise should be *resolved* and Metadata in reject statement should NOT contain Error message, when ERC-Checker', function () {
+    	it("is called on two HTML files which contain text differences.", function (done) {
+            this.timeout(0);
+
+            let config = checkConfig;
+            config.pathToOriginalHTML = testStringText1;
+            config.pathToReproducedHTML = testStringText2;
+
+            checker(config)
+                .then(
+                    function (metadata) {
+                    	console.log(metadata.numTextDifferrences);
+                        assert.equal(0, metadata.errors.length, "No errors should have been produced.");
+                        assert.isAbove(metadata.numTextDifferrences, 0, "The number of textual differences should be larger than zero.");
+                    }
+                )
+                .then(done);
+		});
+    });
 
 	describe('Returned Promise object should be *resolved* and include a Metadata object, which ', function () {
 
@@ -268,12 +282,13 @@ describe('Using ERC-Checker as node-module', function () {
 		describe('for a check on two papers containing equal amount of, but differing images, and "createParentDirectories" flag set', function () {
 
 			it('should successfully write a "metadata.json" file to the directory specified as Absolute Path', function (done) {
+				this.timeout(0);
 				let configSaveMeta = checkConfig;
 				configSaveMeta.pathToOriginalHTML = testStringA;
 				configSaveMeta.pathToReproducedHTML = testStringB;
 				configSaveMeta.saveFilesOutputPath = "/tmp/erc-checker/test-saveMetadata";
 				configSaveMeta.saveMetadataJSON = true;
-				configSaveMeta.saveDiffHTML = false;
+				configSaveMeta.saveDiffHTML = true;
 				configSaveMeta.createParentDirectories = true;
 
 				checker(configSaveMeta)
@@ -300,7 +315,6 @@ describe('Using ERC-Checker as node-module', function () {
 						assert.deepEqual(resMeta, savedJSONFileContent, "Saved metadata.json file content varries from original check result metadata:");
 
 						assert.isFalse(errorReadingOutputFile, "Error reading output file: "+ errorReadingOutputFile);
-
 					})
 					.then( function (success) {
 						done();
@@ -308,11 +322,98 @@ describe('Using ERC-Checker as node-module', function () {
 						done(new Error(JSON.stringify(reason)));
 					})
 			})
-		})
-	});
+        })
+    });
 
-	describe("Running the erc-checker in directory mode for a paper with 2 images each, one of which differing" , function () {
+    describe('With "saveDiffHTML" flag set to "true", and "saveFilesOutputPath" given in the config object', function () {
+
+        describe('for a check on two papers containing equal amount of, but differing images, and "createParentDirectories" flag set', function () {
+
+            it('should successfully write a "diffHTML.html" file to the directory specified as Absolute Path', function (done) {
+                let configSaveMeta = checkConfig;
+                configSaveMeta.pathToOriginalHTML = testStringA;
+                configSaveMeta.pathToReproducedHTML = testStringB;
+                configSaveMeta.saveFilesOutputPath = "/tmp/erc-checker/test-saveHTML";
+                configSaveMeta.saveMetadataJSON = false;
+                configSaveMeta.saveDiffHTML = true;
+                configSaveMeta.createParentDirectories = true;
+
+                checker(configSaveMeta)
+                    .then(function (resultMetadata) {
+                        let outputFileCreated = false;
+                        let errorReadingOutputFile = false;
+                        let htmlOutpath = path.join(configSaveMeta.saveFilesOutputPath, "diffHTML.html");
+
+                        try {
+                            fs.accessSync(htmlOutpath);
+                            outputFileCreated = true;
+                        }
+                        catch (e) {
+                            errorReadingOutputFile = e;
+                        }
+
+                        assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: " + resultMetadata.errors);
+
+                        assert.isTrue(outputFileCreated, "Error: Output file was not created or could not be read: " + errorReadingOutputFile);
+
+                        assert.isFalse(errorReadingOutputFile, "Error reading output file: " + errorReadingOutputFile);
+
+                    })
+                    .then(function (success) {
+                        done();
+                    }, function (reason) {
+                        done(new Error(JSON.stringify(reason)));
+                    })
+            })
+        });
+
+        describe('for a check on two papers containing equal amount of, but differing images, a output file name passed in the config object, and "createParentDirectories" flag set', function () {
+            it('should successfully write an HTML file with the specified name to the directory specified as Absolute Path', function (done) {
+                let configSaveMeta = checkConfig;
+                configSaveMeta.pathToOriginalHTML = testStringA;
+                configSaveMeta.pathToReproducedHTML = testStringB;
+                configSaveMeta.saveFilesOutputPath = "/tmp/erc-checker/test-saveHTML";
+                configSaveMeta.saveMetadataJSON = false;
+                configSaveMeta.saveDiffHTML = true;
+                configSaveMeta.outFileName = "specifiedName.html";
+                configSaveMeta.createParentDirectories = true;
+
+                checker(configSaveMeta)
+                    .then( function (resultMetadata) {
+                        let outputFileCreated = false;
+                        let errorReadingOutputFile = false;
+                        let htmlOutpath = path.join(configSaveMeta.saveFilesOutputPath, "specifiedName.html");
+                        let resMeta = resultMetadata;
+
+                        try {
+                            fs.accessSync(htmlOutpath);
+                            outputFileCreated = true;
+                        }
+                        catch (e) {
+                            errorReadingOutputFile  = e;
+                        }
+
+                        assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: "+ resultMetadata.errors);
+
+                        assert.isTrue(outputFileCreated, "Error: Output file was not created or could not be read: " + errorReadingOutputFile);
+
+                        assert.isFalse(errorReadingOutputFile, "Error reading output file: "+ errorReadingOutputFile);
+
+                    })
+                    .then( function (success) {
+                        done();
+                    }, function (reason) {
+                        done(new Error(JSON.stringify(reason)));
+                    })
+            })
+        })
+    });
+
+
+    describe("Running the erc-checker in directory mode for a paper with 2 images each, one of which differing" , function () {
 		it("should work just as well as in file mode (see above)", function (done) {
+			this.timeout(0);
+
 			let config = checkConfig;
 			config.directoryMode = true;
 			config.pathToMainDirectory = testStringDirMode;
@@ -331,7 +432,7 @@ describe('Using ERC-Checker as node-module', function () {
 				}, function (reason) {
 					return Promise.reject(reason);
 				})
-				.then(function () {
+				.then(function (success) {
 					done();
 				},
 				function (reason) {
@@ -340,11 +441,158 @@ describe('Using ERC-Checker as node-module', function () {
 		})
 	});
 
-	describe("After successful Test execution", function () {
+    describe("Running the erc-checker in an environment with a `.ercignore` file and/or with acceptable file endings specified in `config` object", function () {
+        describe("the checker should create a ComparisonSet list of files to be checked, which", function () {
+
+            it("should only contain files, which have the required file ending.", function (done) {
+            	this.timeout(0);
+
+                let configTestIgnore = checkConfig;
+                configTestIgnore.pathToOriginalHTML = testStringA;
+                configTestIgnore.pathToReproducedHTML = testStringB;
+                configTestIgnore.comparisonSetBaseDir = "./test/test_ercignore";
+                configTestIgnore.checkFileTypes = ['html','htm','mp3'];
+
+                checker(configTestIgnore)
+                    .then(function (resultMetadata) {
+
+                        let allFilesCorrect = true;
+                        resultMetadata.comparisonSet.forEach(filePath => {
+                        	let endingHTM = (filePath.substr(filePath.length-4, 4)) == ".htm";
+                        	let endingHTML = (filePath.substr(filePath.length-5, 5)) == ".html";
+                        	let endingMP3 = (filePath.substr(filePath.length-4, 4)) == ".mp3";
+
+                        	if (!endingHTM && !endingHTML && !endingMP3) {
+                        		allFilesCorrect = false;
+							}
+						});
+                        assert.strictEqual(allFilesCorrect, true, "ComparisonSet contains files which do not match the required file endings: \n"+ resultMetadata.comparisonSet);
+
+                        assert.strictEqual(resultMetadata.comparisonSet.length, 7, "ComparisonSet should include 7 file paths, but it contained "+ resultMetadata.comparisonSet.length);
+
+                        assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: "+ resultMetadata.errors);
+
+                    }, function (reason) {
+						return Promise.reject(reason);
+                    })
+                    .then( function (success) {
+                        done();
+                    }, function (reason) {
+                        done(new Error(JSON.stringify(reason)));
+                    })
+            });
+
+            it("should by default only contain files having a \".htm\" or \".html\" ending.", function (done) {
+                let configTestIgnore = checkConfig;
+                configTestIgnore.pathToOriginalHTML = testStringA;
+                configTestIgnore.pathToReproducedHTML = testStringB;
+                configTestIgnore.comparisonSetBaseDir = "./test/test_ercignore";
+                delete configTestIgnore.checkFileTypes;
+
+                checker(configTestIgnore)
+                    .then( function (resultMetadata) {
+
+                        let allFilesCorrect = true;
+                        resultMetadata.comparisonSet.forEach(filePath => {
+                            let endingHTM = (filePath.substr(filePath.length-4, 4)) == ".htm";
+                            let endingHTML = (filePath.substr(filePath.length-5, 5)) == ".html";
+
+                            if (!endingHTM && !endingHTML) {
+                                allFilesCorrect = false;
+                            }
+                        });
+                        assert.strictEqual(allFilesCorrect, true, "ComparisonSet contains files which do not match the required file endings: \n"+ resultMetadata.comparisonSet);
+
+                        assert.strictEqual(resultMetadata.comparisonSet.length, 6, "ComparisonSet should include 6 file paths, but it contained "+ resultMetadata.comparisonSet.length);
+
+                        assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: "+ resultMetadata.errors);
+                    })
+                    .then( function (success) {
+                        done();
+                    }, function (reason) {
+                        done(new Error(JSON.stringify(reason)));
+                    })
+            });
+
+            it("should only contain files which are not ignored by `.ercignore`", function (done) {
+                let configTestIgnore = checkConfig;
+                configTestIgnore.pathToOriginalHTML = testStringA;
+                configTestIgnore.pathToReproducedHTML = testStringB;
+                configTestIgnore.comparisonSetBaseDir = "./test/test_ercignore";
+                configTestIgnore.checkFileTypes = [".*"];
+
+                checker(configTestIgnore)
+                    .then(function (resultMetadata) {
+
+                        let allFilesCorrect = true;
+                        resultMetadata.comparisonSet.forEach(filePath => {
+                            let containsFilteredDirectory = (filePath.includes("false_positive_dir/"));
+                            let endingPNG = (filePath.substr(filePath.length-4, 4)) == ".png";
+
+                            if (containsFilteredDirectory || endingPNG) {
+                                allFilesCorrect = false;
+                            }
+                        });
+                        assert.strictEqual(allFilesCorrect, true, "ComparisonSet contains files which do not match the required file endings: \n"+ resultMetadata.comparisonSet);
+
+                        assert.strictEqual(resultMetadata.comparisonSet.length, 8, "ComparisonSet should include 8 file paths, but it contained "+ resultMetadata.comparisonSet.length);
+
+                        assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: "+ resultMetadata.errors);
+                    })
+                    .then( function (success) {
+                        done();
+                    }, function (reason) {
+                        done(new Error(JSON.stringify(reason)));
+                    })
+            });
+
+            it("should only contain files, which have the required file ending, and are not filtered by the `.ercignore` file.", function (done) {
+                let configTestIgnore = checkConfig;
+                configTestIgnore.pathToOriginalHTML = testStringA;
+                configTestIgnore.pathToReproducedHTML = testStringB;
+                configTestIgnore.comparisonSetBaseDir = "./test/test_ercignore";
+                configTestIgnore.checkFileTypes = ["html", "htm"];
+
+                checker(configTestIgnore)
+                    .then(function (resultMetadata) {
+                        let allFilesCorrect = true;
+                        resultMetadata.comparisonSet.forEach(filePath => {
+                            let containsFilteredDirectory = (filePath.includes("false_positive_dir/"));
+                            let endingPNG = (filePath.substr(filePath.length-4, 4)) == ".png";
+
+                            let endingHTM = (filePath.substr(filePath.length-4, 4)) == ".htm";
+                            let endingHTML = (filePath.substr(filePath.length-5, 5)) == ".html";
+
+                            if (containsFilteredDirectory || endingPNG) {
+                                allFilesCorrect = false;
+                            }
+                            if (!endingHTM && !endingHTML) {
+                            	allFilesCorrect = false;
+							}
+                        });
+                        assert.strictEqual(allFilesCorrect, true, "ComparisonSet contains files which do not match the required file endings: \n"+ resultMetadata.comparisonSet);
+
+                        assert.strictEqual(resultMetadata.comparisonSet.length, 6, "ComparisonSet should include 6 file paths, but it contained "+ resultMetadata.comparisonSet.length);
+
+                        assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: "+ resultMetadata.errors);
+                    })
+                    .then( function (success) {
+                        done();
+                    }, function (reason) {
+                        done(new Error(JSON.stringify(reason)));
+                    })
+            });
+        });
+    });
+
+    // describe("Running the erc-checker on ")
+
+	describe.skip("After successful Test execution", function () {
 		it("deletes temporary leftovers", function () {
 			let cleanUpWentWrong = false;
 			try {
 				deleteFolderRecursive("/tmp/erc-checker/test-saveMetadata");
+				deleteFolderRecursive("/tmp/erc-checker/test-saveHTML");
 			} catch (e) {
 				cleanUpWentWrong = e;
 			}
@@ -352,6 +600,7 @@ describe('Using ERC-Checker as node-module', function () {
 			assert.isFalse(cleanUpWentWrong, cleanUpWentWrong);
 
 			assert.isFalse(fs.existsSync("/tmp/erc-checker/test-saveMetadata"), "CleanUp went wrong, path still exists.");
+			assert.isFalse(fs.existsSync("/tmp/erc-checker/test-saveHTML"), "CleanUp went wrong, path still exists.");
 		});
 	});
 });
