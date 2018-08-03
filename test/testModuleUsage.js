@@ -113,7 +113,7 @@ describe('Using ERC-Checker as node-module', function () {
 		})
 	});
 
-    describe.only('Returned Promise should be *resolved* and Metadata in reject statement should NOT contain Error message, when ERC-Checker', function () {
+    describe('Returned Promise should be *resolved* and Metadata in reject statement should NOT contain Error message, when ERC-Checker', function () {
     	it("is called on two HTML files which contain text differences.", function (done) {
             this.timeout(0);
 
@@ -236,9 +236,7 @@ describe('Using ERC-Checker as node-module', function () {
 		});
 
 		describe('for a paper containing 9 images with only the first image differing', function () {
-			it('should contain no errors, and a parameter {"checkSuccessful" == false}, i.e. differences exist, plus an Array of image comparison results with a length 9, of which only the first entry describes differences', function (done)
-			 {
-				this.timeout(0);
+			it('should contain no errors, and a parameter {"checkSuccessful" == false}, i.e. differences exist, plus an Array of image comparison results with a length 9, of which only the first entry describes differences', function (done) {
 
 				 let config = checkConfig;
 				 config.pathToOriginalHTML = testStringD;
@@ -273,7 +271,7 @@ describe('Using ERC-Checker as node-module', function () {
 							done(reason);
 						}
 					);
-			});
+			}).timeout(10000);
 		});
 	});
 
@@ -282,7 +280,6 @@ describe('Using ERC-Checker as node-module', function () {
 		describe('for a check on two papers containing equal amount of, but differing images, and "createParentDirectories" flag set', function () {
 
 			it('should successfully write a "metadata.json" file to the directory specified as Absolute Path', function (done) {
-				this.timeout(0);
 				let configSaveMeta = checkConfig;
 				configSaveMeta.pathToOriginalHTML = testStringA;
 				configSaveMeta.pathToReproducedHTML = testStringB;
@@ -320,8 +317,8 @@ describe('Using ERC-Checker as node-module', function () {
 						done();
 					}, function (reason) {
 						done(new Error(JSON.stringify(reason)));
-					})
-			})
+					});
+			}).timeout(10000);
         })
     });
 
@@ -404,16 +401,14 @@ describe('Using ERC-Checker as node-module', function () {
                         done();
                     }, function (reason) {
                         done(new Error(JSON.stringify(reason)));
-                    })
-            })
+                    });
+            }).timeout(10000);
         })
     });
 
 
     describe("Running the erc-checker in directory mode for a paper with 2 images each, one of which differing" , function () {
 		it("should work just as well as in file mode (see above)", function (done) {
-			this.timeout(0);
-
 			let config = checkConfig;
 			config.directoryMode = true;
 			config.pathToMainDirectory = testStringDirMode;
@@ -437,16 +432,14 @@ describe('Using ERC-Checker as node-module', function () {
 				},
 				function (reason) {
 					done(new Error(JSON.stringify(reason)));
-				})
-		})
+				});
+		}).timeout(10000);
 	});
 
     describe("Running the erc-checker in an environment with a `.ercignore` file and/or with acceptable file endings specified in `config` object", function () {
         describe("the checker should create a ComparisonSet list of files to be checked, which", function () {
 
             it("should only contain files, which have the required file ending.", function (done) {
-            	this.timeout(0);
-
                 let configTestIgnore = checkConfig;
                 configTestIgnore.pathToOriginalHTML = testStringA;
                 configTestIgnore.pathToReproducedHTML = testStringB;
@@ -479,8 +472,8 @@ describe('Using ERC-Checker as node-module', function () {
                         done();
                     }, function (reason) {
                         done(new Error(JSON.stringify(reason)));
-                    })
-            });
+                    });
+            }).timeout(10000);
 
             it("should by default only contain files having a \".htm\" or \".html\" ending.", function (done) {
                 let configTestIgnore = checkConfig;
@@ -511,7 +504,7 @@ describe('Using ERC-Checker as node-module', function () {
                         done();
                     }, function (reason) {
                         done(new Error(JSON.stringify(reason)));
-                    })
+                    });
             });
 
             it("should only contain files which are not ignored by `.ercignore`", function (done) {
@@ -534,7 +527,7 @@ describe('Using ERC-Checker as node-module', function () {
                             }
                         });
                         assert.strictEqual(allFilesCorrect, true, "ComparisonSet contains files which do not match the required file endings: \n"+ resultMetadata.comparisonSet);
-
+						console.log(resultMetadata.comparisonSet);
                         assert.strictEqual(resultMetadata.comparisonSet.length, 8, "ComparisonSet should include 8 file paths, but it contained "+ resultMetadata.comparisonSet.length);
 
                         assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: "+ resultMetadata.errors);
@@ -543,7 +536,7 @@ describe('Using ERC-Checker as node-module', function () {
                         done();
                     }, function (reason) {
                         done(new Error(JSON.stringify(reason)));
-                    })
+                    });
             });
 
             it("should only contain files, which have the required file ending, and are not filtered by the `.ercignore` file.", function (done) {
@@ -580,7 +573,7 @@ describe('Using ERC-Checker as node-module', function () {
                         done();
                     }, function (reason) {
                         done(new Error(JSON.stringify(reason)));
-                    })
+                    });
             });
         });
     });
@@ -610,7 +603,7 @@ var deleteFolderRecursive = function(pathParam) {
 
 	fs.readdirSync(tmpDirPath).forEach(function(file, index){
 		let curPath = path.join(tmpDirPath, file);
-		if(fs.lstatSync(curPath).isDirectory()) { // recurse
+		if(fs.lstatSync(curPath).isDirectory()) { // recursive delete
 			deleteFolderRecursive(curPath);
 		} else { // delete file
 			fs.unlinkSync(curPath);
