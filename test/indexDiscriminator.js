@@ -16,7 +16,6 @@
  */
 
 const assert = require('chai').assert;
-const expect = require('chai').expect;
 const debug = require('debug')('tester');
 const colors = require('colors');
 
@@ -32,56 +31,58 @@ var checkConfig = {
 	ercID: "",
 	saveMetadataJSON: false,
 	createParentDirectories: false, 	// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
-	quiet: false
+	quiet: false,
+	comparisonSetBaseDir: "."
 };
 
 describe('Testing erc-checker', function () {
 
 	describe('Compare HTML function', function () {
 		it('called with two invalid paths should return metadata containing an Error', function () {
-
-			let config = checkConfig;
+			let config = Object.assign({}, checkConfig);
 			config.pathToOriginalHTML = "path/to/nothing.html";
 			config.pathToReproducedHTML = "path/to/more/nothing.html";
 
-			checker(config)
-				.then( function (resolve) {
-					expect(resolve).to.equal(undefined)
-				},
-				function (rejectMetadata) {
-					expect(rejectMetadata.errors[0]).to.not.equal(0);
-				})
+			return checker(config)
+				.then(function (resolve) {
+					assert.isUndefined(resolve);
+				}, function (rejectMetadata) {
+					assert.isNotEmpty(rejectMetadata.errors);
+					assert.include(JSON.stringify(rejectMetadata.errors), "wrong path here");
+					assert.include(JSON.stringify(rejectMetadata.errors), "no such file");
+					assert.include(JSON.stringify(rejectMetadata.errors), config.pathToOriginalHTML);
+				});
 		});
 
 		it('called with only one invalid path should return metadata containing an Error', function () {
+			let config = Object.assign({}, checkConfig);
+			config.comparisonSetBaseDir = ".";
+			config.pathToOriginalHTML = "test/TestPapers_1/testPaper_1_shortened_a.html";
+			config.pathToReproducedHTML = "path/to/nothing.html";
 
-			let config = checkConfig;
-			config.pathToOriginalHTML = "path/to/nothing.html";
-			config.pathToReproducedHTML = "test/TestPapers_1/testPaper_1_shortened_a.html";
-
-			checker(config)
-				.then(function(resolve) {
-					expect(resolve).to.equal(undefined);
-				},
-				function (rejectMetadata) {
-					expect(rejectMetadata.errors[0]).to.not.equal(0);
-				})
+			return checker(config)
+				.then(function (resolve) {
+					assert.isUndefined(resolve);
+				}, function (rejectMetadata) {
+					assert.isNotEmpty(rejectMetadata.errors);
+					assert.include(JSON.stringify(rejectMetadata.errors), "wrong path here");
+					assert.include(JSON.stringify(rejectMetadata.errors), config.pathToReproducedHTML);
+					assert.notInclude(JSON.stringify(rejectMetadata.errors), config.pathToOriginalHTML);
+				});
 		});
 
-		it('called with equal papers should return Promise state *resolved* with metadata containing no Errors, but also value 0 for differences', function (done) {
-
-			let config = checkConfig;
+		it('called with equal papers should return Promise state *resolved* with metadata containing no Errors, but also value 0 for differences', function () {
+			let config = Object.assign({}, checkConfig);
 			config.pathToOriginalHTML = "test/TestPapers_1/testPaper_1_shortened_a.html";
 			config.pathToReproducedHTML = "test/TestPapers_1/testPaper_1_shortened_a.html";
 
-			checker(config)
+			return checker(config)
 				.then(function (resolve) {
-						if ( resolve.checkSuccessful == true && resolve.errors[0] == null) {done()}
-						else { done(new Error ("Failed to handle equal papers")) }
-				},
-				function (reject) {
-					throw new Error (reject);
-				})
+					assert.isTrue(resolve.checkSuccessful);
+					assert.isEmpty(resolve.errors);
+				}, function (reject) {
+					assert.ifError(reject);
+				});
 		});
 	})
 });
