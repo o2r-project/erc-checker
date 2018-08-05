@@ -270,6 +270,14 @@ For debugging tests, use 'tester'.
 
 \* default when used as CLI
 
+## Publish a new release
+
+```bash
+# see npm version --help
+npm version {major,minor,bugfix}
+npm publish
+```
+
 ## License
 
 o2r checker is licensed under Apache License, Version 2.0, see file LICENSE.
