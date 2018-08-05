@@ -10,15 +10,6 @@
    - [Development](#development)
    - [Usage](#how-to-use-the-checker-module)
    - [Debug](#debug)
- 
- 
- - [Command Line Interface (WORK IN PROGRESS)](#command-line-interface-work-in-progress)
-   - [Installation](#installation)
-   - [Usage](#usage)
-   - [Options](#options)
-   - [Debug](#debug)
- 
- 
  - [Debug Loggers](#debug-loggers)
  - [License](#license)
 
@@ -26,14 +17,11 @@
 
 A JavaScript library and CLI tool for [ERC](https://github.com/o2r-project/erc-spec) metadata, execution, and result checking.  
 
- 
 The checker is part of the [o2r-project](http://www.o2r.info/). Its purpose is to verify the o2r-platform's reproduction automatism for scientific papers in HTML format. 
 
 The checker runs on [NodeJS](https://nodejs.org/en/). The tool implements a [NodeJS module](#node-module), which is a function returning a [JavaScript Promise](https://www.npmjs.com/package/promise). 
 
 It further implements a [command line interface](#command-line-interface) (WORK IN PROGRESS). 
-
-
 
 -------------------------------------------------
 
@@ -263,51 +251,6 @@ E.g.:
  ```
  
  Find available DEBUG loggers [below](#debug-loggers).
- 
--------------------------------------------------
-
-### Command Line Interface (WORK IN PROGRESS)
-
-#### Installation
-1. Navigate to the checker's base directory
-2. Run `npm install -g` (you will need to be root) to use the checker tool from CLI, or just run `npm install`
-
-#### Usage
-
-```bash
-erc-checker [options] <originalHTML> <reproducedHTML> [-o <output>]
-```
-
-```bash
-<originalHTML>		Relative or absolute location of the Original HTML file to be compared.
-<reproducedHTML>	Relative or absolute location of the Reproduced HTML file to be compared.
-```
-
-##### Options:
-
-```bash
--h, --help                  output usage information
-                               
--o, --output <outputPath>   desired output location and file name 
-    			            as String or standard path input.
-    			            Accepts absolute and relative paths alike.
-
--p, --parents               automatically create parent directories for output path
-                               
--q, --quiet                 quiet mode, silencing DEBUG logs entirely
-```
-
-##### Debug
-
-Enable debugging by setting an environment variable **DEBUG**.
-   
-Example:
-   
-```bash
-DEBUG=* erc-checker [option] <path_original> <path_reproduced> [-o <output>]
-```
-
-Find available DEBUG loggers [below](#debug-loggers).
 
 -------------------------------------------------
 
@@ -327,10 +270,18 @@ For debugging tests, use 'tester'.
 
 \* default when used as CLI
 
+## Publish a new release
+
+```bash
+# see npm version --help
+npm version {major,minor,bugfix}
+npm publish
+```
+
 ## License
 
 o2r checker is licensed under Apache License, Version 2.0, see file LICENSE.
 
-Copyright (C) 2017 - o2r project. 
+Copyright (C) 2018 - o2r project. 
 
 ![o2r](https://avatars3.githubusercontent.com/u/16774537?v=3&s=200)
