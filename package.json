@@ -30,9 +30,9 @@
     "erc-checker": "./index.js"
   },
   "bugs": {
-    "url": "https://github.com/Timmimim/erc-validator/issues"
+    "url": "https://github.com/o2r-project/erc-validator/issues"
   },
-  "homepage": "https://github.com/Timmimim/erc-validator#readme",
+  "homepage": "https://github.com/o2r-project/erc-validator#readme",
   "dependencies": {
     "base64-arraybuffer": "^0.1.5",
     "blink-diff": "^1.0.13",
