@@ -34,24 +34,24 @@
   },
   "homepage": "https://github.com/o2r-project/erc-validator#readme",
   "dependencies": {
-    "base64-arraybuffer": "^0.1.5",
+    "base64-arraybuffer": "^0.2.0",
     "blink-diff": "^1.0.13",
-    "colors": "^1.3.1",
-    "commander": "^2.16.0",
-    "debug": "^3.1.0",
-    "deglob": "git+https://git@github.com/o2r-project/deglob.git",
-    "image-size": "^0.6.3",
-    "leven": "^2.1.0",
+    "colors": "^1.4.0",
+    "commander": "^4.0.1",
+    "debug": "^4.1.1",
+    "deglob": "^4.0.1",
+    "image-size": "^0.8.3",
+    "leven": "^3.1.0",
     "levenshtein": "^1.0.5",
     "node-htmldiff": "^0.9.3",
-    "object-sizeof": "^1.2.0",
-    "promise": "^8.0.1",
+    "object-sizeof": "^1.5.2",
+    "promise": "^8.0.3",
     "rewire": "^4.0.1",
-    "sharp": "^0.20.5"
+    "sharp": "^0.23.3"
   },
   "devDependencies": {
-    "chai": "^4.1.2",
-    "mocha": "^5.2.0",
-    "tmp": "0.0.33"
+    "chai": "^4.2.0",
+    "mocha": "^6.2.2",
+    "tmp": "^0.1.0"
   }
 }

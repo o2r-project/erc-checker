@@ -1,0 +1,9 @@
+image: Ubuntu
+
+install:
+- npm install
+
+test_script:
+- DEBUG=* npm test
+
+build: off
