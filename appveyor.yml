@@ -1,5 +1,5 @@
 image:
-  - Visual Studio 2019
+#  - Visual Studio 2019
   - Ubuntu
   - macOS
   
@@ -8,6 +8,9 @@ branches:
   # whitelist
   only:
     - master
+
+environment: 
+  nodejs_version: "13"
 
 install:
 - npm install -g npm@latest
