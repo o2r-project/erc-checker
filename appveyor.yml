@@ -1,9 +1,19 @@
-image: Ubuntu
+image:
+  - Visual Studio 2019
+  - Ubuntu
+  - macOS
+  
+# branches to build
+branches:
+  # whitelist
+  only:
+    - master
 
 install:
+- npm install sharp@latest --save 
 - npm install
 
 test_script:
-- DEBUG=* npm test
+- npm test
 
 build: off
