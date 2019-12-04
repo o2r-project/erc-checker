@@ -9,9 +9,6 @@ branches:
   only:
     - master
 
-matrix:
-- nodejs_version: "13"
-
 install:
 - npm install -g npm@latest
 
