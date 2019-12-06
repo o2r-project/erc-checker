@@ -50,7 +50,7 @@ describe('Testing erc-checker', function () {
 					assert.isNotEmpty(rejectMetadata.errors);
 					assert.include(JSON.stringify(rejectMetadata.errors), "wrong path here");
 					assert.include(JSON.stringify(rejectMetadata.errors), "no such file");
-					assert.include(JSON.stringify(rejectMetadata.errors), config.pathToOriginalHTML);
+					assert.include(JSON.stringify(rejectMetadata.errors), "nothing.html");
 				});
 		}).timeout(10000);
 
@@ -67,7 +67,7 @@ describe('Testing erc-checker', function () {
 					assert.isNotEmpty(rejectMetadata.errors);
 					assert.include(JSON.stringify(rejectMetadata.errors), "wrong path here");
 					assert.include(JSON.stringify(rejectMetadata.errors), config.pathToReproducedHTML);
-					assert.notInclude(JSON.stringify(rejectMetadata.errors), config.pathToOriginalHTML);
+					assert.notInclude(JSON.stringify(rejectMetadata.errors), "nothing.html");
 				});
 		}).timeout(10000);
 
