@@ -66,7 +66,7 @@ describe('Testing erc-checker', function () {
 				}, function (rejectMetadata) {
 					assert.isNotEmpty(rejectMetadata.errors);
 					assert.include(JSON.stringify(rejectMetadata.errors), "wrong path here");
-					assert.include(JSON.stringify(rejectMetadata.errors), config.pathToReproducedHTML);
+					assert.include(JSON.stringify(rejectMetadata.errors), "nothing.html");
 					assert.notInclude(JSON.stringify(rejectMetadata.errors), "testPaper_1_shortened_a.html");
 				});
 		}).timeout(10000);
