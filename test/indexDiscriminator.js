@@ -52,7 +52,7 @@ describe('Testing erc-checker', function () {
 					assert.include(JSON.stringify(rejectMetadata.errors), "no such file");
 					assert.include(JSON.stringify(rejectMetadata.errors), config.pathToOriginalHTML);
 				});
-		});
+		}).timeout(10000);
 
 		it('called with only one invalid path should return metadata containing an Error', function () {
 			let config = Object.assign({}, checkConfig);
@@ -69,7 +69,7 @@ describe('Testing erc-checker', function () {
 					assert.include(JSON.stringify(rejectMetadata.errors), config.pathToReproducedHTML);
 					assert.notInclude(JSON.stringify(rejectMetadata.errors), config.pathToOriginalHTML);
 				});
-		});
+		}).timeout(10000);
 
 		it('called with equal papers should return Promise state *resolved* with metadata containing no Errors, but also value 0 for differences', function () {
 			let config = Object.assign({}, checkConfig);
@@ -83,6 +83,6 @@ describe('Testing erc-checker', function () {
 				}, function (reject) {
 					assert.ifError(reject);
 				});
-		});
+		}).timeout(10000);
 	})
 });
