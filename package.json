@@ -39,7 +39,7 @@
     "colors": "^1.4.0",
     "commander": "^4.0.1",
     "debug": "^4.1.1",
-    "deglob": "^4.0.1",
+    "deglob": "o2r-project/deglob#master",
     "image-size": "^0.8.3",
     "leven": "^3.1.0",
     "levenshtein": "^1.0.5",

@@ -251,7 +251,7 @@ describe('Using ERC-Checker as node-module', function () {
 							assert.ifError(reason);
 						}
 					);
-			}).timeout(10000);
+			}).timeout(30000);
 		});
 	});
 
@@ -389,122 +389,100 @@ describe('Using ERC-Checker as node-module', function () {
 		}).timeout(10000);
 	});
 
-	describe("Running the erc-checker in an environment with a `.ercignore` file and/or with acceptable file endings specified in `config` object", function () {
+	describe("Running the erc-checker in an environment with a `.ercignore` file and/or with acceptable file endings specified in `config` object, the ComparisonSet", function () {
+		
+		it("should only contain files, which have the required file ending", function () {
+			let configTestIgnore = Object.assign({}, checkConfig);
+			configTestIgnore.pathToOriginalHTML = "test_ignore8.htm";
+			configTestIgnore.pathToReproducedHTML = "test_ignore10.html";
+			configTestIgnore.comparisonSetBaseDir = "test/test_ercignore";
+			configTestIgnore.checkFileTypes = ['html', 'htm', 'mp3'];
 
-		describe("the checker should create a ComparisonSet list of files to be checked, which", function () {
-			it("should only contain files, which have the required file ending", function () {
-				let configTestIgnore = Object.assign({}, checkConfig);
-				configTestIgnore.pathToOriginalHTML = "test_ignore8.htm";
-				configTestIgnore.pathToReproducedHTML = "test_ignore10.html";
-				configTestIgnore.comparisonSetBaseDir = "test/test_ercignore";
-				configTestIgnore.checkFileTypes = ['html', 'htm', 'mp3'];
+			return checker(configTestIgnore)
+				.then(function (resultMetadata) {
 
-				return checker(configTestIgnore)
-					.then(function (resultMetadata) {
-
-						let allFilesCorrect = true;
-						resultMetadata.comparisonSet.forEach(filePath => {
-							let endingHTM = (filePath.substr(filePath.length - 4, 4)) == ".htm";
-							let endingHTML = (filePath.substr(filePath.length - 5, 5)) == ".html";
-							let endingMP3 = (filePath.substr(filePath.length - 4, 4)) == ".mp3";
-
-							if (!endingHTM && !endingHTML && !endingMP3) {
-								allFilesCorrect = false;
-							}
-						});
-
-						assert.strictEqual(allFilesCorrect, true, "ComparisonSet contains files which do not match the required file endings: \n" + resultMetadata.comparisonSet);
-						assert.strictEqual(resultMetadata.comparisonSet.length, 7, "ComparisonSet should include 7 file paths, but it contained " + resultMetadata.comparisonSet.length);
-						assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: " + resultMetadata.errors);
-					}, function (reason) {
-						return Promise.reject(reason);
+					let allFilesCorrect = true;
+					resultMetadata.comparisonSet.forEach(filePath => {
+						assert.match(filePath, /(htm|html|mp3)/, "file path does include wanted file ending");
+						assert.notMatch(filePath, /(txt|png)/, "file path does not include unwanted file ending");
 					});
-			}).timeout(10000);
 
-			it("should by default only contain files having a \".htm\" or \".html\" ending.", function () {
-				let configTestIgnore = Object.assign({}, checkConfig);
-				configTestIgnore.pathToOriginalHTML = "test_ignore8.htm";
-				configTestIgnore.pathToReproducedHTML = "test_ignore10.html";
-				configTestIgnore.comparisonSetBaseDir = "./test/test_ercignore";
-				delete configTestIgnore.checkFileTypes;
+					assert.strictEqual(resultMetadata.comparisonSet.length, 6);
+				}, function (reason) {
+					return Promise.reject(reason);
+				});
+		});
 
-				return checker(configTestIgnore)
-					.then(function (resultMetadata) {
+		it("should not return any errors", function () {
+			let configTestIgnore = Object.assign({}, checkConfig);
+			configTestIgnore.pathToOriginalHTML = "test_ignore8.htm";
+			configTestIgnore.pathToReproducedHTML = "test_ignore10.html";
+			configTestIgnore.comparisonSetBaseDir = "test/test_ercignore";
+			configTestIgnore.checkFileTypes = ['html', 'htm', 'mp3'];
+			
+			return checker(configTestIgnore)
+				.then(function (resultMetadata) {
+					assert.strictEqual(resultMetadata.errors.length, 0);
+				}, function (reason) {
+					return Promise.reject(reason);
+				});
+		});
 
-						let allFilesCorrect = true;
-						resultMetadata.comparisonSet.forEach(filePath => {
-							let endingHTM = (filePath.substr(filePath.length - 4, 4)) == ".htm";
-							let endingHTML = (filePath.substr(filePath.length - 5, 5)) == ".html";
+		it("should by default only contain files having a '.htm' or '.html' ending.", function () {
+			let configTestIgnore = Object.assign({}, checkConfig);
+			configTestIgnore.pathToOriginalHTML = "test_ignore8.htm";
+			configTestIgnore.pathToReproducedHTML = "test_ignore10.html";
+			configTestIgnore.comparisonSetBaseDir = "./test/test_ercignore";
+			delete configTestIgnore.checkFileTypes;
 
-							if (!endingHTM && !endingHTML) {
-								allFilesCorrect = false;
-							}
-						});
-						assert.strictEqual(allFilesCorrect, true, "ComparisonSet contains files which do not match the required file endings: \n" + resultMetadata.comparisonSet);
+			return checker(configTestIgnore)
+				.then(function (resultMetadata) {
 
-						assert.strictEqual(resultMetadata.comparisonSet.length, 6, "ComparisonSet should include 6 file paths, but it contained " + resultMetadata.comparisonSet.length);
-
-						assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: " + resultMetadata.errors);
+					let allFilesCorrect = true;
+					resultMetadata.comparisonSet.forEach(filePath => {
+						assert.match(filePath, /(htm|html)/, "file path does include wanted file ending");
+						assert.notMatch(filePath, /(txt|png|mp3)/, "file path does not include unwanted file ending");
 					});
-			});
 
-			it("should only contain files which are not ignored by `.ercignore`", function () {
-				let configTestIgnore = Object.assign({}, checkConfig);
-				configTestIgnore.pathToOriginalHTML = "test_ignore8.htm";
-				configTestIgnore.pathToReproducedHTML = "test_ignore10.html";
-				configTestIgnore.comparisonSetBaseDir = "./test/test_ercignore";
-				configTestIgnore.checkFileTypes = [".*"];
+					assert.strictEqual(resultMetadata.comparisonSet.length, 5);
+				});
+		});
 
-				return checker(configTestIgnore)
-					.then(function (resultMetadata) {
+		it("should only contain files which are not ignored by `.ercignore`", function () {
+			let configTestIgnore = Object.assign({}, checkConfig);
+			configTestIgnore.pathToOriginalHTML = "test_ignore8.htm";
+			configTestIgnore.pathToReproducedHTML = "test_ignore10.html";
+			configTestIgnore.comparisonSetBaseDir = "test/test_ercignore";
+			configTestIgnore.checkFileTypes = [".*"];
 
-						let allFilesCorrect = true;
-						resultMetadata.comparisonSet.forEach(filePath => {
-							let containsFilteredDirectory = (filePath.includes("false_positive_dir/"));
-							let endingPNG = (filePath.substr(filePath.length - 4, 4)) == ".png";
+			return checker(configTestIgnore)
+				.then(function (resultMetadata) {
 
-							if (containsFilteredDirectory || endingPNG) {
-								allFilesCorrect = false;
-							}
-						});
-						assert.strictEqual(allFilesCorrect, true, "ComparisonSet contains files which do not match the required file endings: \n" + resultMetadata.comparisonSet);
-						console.log(resultMetadata.comparisonSet);
-						assert.strictEqual(resultMetadata.comparisonSet.length, 8, "ComparisonSet should include 8 file paths, but it contained " + resultMetadata.comparisonSet.length);
-
-						assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: " + resultMetadata.errors);
+					let allFilesCorrect = true;
+					resultMetadata.comparisonSet.forEach(filePath => {
+						assert.notInclude(filePath, "false_positive_dir", "file path does not contain ignored directory");
+						assert.notInclude(filePath, "png", "comparison set file is not a png");
 					});
-			});
+				});
+		});
 
-			it("should only contain files, which have the required file ending, and are not filtered by the `.ercignore` file.", function () {
-				let configTestIgnore = Object.assign({}, checkConfig);
-				configTestIgnore.pathToOriginalHTML = "test_ignore8.htm";
-				configTestIgnore.pathToReproducedHTML = "test_ignore10.html";
-				configTestIgnore.comparisonSetBaseDir = "./test/test_ercignore";
-				configTestIgnore.checkFileTypes = ["html", "htm"];
+		it("should not contain files which are not in check files types, nor files from `.ercignore`.", function () {
+			let configTestIgnore = Object.assign({}, checkConfig);
+			configTestIgnore.pathToOriginalHTML = "test_ignore8.htm";
+			configTestIgnore.pathToReproducedHTML = "test_ignore10.html";
+			configTestIgnore.comparisonSetBaseDir = "./test/test_ercignore";
+			configTestIgnore.checkFileTypes = ["html", "htm"];
 
-				return checker(configTestIgnore)
-					.then(function (resultMetadata) {
-						let allFilesCorrect = true;
-						resultMetadata.comparisonSet.forEach(filePath => {
-							let containsFilteredDirectory = (filePath.includes("false_positive_dir/"));
-							let endingPNG = (filePath.substr(filePath.length - 4, 4)) == ".png";
-
-							let endingHTM = (filePath.substr(filePath.length - 4, 4)) == ".htm";
-							let endingHTML = (filePath.substr(filePath.length - 5, 5)) == ".html";
-
-							if (containsFilteredDirectory || endingPNG) {
-								allFilesCorrect = false;
-							}
-							if (!endingHTM && !endingHTML) {
-								allFilesCorrect = false;
-							}
-						});
-						
-						assert.strictEqual(allFilesCorrect, true, "ComparisonSet contains files which do not match the required file endings: \n" + resultMetadata.comparisonSet);
-						assert.strictEqual(resultMetadata.comparisonSet.length, 6, "ComparisonSet should include 6 file paths, but it contained " + resultMetadata.comparisonSet.length);
-						assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: " + resultMetadata.errors);
+			return checker(configTestIgnore)
+				.then(function (resultMetadata) {
+					let allFilesCorrect = true;
+					resultMetadata.comparisonSet.forEach(filePath => {
+						assert.notInclude(filePath, "false_positive_dir", "file path does not contain ignored directory");
+						assert.notInclude(filePath, "png", "comparison set file is not a png");
+						assert.notInclude(filePath, "mp3", "comparison set file is not a png");
+						assert.notInclude(filePath, "txt", "comparison set file is not a png");
 					});
-			});
+				});
 		});
 	});
 
