@@ -11,6 +11,7 @@ environment:
   matrix:
     - nodejs_version: "12" # lts
     - nodejs_version: "13"
+  DEBUG: "*"
 
 platform:
   - x64 # dependency 'sharp' is not available for x86
@@ -22,6 +23,6 @@ install:
   - npm install
 
 test_script:
-  - npm test
+  - npm run-script testci
 
 build: off

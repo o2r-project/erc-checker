@@ -6,7 +6,8 @@
   "scripts": {
     "start": "DEBUG='index:*,checker:general,checker:ERROR' node index.js",
     "debug": "DEBUG=* node index.js",
-    "test": "DEBUG=*,-eslint:* mocha test"
+    "test": "DEBUG='*,-eslint:*' mocha test",
+    "testci": "mocha test"
   },
   "repository": {
     "type": "git",
