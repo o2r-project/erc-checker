@@ -9,7 +9,6 @@ os:
 node_js:
   - "8"
   - "12"
-  - "13"
 
 cache:
   directories:

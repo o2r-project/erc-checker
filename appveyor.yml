@@ -1,7 +1,7 @@
 image:
   - Visual Studio 2019
-  - Ubuntu
-  - macOS
+#  - Ubuntu
+#  - macOS
   
 branches:
   only:
@@ -10,7 +10,6 @@ branches:
 environment:
   matrix:
     - nodejs_version: "12" # lts
-    - nodejs_version: "13"
   DEBUG: "*"
 
 platform:
