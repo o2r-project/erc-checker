@@ -1,0 +1,24 @@
+image:
+#  - Visual Studio 2019
+  - Ubuntu
+  - macOS
+  
+# branches to build
+branches:
+  # whitelist
+  only:
+    - master
+
+environment: 
+  nodejs_version: "13"
+
+install:
+- npm install -g npm@latest
+
+- npm install sharp@latest --save 
+- npm install
+
+test_script:
+- npm test
+
+build: off
