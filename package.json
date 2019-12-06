@@ -24,7 +24,11 @@
     "reproducibility",
     "reproducible research"
   ],
-  "author": "o2r project",
+  "author": {
+    "name": "o2r project",
+    "url": "https://o2r.info",
+    "email": "o2r-team@uni-muenster.de"
+  },
   "contributors": [
     {
     "name": "Timm Kühnel",
