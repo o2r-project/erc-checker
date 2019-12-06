@@ -1,6 +1,6 @@
 # erc-checker
 
-![Travis CI](https://travis-ci.org/Timmimim/erc-checker.svg?branch=master) [![npm](https://img.shields.io/npm/v/erc-checker.svg)](https://www.npmjs.com/package/erc-checker)
+[![Build Status](https://travis-ci.org/o2r-project/erc-checker.svg?branch=master)](https://travis-ci.org/o2r-project/erc-checker) [![npm](https://img.shields.io/npm/v/erc-checker.svg)](https://www.npmjs.com/package/erc-checker)
 
  - [NodeJS module usage](#nodejs-module-usage)
    - [Installation](#installation)
