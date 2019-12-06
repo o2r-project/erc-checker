@@ -1,6 +1,6 @@
 # erc-checker
 
-[![Build Status](https://travis-ci.org/o2r-project/erc-checker.svg?branch=master)](https://travis-ci.org/o2r-project/erc-checker) [![npm](https://img.shields.io/npm/v/erc-checker.svg)](https://www.npmjs.com/package/erc-checker)
+[![Build Status](https://travis-ci.org/o2r-project/erc-checker.svg?branch=master)](https://travis-ci.org/o2r-project/erc-checker) [![Build status](https://ci.appveyor.com/api/projects/status/xbla7j4wpbwauk7p/branch/master?svg=true)](https://ci.appveyor.com/project/nuest/erc-checker-r035a/branch/master) [![npm](https://img.shields.io/npm/v/erc-checker.svg)](https://www.npmjs.com/package/erc-checker)
 
  - [NodeJS module usage](#nodejs-module-usage)
    - [Installation](#installation)
