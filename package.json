@@ -6,7 +6,8 @@
   "scripts": {
     "start": "DEBUG='index:*,checker:general,checker:ERROR' node index.js",
     "debug": "DEBUG=* node index.js",
-    "test": "DEBUG=*,-eslint:* mocha test"
+    "test": "DEBUG='*,-eslint:*' mocha test",
+    "testci": "mocha test"
   },
   "repository": {
     "type": "git",
@@ -15,16 +16,33 @@
   "keywords": [
     "cli",
     "erc",
+    "executable research compendium",
     "o2r",
     "o2r-project",
     "opening reproducible research",
-    "ifgi",
-    "ifgi-muenster",
-    "validating",
-    "compare",
-    "html"
+    "comparison",
+    "reproducibility",
+    "reproducible research"
   ],
-  "author": "Timm Kühnel",
+  "author": {
+    "name": "o2r project",
+    "url": "https://o2r.info",
+    "email": "o2r-team@uni-muenster.de"
+  },
+  "contributors": [
+    {
+    "name": "Timm Kühnel",
+    "url": "https://github.com/Timmimim"
+    },
+    {
+      "name": "Tom Niers",
+      "url": "https://github.com/tnier01"
+    },
+    {
+      "name": "Daniel Nüst",
+      "url": "https://github.com/nuest"
+    }
+  ],
   "license": "Apache-2.0",
   "bin": {
     "erc-checker": "./index.js"

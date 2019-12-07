@@ -50,9 +50,9 @@ describe('Testing erc-checker', function () {
 					assert.isNotEmpty(rejectMetadata.errors);
 					assert.include(JSON.stringify(rejectMetadata.errors), "wrong path here");
 					assert.include(JSON.stringify(rejectMetadata.errors), "no such file");
-					assert.include(JSON.stringify(rejectMetadata.errors), config.pathToOriginalHTML);
+					assert.include(JSON.stringify(rejectMetadata.errors), "nothing.html");
 				});
-		});
+		}).timeout(10000);
 
 		it('called with only one invalid path should return metadata containing an Error', function () {
 			let config = Object.assign({}, checkConfig);
@@ -66,10 +66,10 @@ describe('Testing erc-checker', function () {
 				}, function (rejectMetadata) {
 					assert.isNotEmpty(rejectMetadata.errors);
 					assert.include(JSON.stringify(rejectMetadata.errors), "wrong path here");
-					assert.include(JSON.stringify(rejectMetadata.errors), config.pathToReproducedHTML);
-					assert.notInclude(JSON.stringify(rejectMetadata.errors), config.pathToOriginalHTML);
+					assert.include(JSON.stringify(rejectMetadata.errors), "nothing.html");
+					assert.notInclude(JSON.stringify(rejectMetadata.errors), "testPaper_1_shortened_a.html");
 				});
-		});
+		}).timeout(10000);
 
 		it('called with equal papers should return Promise state *resolved* with metadata containing no Errors, but also value 0 for differences', function () {
 			let config = Object.assign({}, checkConfig);
@@ -83,6 +83,6 @@ describe('Testing erc-checker', function () {
 				}, function (reject) {
 					assert.ifError(reject);
 				});
-		});
+		}).timeout(10000);
 	})
 });
