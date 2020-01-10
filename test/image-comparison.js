@@ -23,11 +23,16 @@ const expect = require('chai').expect;
 const debug = require('debug')('tester');
 const colors = require('colors');
 
+const PNG = require('pngjs').PNG;
+const pixelmatch = require('pixelmatch');
+
 var rewire = require('rewire'); // for testing unexported functions, see https://stackoverflow.com/questions/14874208/how-to-access-and-test-an-internal-non-exports-function-in-a-node-js-module
 var checkerCore = rewire('../lib/checker.js');
 
 runBlinkDiff = checkerCore.__get__('runBlinkDiff');
 sliceImagesOutOfHTMLStringsAndCreateBuffers = checkerCore.__get__('sliceImagesOutOfHTMLStringsAndCreateBuffers');
+prepareImagesForComparison = checkerCore.__get__('prepareImagesForComparison');
+
 
 describe('Testing image comparison', function () {
 
@@ -43,12 +48,18 @@ describe('Testing image comparison', function () {
 
 
 		before(function (done) {
-
+			this.timeout(10000);
 			let inputFiles = [fs.readFileSync(paperA, 'utf-8'), fs.readFileSync(paperB, 'utf-8')];
 
 			sliceImagesOutOfHTMLStringsAndCreateBuffers(inputFiles).then(function (result) {
 				var originalImageBuffers = result[0],
 					reproducedImageBuffers = result[1];
+			console.log(result[0]); 
+
+			prepareImagesForComparison(result).then(function (result2) { 
+			console.log(result2[0]); 
+
+
 
 				images = [{
 					originalImage: {
@@ -60,6 +71,7 @@ describe('Testing image comparison', function () {
 				}];
 				done();
 			});
+		}); 
 		});
 
 		it('should create a file matching the reference file', function (done) {
