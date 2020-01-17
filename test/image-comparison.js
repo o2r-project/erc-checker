@@ -46,35 +46,39 @@ describe('Testing image comparison', function () {
 			fs.mkdirSync(path.join(os.tmpdir(), 'erc-checker'));
 		}catch (e) {}
 
-
 		before(function (done) {
-			this.timeout(10000);
+			 this.timeout(60000);
 			let inputFiles = [fs.readFileSync(paperA, 'utf-8'), fs.readFileSync(paperB, 'utf-8')];
 
-			sliceImagesOutOfHTMLStringsAndCreateBuffers(inputFiles).then(function (result) {
-				var originalImageBuffers = result[0],
-					reproducedImageBuffers = result[1];
-			console.log(result[0]); 
+			sliceImagesOutOfHTMLStringsAndCreateBuffers(inputFiles).then(function (result) { 
 
-			prepareImagesForComparison(result).then(function (result2) { 
-			console.log(result2[0]); 
+				/*var originalImageBuffers2 = result[0],
+					reproducedImageBuffers2 = result[1];
 
+					console.log(originalImageBuffers2[0]); */
 
-
+			prepareImagesForComparison(result).then(function (result) { 
+		
+			  // es wird ein Buffer für den Test ausgewählt 
+			  var originalImageBuffer = result.images[0].originalImage.buffer; 
+			  var reproducedImageBuffer = result.images[0].reproducedImage.buffer; 
+			
 				images = [{
 					originalImage: {
-						buffer: originalImageBuffers[0]
+						buffer: originalImageBuffer // originalImageBuffers2[0]
 					},
 					reproducedImage: {
-						buffer: reproducedImageBuffers[0]
+						buffer: reproducedImageBuffer // reproducedImageBuffers2[0]
 					}
 				}];
 				done();
+				console.log(images);
 			});
 		}); 
 		});
 
 		it('should create a file matching the reference file', function (done) {
+			console.log(images); 
 			runBlinkDiff(images)
 				.then(
 					function (compareResult) {
