@@ -11,17 +11,18 @@
    - [Usage](#how-to-use-the-checker-module)
    - [Debug](#debug)
  - [Debug Loggers](#debug-loggers)
+ - [Contribute](#contribute)
  - [License](#license)
 
 -------------------------------------------------
 
-A JavaScript library and CLI tool for [ERC](https://github.com/o2r-project/erc-spec) metadata, execution, and result checking.  
+A JavaScript library and CLI tool for [ERC](https://github.com/o2r-project/erc-spec) execution and result checking.  
+The checker is part of the project [o2r](https://o2r.info/).
 
-The checker is part of the [o2r-project](http://www.o2r.info/). Its purpose is to verify the o2r-platform's reproduction automatism for scientific papers in HTML format. 
+The checker runs on [NodeJS](https://nodejs.org/en/).
+The tool implements a [NodeJS module](#node-module), which is a function returning a [JavaScript Promise](https://www.npmjs.com/package/promise). 
 
-The checker runs on [NodeJS](https://nodejs.org/en/). The tool implements a [NodeJS module](#node-module), which is a function returning a [JavaScript Promise](https://www.npmjs.com/package/promise). 
-
-It further implements a [command line interface](#command-line-interface) (WORK IN PROGRESS). 
+It further implements a [command line interface](#command-line-interface) (WORK IN PROGRESS).
 
 -------------------------------------------------
 
@@ -29,7 +30,7 @@ It further implements a [command line interface](#command-line-interface) (WORK 
 
 The checker's `index.js` exports an object called `ercChecker`. This object contains a function that takes two paths to HTML files and optional further parameters, and returns a JavaScript Promise. 
 
-#### Installation
+### Installation
 
 The erc-checker is currently not featured as an official npm module in the [node package repository](https://www.npmjs.com/). 
 
@@ -53,7 +54,7 @@ This resulting tarball is a fully functioning npm package. It may then be instal
     $  npm install --save /path/to/tarball/erc-checker-x.y.z.tgz`
 ```
 
-#### Current functional scope
+### Features
 
 The checker is executed with a `config` object (`JSON`).
 
@@ -114,7 +115,8 @@ Further parameters (in order):
   - `checkFileTypes: [String]`:	case insensitive list of file endings to be included in the comparison set for the check
   - `quiet: Boolean` : silence loggers
 
-#### Errors
+### Errors
+
 Any errors during execution cause the returned JSPromise to be __rejected__. Errors will be caught and
  - logged out to the console
  - saved in a check metadata JSON object, which is returned as _rejection argument_:
@@ -138,8 +140,8 @@ Externally caused errors will occur, if:
 - papers contain an unequal number of images
 - base64-encoded image invalid / broken
 
-    
-#### Returns
+### Returns
+
 The `ercChecker` function returns a JSPromise. 
 
 If execution is successful, the Promise will be __resolved__, containing a check metadata JSON object:
@@ -173,9 +175,6 @@ prepResult codes (for images of same index in paper):
 - 0: images do not differ in size
 - 1: images differed in size -- resized for comparison
 - 2: images differed in size -- not resized for comparison
-
-##### Development
-For debugging purposes: When running the checker with a NodeJS environment variable `DEV` set true, the result AND reject metadata will include an absolute path to the temp-directory used during the check.
 
 ### How to use the checker module
 
@@ -242,46 +241,41 @@ It can be used as follows:
 __Note:__ The checker will automatically remove all temporary files on termination. To prevent this, set an environment variable `DEV=true`.
 
 
-#### Debug
+### Debug
 
 Enable debugging by setting an environment variable **DEBUG**.
-E.g.:
- ```bash
-    $  DEBUG=* node yourProject.js
- ```
+
+```bash
+$  DEBUG=* node yourProject.js
+```
  
- Find available DEBUG loggers [below](#debug-loggers).
+Available loggers are:
 
--------------------------------------------------
-
-### Debug loggers
-
-Available DEBUG loggers are:
-
-* index:checkRequestHandling  *
-* index:ERROR  *
+* index:checkRequestHandling *
+* index:ERROR *
 * checker:general *
 * checker:slice
 * checker:compare
 * checker:reassemble
-* checker:ERROR  *
+* checker:ERROR *
+* `tester` (for debugging tests)
 
-For debugging tests, use 'tester'.
+\* active by default when used via CLI
 
-\* default when used as CLI
+-------------------------------------------------
 
-## Publish a new release
+## Contribute
 
-```bash
-# see npm version --help
-npm version {major,minor,bugfix}
-npm publish
-```
+All help is welcome: asking questions, providing documentation, testing, or even development.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+Please note that this project is released with a [Contributor Code of Conduct](CONDUCT.md).
+By participating in this project you agree to abide by its terms.
 
 ## License
 
-o2r checker is licensed under Apache License, Version 2.0, see file LICENSE.
+o2r checker is licensed under Apache License, Version 2.0, see file `LICENSE`.
 
-Copyright (C) 2018 - o2r project. 
+Copyright (C) 2020 - o2r project. 
 
-![o2r](https://avatars3.githubusercontent.com/u/16774537?v=3&s=200)
+[![o2r](https://avatars3.githubusercontent.com/u/16774537?v=3&s=200)](https://o2r.info)
