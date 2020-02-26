@@ -4,3 +4,5 @@ etc
 test
 docs
 _site
+appveyor.yml
+mkdocs.yml

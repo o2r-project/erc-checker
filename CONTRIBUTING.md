@@ -78,6 +78,11 @@ cd docs/
 mkdocs build --clean --verbose
 ```
 
+## Online documentation
+
+The online documentation is automatically built by Travis CI, see file `.travis.yml`.
+For background on the personal access token see [https://github.com/o2r-project/erc-spec#automated-builds](https://github.com/o2r-project/erc-spec#automated-builds).
+
 ## Development hints
 
 For debugging purposes: When running the checker with a NodeJS environment variable `DEV` set true, the result AND reject metadata will include an absolute path to the temp-directory used during the check.
