@@ -5,7 +5,7 @@ os:
   - osx
   - windows
 node_js:
-  - "8"
+  # let's stick to the current LTS version
   - "12"
 cache:
   directories:
@@ -17,7 +17,7 @@ script:
 after_script:
   - shopt -s expand_aliases
   - |-
-    if [[ "$TRAVIS_OS_NAME" = "linux" && && -n "$PYENV_VERSION" && $TRAVIS_BRANCH == 'master' && $TRAVIS_PULL_REQUEST == 'false' ]]; then
+    if [[ "$TRAVIS_OS_NAME" = "linux" && -n "$PYENV_VERSION" && $TRAVIS_BRANCH == 'master' && $TRAVIS_PULL_REQUEST == 'false' ]]; then
       wget https://github.com/praekeltfoundation/travis-pyenv/releases/download/0.4.0/setup-pyenv.sh
       source setup-pyenv.sh
       
