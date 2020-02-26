@@ -46,7 +46,7 @@ Please [open an issue on GitHub](https://github.com/o2r-project/erc-checker/issu
 This software is developed by the members of the DFG-funded project Opening Reproducible Research.
 `erc-checker` is part of the reference implementations of a reproducibility service based on ERCs.
 
-[![Opening Reproducible Research](/img/o2r-logo.png)](https://o2r.info)
+[![Opening Reproducible Research](./img/o2r-logo.png)](https://o2r.info)
 
 To cite this software please use
 
