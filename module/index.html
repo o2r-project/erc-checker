@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="o2r team">
+  <link rel="canonical" href="https://o2r.info/erc-checker/module/">
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>npm Module - erc-checker</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+  <link href="../o2r.css" rel="stylesheet" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "npm Module";
+    var mkdocs_page_input_path = "module.md";
+    var mkdocs_page_url = "/erc-checker/module/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> erc-checker</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../cli/">CLI usage</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">npm Module</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#features">Features</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#errors">Errors</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#return-value">Return value</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#debug">Debug</a>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">erc-checker</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>npm Module</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/o2r-project/erc-checker/tree/master/docs/module.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="erc-checker-javascript-module">erc-checker JavaScript module<a class="headerlink" href="#erc-checker-javascript-module" title="Permanent link">&para;</a></h1>
+<p>The checker's <code>index.js</code> exports an object called <code>ercChecker</code>.
+This object contains a function that takes two paths to HTML files and optional further parameters, and returns a JavaScript Promise. </p>
+<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
+<p>The checker is executed with a <code>config</code> object (<code>JSON</code>).</p>
+<div class="codehilite"><pre><span></span><code>    <span class="kd">var</span> <span class="nx">config</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nx">directoryMode</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>             <span class="c1">// default: false --- read papers from directories automatically?  (false: paths for both papers MUST be specified; true: path to directory MUST be specified)</span>
+        <span class="nx">pathToMainDirectory</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
+        <span class="nx">pathToOriginalHTML</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
+        <span class="nx">pathToReproducedHTML</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
+        <span class="nx">saveFilesOutputPath</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>        <span class="c1">// necessary if diff-HTML or check metadata should be saved</span>
+        <span class="nx">saveDiffHTML</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>              <span class="c1">// default: false</span>
+        <span class="nx">outFileName</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>                <span class="c1">// choose a name for diff-HTML (defaults to &quot;diffHTML.html&quot;)</span>
+        <span class="nx">saveMetadataJSON</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>          <span class="c1">// default: false</span>
+        <span class="nx">createParentDirectories</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>   <span class="c1">// default: false --- IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails</span>
+        <span class="nx">comparisonSetBaseDir</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>       <span class="c1">// base directory of repository to be checked, used to create a file list (glob)</span>
+        <span class="nx">checkFileTypes</span><span class="o">:</span> <span class="p">[</span><span class="nb">String</span><span class="p">],</span>           <span class="c1">// case insensitive list of file endings to be included; currently defaults to [&quot;htm&quot;, &quot;html&quot;]</span>
+        <span class="nx">quiet</span><span class="o">:</span> <span class="nb">Boolean</span>                      <span class="c1">// default: false</span>
+    <span class="p">};</span>
+</code></pre></div>
+
+<p><strong><em>Note:</em></strong> optional parameters may be left out of the config object when not used. In this case, defaults apply.</p>
+<p>In directory mode, individual path parameters will be ignored. Otherwise, main directory path will be ignored.</p>
+<p>One of the following configurations <strong>MUST</strong> be made
+ - <code>directoryMode = false</code> and <code>pathToOriginalHTML</code> &amp;&amp; <code>pathToReproducedHTML</code> valid paths to HTML files, <em>or</em>
+ - <code>directoryMode = true</code> &amp;&amp; <code>pathToMainDirectory</code> valid path to a directory structure as seen below:
+   <div class="codehilite"><pre><span></span><code>   target_directory    
+   │
+   └───original
+   │    │   main.html
+   |    │   someOther.html
+   │   
+   └───reproduced
+        │   main.html
+</code></pre></div></p>
+<p>In <code>directoryMode</code>, there <strong>MUST</strong> be two subdirectories, <code>original</code> and <code>reproduced</code>.</p>
+<p><strong><em>Note</em></strong>: HTML files in directories are NOT REQUIRED to be named "<em>main.html</em>". However, the checker will pick the first <code>.html</code>file found <em>in alphabetical order</em> . </p>
+<p>The tool will compare both HTML files for images only.
+The images <strong>MUST</strong> be <strong>base64</strong>-encoded, and encapsulated in an HTML img tag, as generated automatically when rendering an .Rmd file into HTML format.</p>
+<p>If both HTML papers contain an equal number of images, the checker may write a new HTML file, containing the results of the comparison between all images in the input files, as created by <a href="http://yahoo.github.io/blink-diff/"><code>blink-diff</code></a>, as well as highlighted text differences between both Papers. </p>
+<p>Further parameters (in order): </p>
+<ul>
+<li><code>saveFilesOutputPath: String</code> : third path for file output; necessary if either parameter <code>saveDiffHTML</code> or <code>saveMetadataJSON</code> is set, otherwise ignored</li>
+<li><code>saveDiffHTML: Boolean</code> : save diffHTML file to output directory</li>
+<li><code>outFileName: String</code> : choose a custom name for diffHTML (default is "diffHTML.html")</li>
+<li><code>saveMetadataJSON: Boolean</code> : save metadata.json to output directory</li>
+<li><code>createParentDirectories: Boolean</code> : create parent directories for output (if false and directories of path not yet created, output will not be created) </li>
+<li><code>comparisonSetBaseDir: String</code>: path to the base directory of the repository to be checked, may be absolute or relative</li>
+<li><code>checkFileTypes: [String]</code>:   case insensitive list of file endings to be included in the comparison set for the check</li>
+<li><code>quiet: Boolean</code> : silence loggers</li>
+</ul>
+<h2 id="errors">Errors<a class="headerlink" href="#errors" title="Permanent link">&para;</a></h2>
+<p>Any errors during execution cause the returned JSPromise to be <strong>rejected</strong>. Errors will be caught and
+ - logged out to the console
+ - saved in a check metadata JSON object, which is returned as <em>rejection argument</em>:
+   <div class="codehilite"><pre><span></span><code><span class="p">{</span>
+   <span class="s2">&quot;checkSuccessful&quot;</span><span class="o">:</span> <span class="p">...</span> <span class="p">,</span>
+   <span class="s2">&quot;images&quot;</span><span class="o">:</span> <span class="p">[</span> <span class="p">...</span> <span class="p">],</span>
+   <span class="s2">&quot;display&quot;</span><span class="o">:</span> <span class="p">{</span>
+     <span class="s2">&quot;diff&quot;</span><span class="o">:</span> <span class="s2">&quot;[merged diff-HTML]&quot;</span>
+   <span class="p">},</span>
+   <span class="s2">&quot;start&quot;</span><span class="o">:</span> <span class="nb">Date</span><span class="p">,</span>
+   <span class="s2">&quot;end&quot;</span><span class="o">:</span> <span class="nb">Date</span><span class="p">,</span>
+   <span class="s2">&quot;errors&quot;</span><span class="o">:</span> <span class="p">[</span> <span class="o">&lt;</span><span class="nb">Error</span> <span class="nx">description</span><span class="o">&gt;</span> <span class="p">]</span> 
+<span class="p">}</span>
+</code></pre></div></p>
+<p>Metadata may contain a varying amount of data, depending on where in the process an error occurred.</p>
+<p>Externally caused errors will occur, if:
+- paths to files / directory are invalid
+- output path does not exist, and createParentDirectories flag is not set
+- papers contain an unequal number of images
+- base64-encoded image invalid / broken</p>
+<h2 id="return-value">Return value<a class="headerlink" href="#return-value" title="Permanent link">&para;</a></h2>
+<p>The <code>ercChecker</code> function returns a JSPromise. </p>
+<p>If execution is successful, the Promise will be <strong>resolved</strong>, containing a check metadata JSON object:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+    <span class="s2">&quot;checkSuccessful&quot;</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>
+    <span class="s2">&quot;images&quot;</span><span class="o">:</span> <span class="p">[</span> 
+        <span class="p">{</span>
+            <span class="s2">&quot;imageIndex&quot;</span><span class="o">:</span> <span class="nb">Number</span><span class="p">,</span>
+            <span class="s2">&quot;resizeOperationCode&quot;</span><span class="o">:</span> <span class="nb">Number</span><span class="p">,</span> <span class="c1">// represents status code, see below</span>
+            <span class="s2">&quot;compareResults&quot;</span><span class="o">:</span>   <span class="p">{</span>
+                <span class="s2">&quot;differences&quot;</span><span class="o">:</span> <span class="nb">Number</span><span class="p">,</span>
+                <span class="s2">&quot;dimension&quot;</span><span class="o">:</span> <span class="nb">Number</span>
+            <span class="p">}</span>
+        <span class="p">},</span> <span class="p">...</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;display&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;diff&quot;</span><span class="o">:</span> <span class="nb">String</span> <span class="c1">// contains the entire result HTML, </span>
+                        <span class="c1">// with images swapped for diff-Images where differences were found;</span>
+                        <span class="c1">// contains merged text of both papers, with differences highlighted</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;comparisonSet&quot;</span><span class="o">:</span> <span class="p">[</span><span class="nb">String</span><span class="p">],</span>  <span class="c1">// contains relative paths of all files with file type ending </span>
+                                    <span class="c1">// matching the specified in config file using the `checkFileTypes` attribute              </span>
+    <span class="s2">&quot;start&quot;</span><span class="o">:</span> <span class="nb">Number</span><span class="p">,</span>
+    <span class="s2">&quot;end&quot;</span><span class="o">:</span> <span class="nb">Number</span><span class="p">,</span>
+    <span class="s2">&quot;errors&quot;</span><span class="o">:</span> <span class="p">[]</span> 
+<span class="p">}</span>
+ <span class="sb">```</span>
+
+<span class="sb">prepResult codes (for images of same index in paper):</span>
+<span class="sb">- 0: images do not differ in size</span>
+<span class="sb">- 1: images differed in size -- resized for comparison</span>
+<span class="sb">- 2: images differed in size -- not resized for comparison</span>
+
+<span class="sb">## How to use the checker module</span>
+
+<span class="sb">```</span><span class="nx">javascript</span>
+<span class="kr">const</span> <span class="nx">checker</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;&lt;path&gt;/&lt;to&gt;/erc-checker/index&#39;</span><span class="p">).</span><span class="nx">ercChecker</span><span class="p">;</span>  <span class="c1">// import the ercChecker module, which is a function</span>
+
+<span class="c1">// head: checker(config);    </span>
+</code></pre></div>
+
+<p>The <code>ercChecker</code> function will return a Promise, which will be resolved on successful execution, or rejected on error.</p>
+<p>Thus, while the Checker will run asynchronously, it can be chained in a controlled fashion.
+It can be used as follows: </p>
+<div class="codehilite"><pre><span></span><code><span class="c1">// use with direct file paths: </span>
+<span class="kd">let</span> <span class="nx">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">directoryMode</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span> 
+    <span class="nx">pathToOriginalHTML</span><span class="o">:</span> <span class="s2">&quot;path/to/fileA.html&quot;</span><span class="p">,</span>
+    <span class="nx">pathToReproducedHTML</span><span class="o">:</span> <span class="s2">&quot;path/to/fileB.html&quot;</span><span class="p">,</span>
+    <span class="nx">saveFilesOutputPath</span><span class="o">:</span> <span class="s2">&quot;/optional/output/path/&quot;</span><span class="p">,</span>
+    <span class="nx">saveDiffHTML</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="nx">outFileName</span><span class="o">:</span> <span class="s2">&quot;customNameForDiff.html&quot;</span><span class="p">,</span>
+    <span class="nx">saveMetadataJSON</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="nx">createParentDirectories</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="nx">comparisonSetBaseDir</span><span class="o">:</span> <span class="s2">&quot;/path/of/files/toBeChecked&quot;</span><span class="p">,</span>
+    <span class="nx">checkFileTypes</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;htm&quot;</span><span class="p">,</span> <span class="s2">&quot;html&quot;</span><span class="p">],</span>                <span class="c1">// case insensitive list of file endings to be included</span>
+    <span class="nx">quiet</span><span class="o">:</span> <span class="kc">false</span>
+<span class="p">}</span>
+
+<span class="c1">// example</span>
+<span class="nx">checker</span><span class="p">(</span><span class="nx">config</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">then</span><span class="p">(</span>
+        <span class="c1">// successfully resolved: result contains metadata object</span>
+        <span class="kd">function</span> <span class="p">(</span><span class="nx">resolveMetadata</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">//handle result </span>
+        <span class="p">},</span>
+        <span class="c1">// an Error occured, Promise rejected</span>
+        <span class="kd">function</span> <span class="p">(</span><span class="nx">rejectMetadata</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// handle result</span>
+        <span class="p">}</span>
+    <span class="p">);</span>
+
+<span class="c1">// in this example, independent of result handling, there will be files for resulting HTML and Metadata JSON saved to specified outputlocation</span>
+<span class="c1">// file names:  customNameForDiff.html , metadata.json </span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1">// use with directories</span>
+<span class="kd">let</span> <span class="nx">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">directoryMode</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span> 
+    <span class="nx">pathToMainDirectory</span><span class="o">:</span> <span class="s2">&quot;path/to/directory&quot;</span><span class="p">,</span>
+    <span class="nx">quiet</span><span class="o">:</span> <span class="kc">true</span>
+<span class="p">}</span>
+
+<span class="c1">// example</span>
+<span class="nx">checker</span><span class="p">(</span><span class="nx">config</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">then</span><span class="p">(</span> <span class="cm">/*...*/</span> <span class="p">);</span>
+
+<span class="c1">// in this example, no files will be written, and Debug loggers are silenced</span>
+</code></pre></div>
+
+<p><strong>Note:</strong> The checker will automatically remove all temporary files on termination. To prevent this, set an environment variable <code>DEV=true</code>.</p>
+<h2 id="debug">Debug<a class="headerlink" href="#debug" title="Permanent link">&para;</a></h2>
+<p>Enable debugging by setting an environment variable <strong>DEBUG</strong>.</p>
+<div class="codehilite"><pre><span></span><code>$  <span class="nv">DEBUG</span><span class="o">=</span>* node yourProject.js
+</code></pre></div>
+
+<p>Available loggers are:</p>
+<ul>
+<li>index:checkRequestHandling *</li>
+<li>index:ERROR *</li>
+<li>checker:general *</li>
+<li>checker:slice</li>
+<li>checker:compare</li>
+<li>checker:reassemble</li>
+<li>checker:ERROR *</li>
+<li><code>tester</code> (for debugging tests)</li>
+</ul>
+<p>* active by default when used via CLI</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../cli/" class="btn btn-neutral" title="CLI usage"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+      <p>Licensed under Creative Commons CC0 1.0 Universal License.</p>
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/o2r-project/erc-checker/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../cli/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
