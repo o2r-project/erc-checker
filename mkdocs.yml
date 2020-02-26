@@ -14,7 +14,7 @@ repo_url: https://github.com/o2r-project/erc-checker
 repo_name: GitHub
 edit_uri: tree/master/docs/
 site_url: https://o2r.info/erc-checker/
-site_dir: _site
+site_dir: site
 extra_css: [o2r.css]
 markdown_extensions:
     - admonition
