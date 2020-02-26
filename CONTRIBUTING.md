@@ -62,7 +62,7 @@ Documentation is build based on Markdown files in the `/docs` directory and rend
 workon erc-checker-docs
 
 # Install required tools:
-pip install -r requirements-docs.txt
+pip install -r docs/requirements.txt
 
 # Run a local server rendering the docs
 mkdocs serve --verbose
