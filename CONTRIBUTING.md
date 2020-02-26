@@ -62,7 +62,7 @@ Documentation is build based on Markdown files in the `/docs` directory and rend
 workon erc-checker-docs
 
 # Install required tools:
-pip install mkdocs mkdocs-cinder pymdown-extensions pygments
+pip install -r requirements-docs.txt
 
 # Run a local server rendering the docs
 mkdocs serve --verbose
@@ -77,6 +77,11 @@ cd docs/
 
 mkdocs build --clean --verbose
 ```
+
+## Online documentation
+
+The online documentation is automatically built by Travis CI, see file `.travis.yml`.
+For background on the personal access token see [https://github.com/o2r-project/erc-spec#automated-builds](https://github.com/o2r-project/erc-spec#automated-builds).
 
 ## Development hints
 
