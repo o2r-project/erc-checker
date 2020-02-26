@@ -52,7 +52,31 @@ npm test
 
 ## Contribute documentation
 
-TBD
+Documentation is build based on Markdown files in the `/docs` directory and rendered into static HTML pages with [mkdocs]() using Travis CI (see `.travis.yml`).
+
+**View docs locally** using Python 3:
+
+```bash
+# Activate a Python 3 virtual environment
+# mkvirtualenv erc-checker-docs --python=python3.7
+workon erc-checker-docs
+
+# Install required tools:
+pip install mkdocs mkdocs-cinder pymdown-extensions pygments
+
+# Run a local server rendering the docs
+mkdocs serve --verbose
+```
+
+Now view the page at [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+
+Other commands:
+
+```bash
+cd docs/
+
+mkdocs build --clean --verbose
+```
 
 ## Development hints
 

@@ -19,6 +19,11 @@ env:
 
 install:
   - npm install
+  - pip install mkdocs
 
 script:
   - npm run-script testci
+
+after_success:
+  - if [[ $TRAVIS_BRANCH == 'master' && $TRAVIS_PULL_REQUEST == 'false' ]]; then ./.site_build.sh ; fi
+  - if [[ $TRAVIS_BRANCH == 'master' && $TRAVIS_PULL_REQUEST == 'false' ]]; then ./.site_deploy.sh ; fi
