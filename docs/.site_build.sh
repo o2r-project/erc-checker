@@ -8,7 +8,7 @@ mkdir -p site
   git init
   git config user.name "${GH_USER_NAME}"
   git config user.email "${GH_USER_EMAIL}"
-  git remote add upstream "https://${GH_TOKEN}@${GH_REF}"
+  git remote add upstream "https://${GH_TOKEN}@github.com/${GH_SLUG}"
   git fetch upstream
   git reset upstream/gh-pages
 )

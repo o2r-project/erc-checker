@@ -17,7 +17,7 @@ script:
 after_script: # TODO: once the tests complete, we sould use after_success
   - shopt -s expand_aliases
   - |-
-    if [[ "$TRAVIS_OS_NAME" = "linux" && -n "$PYENV_VERSION" && $TRAVIS_BRANCH == 'master' && $TRAVIS_PULL_REQUEST == 'false' ]]; then
+    if [[ "$TRAVIS_OS_NAME" = "linux" && -n "$PYENV_VERSION" && $TRAVIS_BRANCH == 'master' && $TRAVIS_PULL_REQUEST == 'false' && $TRAVIS_REPO_SLUG == $GH_SLUG ]]; then
       pip install -r docs/requirements.txt
       ./docs/.site_build.sh
       ./docs/.site_deploy.sh
@@ -28,5 +28,5 @@ env:
     - SITE_URL: https://o2r.info/erc-checker
     - GH_USER_NAME: "Opening Reproducible Research"
     - GH_USER_EMAIL: openingrr@uni-muenster.de
-    - GH_REF: github.com/o2r-project/erc-checker
+    - GH_SLUG: o2r-project/erc-checker
     - secure: "V/NaKUxFldF7rW++oJ59iioE1PylU464wbhj6HZuW7lAiIx4V/Hi+nlGIrsYNmgc2qdWYx+4fXYg2HUWIgLy9+e1PSZ1V2k4JH1yvJorAqh+HeUBUC4lw+AjKMeaxu/zUERAgqOtOs7jWGSHiDtWwHPC0M7+d5GMra93fcLe+NpIuF9+MzcGCkyij49/lXypQVUYWWBP6ONZG5TdXXVtKMwSi0yWkRfj5jERiKBc1upoxnOCX0vboPeNB2/eBqXcrYCRhnt97kzmbjtDn6yzktj6t5jcZsBtQZve5N8LABcGRbDQIxeYu8u3ghYhuOr+6j1KkuIYLnGwiC0clncGsaGtIRz9rJNsFRxK0BCmonj9+ZkYIJWPYoQtu54Q/fbAGrYlhJPQR4REexaCcP0ltSpykP2Qv/2rlvrRVxTPDrig6YU8ChiMZYydgPyRLSFPd5Je8CYwIS24p4+WizX0AR/Lpx4ZVypoQeycRHH+/BNuh4BlzgVu1Rd3SzwAifu75f35ajN9nyPYqD/GNsSG20LVFtemR4EJjsUzKqgpUKRDe53qH4ztkjecmYfMGLT6Qw/BCXp0dOH5PnV95/NLDwh2Oc8OP3//zykyYJITg+CHE/OW+/PTMG/3DHHbXqDoRo1rwqoK2qdJOuFIeFgr6yeFfgrREehJZL5xsuleyGM="
