@@ -46,18 +46,20 @@ function Metadata(dateStart, comparisonSet, error) {
  *  Config Object
  *
  * 	var checkConfig = {
- * 		directoryMode: Boolean, 			// read papers from directory and subdirectories automatically?  (false: paths for both papers MUST be specified
+ * 		directoryMode: Boolean, 				// read papers from directory and subdirectories automatically?  (false: paths for both papers MUST be specified
  *		pathToMainDirectory: String,
  *		pathToOriginalHTML: String,
  *		pathToReproducedHTML: String,
- *		saveFilesOutputPath: String,		// necessary if diff-HTML or check metadata should be saved
+ *		saveFilesOutputPath: String,			// necessary if diff-HTML or check metadata should be saved
  *		saveDiffHTML: Boolean,
- *		outFileName: String					// default: "diffHTML.html"
+ *		outFileName: String						// default: "diffHTML.html"
  *		saveMetadataJSON: Boolean,
- *		createParentDirectories: Boolean, 	// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
+ *		createParentDirectories: Boolean, 		// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
  *		comparisonSetBaseDir: String
- *		checkFileTypes: Array				// case insensitive list of file endings to be included in Check File List
+ *		checkFileTypes: Array					// case insensitive list of file endings to be included in Check File List
  *		quiet: Boolean
+ *		continueOnImageSizeDifference: Boolean	// if true images get compared after resizing, if false (default) images are not further compared if they 
+ *												// different dimensions 
  * 	};
  */
 
@@ -76,6 +78,8 @@ function ercChecker(config) {
 		checkFileTypes = config.checkFileTypes || ['html', 'htm'],
 		comparisonSetBaseDir = config.comparisonSetBaseDir || ".",
 		quiet = config.quiet;
+		continueOnImageSizeDifference = config.continueOnImageSizeDifference || false;
+
 
 	if (quiet) {
 		debug.enabled = debugERROR.enabled = false;
