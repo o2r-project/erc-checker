@@ -29,7 +29,7 @@ const pixelmatch = require('pixelmatch');
 var rewire = require('rewire'); // for testing unexported functions, see https://stackoverflow.com/questions/14874208/how-to-access-and-test-an-internal-non-exports-function-in-a-node-js-module
 var checkerCore = rewire('../lib/checker.js');
 
-runBlinkDiff = checkerCore.__get__('runBlinkDiff');
+compareImages = checkerCore.__get__('compareImages');
 sliceImagesOutOfHTMLStringsAndCreateBuffers = checkerCore.__get__('sliceImagesOutOfHTMLStringsAndCreateBuffers');
 prepareImagesForComparison = checkerCore.__get__('prepareImagesForComparison');
 
@@ -44,18 +44,13 @@ describe('Testing image comparison', function () {
 
 		try {
 			fs.mkdirSync(path.join(os.tmpdir(), 'erc-checker'));
-		}catch (e) {}
+		} catch (e) { debug(e); }
 
 		before(function (done) {
 			 this.timeout(60000);
 			let inputFiles = [fs.readFileSync(paperA, 'utf-8'), fs.readFileSync(paperB, 'utf-8')];
 
 			sliceImagesOutOfHTMLStringsAndCreateBuffers(inputFiles).then(function (result) { 
-
-				/*var originalImageBuffers2 = result[0],
-					reproducedImageBuffers2 = result[1];
-
-					console.log(originalImageBuffers2[0]); */
 
 			prepareImagesForComparison(result).then(function (result) { 
 		
@@ -72,14 +67,12 @@ describe('Testing image comparison', function () {
 					}
 				}];
 				done();
-				console.log(images);
 			});
 		}); 
 		});
 
 		it('should create a file matching the reference file', function (done) {
-			console.log(images); 
-			runBlinkDiff(images)
+			compareImages(images)
 				.then(
 					function (compareResult) {
 
@@ -95,7 +88,7 @@ describe('Testing image comparison', function () {
 							try {
 								fs.unlinkSync(path.join(tmpDiffOutputPath, "diffImage0.png"));
 								fs.rmdirSync(tmpDiffOutputPath);
-							} catch (e){console.log(e)}
+							} catch (e){ debug(e); }
 
 							let correctPathInResult = (tmpDiffOutputPath.includes('/erc-checker/diffImages_') || tmpDiffOutputPath.includes('\\erc-checker\\diffImages_'));
 
@@ -115,8 +108,8 @@ describe('Testing image comparison', function () {
 						}
 					},
 					function (reason) {
-						console.log("Error comparing images.".yellow)
-						done(new Error (reason));
+						debug("Error comparing images.".yellow);
+						done(new Error(reason));
 					}
 				);
 		});
