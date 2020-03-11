@@ -100,9 +100,9 @@ One of the following configurations __MUST__ be made
     
     ___Note___: HTML files in directories are NOT REQUIRED to be named "_main.html_". However, the checker will pick the first `.html`file found _in alphabetical order_ . 
  
-The tool will compare both HTML files for images only. The images __MUST__ be __base64__-encoded, and encapsulated in an HTML img tag, as generated automatically when rendering an .Rmd file into HTML format. 
+The tool will compare both HTML files for images only. The images __MUST__ be __base64__-encoded, and encapsulated in an HTML img tag, as generated automatically when rendering an `.Rmd` file into HTML format. 
 
-If both HTML papers contain an equal number of images, the checker may write a new HTML file, containing the results of the comparison between all images in the input files, as created by [`blink-diff`](http://yahoo.github.io/blink-diff/), as well as highlighted text differences between both Papers. 
+If both HTML papers contain an equal number of images, the checker may write a new HTML file, containing the results of the comparison between all images in the input files, as created by [`pixelmatch`](https://github.com/mapbox/pixelmatch), as well as highlighted text differences between both papers. 
 
 Further parameters (in order): 
   - `saveFilesOutputPath: String` : third path for file output; necessary if either parameter `saveDiffHTML` or `saveMetadataJSON` is set, otherwise ignored

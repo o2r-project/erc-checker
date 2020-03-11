@@ -36,7 +36,7 @@ prepareImagesForComparison = checkerCore.__get__('prepareImagesForComparison');
 
 describe('Testing image comparison', function () {
 
-	describe('Comparison via blink-diff', function () {
+	describe('Testing image comparison', function () {
 		var paperA = 'test/TestPapers_2/paper_9_img_A.html';
 		var paperB = 'test/TestPapers_2/paper_9_img_C.html';
 

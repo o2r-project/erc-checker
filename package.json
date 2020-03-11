@@ -1,12 +1,13 @@
 {
   "name": "erc-checker",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "CLI tool to validate an ERC (following the o2r specification)",
   "main": "index.js",
   "scripts": {
     "start": "DEBUG='index:*,checker:general,checker:ERROR' node index.js",
     "debug": "DEBUG=* node index.js",
-    "test": "DEBUG='*,-eslint:*' mocha test",
+    "test": "DEBUG='mocha:*' mocha test",
+    "testverbose": "DEBUG='*,-eslint:*' mocha test",
     "testci": "mocha test"
   },
   "repository": {
@@ -53,7 +54,6 @@
   "homepage": "https://github.com/o2r-project/erc-validator#readme",
   "dependencies": {
     "base64-arraybuffer": "^0.2.0",
-    "blink-diff": "^1.0.13",
     "colors": "^1.4.0",
     "commander": "^4.0.1",
     "debug": "^4.1.1",
@@ -68,7 +68,7 @@
     "pngjs": "^3.4.0",
     "promise": "^8.0.3",
     "rewire": "^4.0.1",
-    "sharp": "^0.23.3"
+    "sharp": "^0.25.1"
   },
   "devDependencies": {
     "chai": "^4.2.0",
