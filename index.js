@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * (C) Copyright 2017 o2r-project
  *
