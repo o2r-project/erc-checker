@@ -54,12 +54,10 @@ function Metadata(dateStart, comparisonSet, error) {
  *		saveDiffHTML: Boolean,
  *		outFileName: String						// default: "diffHTML.html"
  *		saveMetadataJSON: Boolean,
- *		createParentDirectories: Boolean, 		// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
+ *		createParentDirectories: Boolean, 		// If outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
  *		comparisonSetBaseDir: String
  *		checkFileTypes: Array					// case insensitive list of file endings to be included in Check File List
  *		quiet: Boolean
- *		continueOnImageSizeDifference: Boolean	// if true images get compared after resizing, if false (default) images are not further compared if they 
- *												// different dimensions 
  * 	};
  */
 
@@ -78,7 +76,6 @@ function ercChecker(config) {
 		checkFileTypes = config.checkFileTypes || ['html', 'htm'],
 		comparisonSetBaseDir = config.comparisonSetBaseDir || ".",
 		quiet = config.quiet;
-		continueOnImageSizeDifference = config.continueOnImageSizeDifference || false;
 
 
 	if (quiet) {

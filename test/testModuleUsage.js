@@ -33,7 +33,7 @@ const checkConfig = {
 	ercID: "",
 	saveMetadataJSON: false,
 	createParentDirectories: false, 	// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
-	quiet: false
+	quiet: false, 
 };
 
 describe('Using ERC-Checker as node-module', function () {

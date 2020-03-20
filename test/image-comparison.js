@@ -58,6 +58,7 @@ describe('Testing image comparison', function () {
 					console.log(originalImageBuffers2[0]); */
 
 			prepareImagesForComparison(result).then(function (result) { 
+				console.log(result); 
 		
 			  // es wird ein Buffer für den Test ausgewählt 
 			  var originalImageBuffer = result.images[0].originalImage.buffer; 
