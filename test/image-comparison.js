@@ -30,7 +30,7 @@ var rewire = require('rewire'); // for testing unexported functions, see https:/
 var checkerCore = rewire('../lib/checker.js');
 
 runBlinkDiff = checkerCore.__get__('runBlinkDiff');
-sliceImagesOutOfHTMLStringsAndCreateBuffers = checkerCore.__get__('sliceImagesOutOfHTMLStringsAndCreateBuffers');
+extractImagesOutOfHTMLStringsAndCreateBuffers = checkerCore.__get__('extractImagesOutOfHTMLStringsAndCreateBuffers');
 prepareImagesForComparison = checkerCore.__get__('prepareImagesForComparison');
 
 
@@ -50,7 +50,8 @@ describe('Testing image comparison', function () {
 			 this.timeout(60000);
 			let inputFiles = [fs.readFileSync(paperA, 'utf-8'), fs.readFileSync(paperB, 'utf-8')];
 
-			sliceImagesOutOfHTMLStringsAndCreateBuffers(inputFiles).then(function (result) { 
+			extractImagesOutOfHTMLStringsAndCreateBuffers(inputFiles).then(function (result) { 
+				console.log(result); 
 
 				/*var originalImageBuffers2 = result[0],
 					reproducedImageBuffers2 = result[1];
@@ -83,7 +84,7 @@ describe('Testing image comparison', function () {
 			runBlinkDiff(images)
 				.then(
 					function (compareResult) {
-
+						console.log(compareResult); 
 						let result = compareResult[0].diffImages;
 
 						if(result != undefined && result.length === images.length && result[0].buffer instanceof Buffer) {

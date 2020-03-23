@@ -261,7 +261,7 @@ Available DEBUG loggers are:
 * index:checkRequestHandling  *
 * index:ERROR  *
 * checker:general *
-* checker:slice
+* checker:extract
 * checker:compare
 * checker:reassemble
 * checker:ERROR  *
