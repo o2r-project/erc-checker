@@ -59,8 +59,7 @@ describe('Testing image comparison', function () {
 						reproducedImageBuffers2 = result[1];
 	
 						console.log(originalImageBuffers2[0]); */
-
-
+						
 					// es wird ein Buffer für den Test ausgewählt 
 					var originalImageBuffer = result.images[0].originalImage.buffer;
 					var reproducedImageBuffer = result.images[0].reproducedImage.buffer;
