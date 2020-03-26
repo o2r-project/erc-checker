@@ -44,84 +44,83 @@ describe('Testing image comparison', function () {
 
 		try {
 			fs.mkdirSync(path.join(os.tmpdir(), 'erc-checker'));
-		}catch (e) {}
+		} catch (e) { }
 
 		before(function (done) {
-			 this.timeout(60000);
+			this.timeout(60000);
 			let inputFiles = [fs.readFileSync(paperA, 'utf-8'), fs.readFileSync(paperB, 'utf-8')];
 
-			extractImagesOutOfHTMLStringsAndCreateBuffers(inputFiles).then(function (result) { 
-				console.log(result); 
+			extractImagesOutOfHTMLStringsAndCreateBuffers(inputFiles)
+				.then(prepareImagesForComparison)
+				.then(function (result) {
+					console.log(result);
 
-				/*var originalImageBuffers2 = result[0],
-					reproducedImageBuffers2 = result[1];
+					/*var originalImageBuffers2 = result[0],
+						reproducedImageBuffers2 = result[1];
+	
+						console.log(originalImageBuffers2[0]); */
 
-					console.log(originalImageBuffers2[0]); */
 
-			prepareImagesForComparison(result).then(function (result) { 
-		
-				console.log(result);
-			  // es wird ein Buffer für den Test ausgewählt 
-			  var originalImageBuffer = result.images[0].originalImage.buffer; 
-			  var reproducedImageBuffer = result.images[0].reproducedImage.buffer; 
-			
-				images = [{
-					originalImage: {
-						buffer: originalImageBuffer // originalImageBuffers2[0]
-					},
-					reproducedImage: {
-						buffer: reproducedImageBuffer // reproducedImageBuffers2[0]
-					}
-				}];
-				done();
-				console.log(images);
-			});
-		}); 
+					// es wird ein Buffer für den Test ausgewählt 
+					var originalImageBuffer = result.images[0].originalImage.buffer;
+					var reproducedImageBuffer = result.images[0].reproducedImage.buffer;
+
+					images = [{
+						originalImage: {
+							buffer: originalImageBuffer // originalImageBuffers2[0]
+						},
+						reproducedImage: {
+							buffer: reproducedImageBuffer // reproducedImageBuffers2[0]
+						}
+					}];
+					done();
+					console.log(images);	
 		});
+	});
 
-		it('should create a file matching the reference file', function (done) {
-			console.log(images); 
-			runBlinkDiff(images)
-				.then(
-					function (compareResult) {
-						console.log(compareResult); 
-						let result = compareResult[0].diffImages;
+	it('should create a file matching the reference file', function (done) {
+		console.log(images);
+		runBlinkDiff(images)
+			.then(
+				function (compareResult) {
+					console.log(compareResult);
+					let result = compareResult[0].diffImages;
 
-						if(result != undefined && result.length === images.length && result[0].buffer instanceof Buffer) {
+					if (result != undefined && result.length === images.length && result[0].buffer instanceof Buffer) {
 
-							let tmpDiffOutputPath = compareResult[1];
+						let tmpDiffOutputPath = compareResult[1];
 
-							let testImage = fs.readFileSync("./test/img/testDiffImg.png"),
-								newDiffImage = fs.readFileSync(path.join(tmpDiffOutputPath, "diffImage0.png"));
+						let testImage = fs.readFileSync("./test/img/testDiffImg.png"),
+							newDiffImage = fs.readFileSync(path.join(tmpDiffOutputPath, "diffImage0.png"));
 
-							try {
-								fs.unlinkSync(path.join(tmpDiffOutputPath, "diffImage0.png"));
-								fs.rmdirSync(tmpDiffOutputPath);
-							} catch (e){console.log(e)}
+						try {
+							fs.unlinkSync(path.join(tmpDiffOutputPath, "diffImage0.png"));
+							fs.rmdirSync(tmpDiffOutputPath);
+						} catch (e) { console.log(e) }
 
-							let correctPathInResult = (tmpDiffOutputPath.includes('/erc-checker/diffImages_') || tmpDiffOutputPath.includes('\\erc-checker\\diffImages_'));
+						let correctPathInResult = (tmpDiffOutputPath.includes('/erc-checker/diffImages_') || tmpDiffOutputPath.includes('\\erc-checker\\diffImages_'));
 
-							if (testImage.equals(newDiffImage) && correctPathInResult) {
-								done();
-							}
-							else{
-								done(new Error ("Diff Image differs from provided test image."));
-							}
+						if (testImage.equals(newDiffImage) && correctPathInResult) {
+							done();
 						}
 						else {
-							try {
-								fs.unlinkSync(path.join(compareResult[1], "diffImage0.png"));
-							}
-							catch(e) {}
-							done(new Error ("Wrong result."))
+							done(new Error("Diff Image differs from provided test image."));
 						}
-					},
-					function (reason) {
-						console.log("Error comparing images.".yellow)
-						done(new Error (reason));
 					}
-				);
-		});
-	})
+					else {
+						try {
+							fs.unlinkSync(path.join(compareResult[1], "diffImage0.png"));
+						}
+						catch (e) { }
+						done(new Error("Wrong result."))
+					}
+				},
+				function (reason) {
+					console.log("Error comparing images.".yellow)
+					done(new Error(reason));
+				}
+			);
+	});
+})
 
 });
