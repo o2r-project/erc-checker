@@ -38,7 +38,7 @@ describe('Testing image comparison', function () {
 
 	describe('Comparison via blink-diff', function () {
 		var paperA = 'test/TestPapers_2/paper_9_img_A.html';
-		var paperB = 'test/TestPapers_2/paper_9_img_C.html';
+		var paperB = 'test/TestPapers_2/paper_9_img_D.html';
 
 		var images;
 
@@ -54,15 +54,15 @@ describe('Testing image comparison', function () {
 				.then(prepareImagesForComparison)
 				.then(function (result) {
 					console.log(result);
-
+	
 					/*var originalImageBuffers2 = result[0],
 						reproducedImageBuffers2 = result[1];
 	
 						console.log(originalImageBuffers2[0]); */
-						
+
 					// es wird ein Buffer für den Test ausgewählt 
-					var originalImageBuffer = result.images[0].originalImage.buffer;
-					var reproducedImageBuffer = result.images[0].reproducedImage.buffer;
+					var originalImageBuffer = result.images[1].originalImage.buffer;
+					var reproducedImageBuffer = result.images[1].reproducedImage.buffer;
 
 					images = [{
 						originalImage: {
@@ -73,53 +73,53 @@ describe('Testing image comparison', function () {
 						}
 					}];
 					done();
-					console.log(images);	
+					console.log(images);
+				});
 		});
-	});
 
-	it('should create a file matching the reference file', function (done) {
-		console.log(images);
-		runBlinkDiff(images)
-			.then(
-				function (compareResult) {
-					console.log(compareResult);
-					let result = compareResult[0].diffImages;
+		it('should create a file matching the reference file', function (done) {
+			console.log(images);
+			runBlinkDiff(images)
+				.then(
+					function (compareResult) {
+						console.log(compareResult);
+						let result = compareResult[0].diffImages;
 
-					if (result != undefined && result.length === images.length && result[0].buffer instanceof Buffer) {
+						if (result != undefined && result.length === images.length && result[0].buffer instanceof Buffer) {
 
-						let tmpDiffOutputPath = compareResult[1];
+							let tmpDiffOutputPath = compareResult[1];
 
-						let testImage = fs.readFileSync("./test/img/testDiffImg.png"),
-							newDiffImage = fs.readFileSync(path.join(tmpDiffOutputPath, "diffImage0.png"));
+							let testImage = fs.readFileSync("./test/img/testDiffImg.png"),
+								newDiffImage = fs.readFileSync(path.join(tmpDiffOutputPath, "diffImage0.png"));
 
-						try {
-							fs.unlinkSync(path.join(tmpDiffOutputPath, "diffImage0.png"));
-							fs.rmdirSync(tmpDiffOutputPath);
-						} catch (e) { console.log(e) }
+							try {
+								fs.unlinkSync(path.join(tmpDiffOutputPath, "diffImage0.png"));
+								fs.rmdirSync(tmpDiffOutputPath);
+							} catch (e) { console.log(e) }
 
-						let correctPathInResult = (tmpDiffOutputPath.includes('/erc-checker/diffImages_') || tmpDiffOutputPath.includes('\\erc-checker\\diffImages_'));
+							let correctPathInResult = (tmpDiffOutputPath.includes('/erc-checker/diffImages_') || tmpDiffOutputPath.includes('\\erc-checker\\diffImages_'));
 
-						if (testImage.equals(newDiffImage) && correctPathInResult) {
-							done();
+							if (testImage.equals(newDiffImage) && correctPathInResult) {
+								done();
+							}
+							else {
+								done(new Error("Diff Image differs from provided test image."));
+							}
 						}
 						else {
-							done(new Error("Diff Image differs from provided test image."));
+							try {
+								fs.unlinkSync(path.join(compareResult[1], "diffImage0.png"));
+							}
+							catch (e) { }
+							done(new Error("Wrong result."))
 						}
+					},
+					function (reason) {
+						console.log("Error comparing images.".yellow)
+						done(new Error(reason));
 					}
-					else {
-						try {
-							fs.unlinkSync(path.join(compareResult[1], "diffImage0.png"));
-						}
-						catch (e) { }
-						done(new Error("Wrong result."))
-					}
-				},
-				function (reason) {
-					console.log("Error comparing images.".yellow)
-					done(new Error(reason));
-				}
-			);
-	});
-})
+				);
+		});
+	})
 
 });
