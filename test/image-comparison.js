@@ -53,14 +53,17 @@ describe('Testing image comparison', function () {
 			extractImagesOutOfHTMLStringsAndCreateBuffers(inputFiles)
 				.then(prepareImagesForComparison)
 				.then(function (result) {
-					console.log(result);
-	
+					var buffer = result;
+					console.log(buffer);
+
 					/*var originalImageBuffers2 = result[0],
 						reproducedImageBuffers2 = result[1];
 	
 						console.log(originalImageBuffers2[0]); */
 
 					// es wird ein Buffer für den Test ausgewählt 
+					console.log(result.images[1].originalImage.buffer);
+
 					var originalImageBuffer = result.images[1].originalImage.buffer;
 					var reproducedImageBuffer = result.images[1].reproducedImage.buffer;
 
