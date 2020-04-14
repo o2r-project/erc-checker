@@ -47,46 +47,33 @@ describe('Testing image comparison', function () {
 		} catch (e) { debug(e); }
 
 		before(function (done) {
-			this.timeout(60000);
+			//this.timeout(60000);
 			let inputFiles = [fs.readFileSync(paperA, 'utf-8'), fs.readFileSync(paperB, 'utf-8')];
 
 			extractImagesOutOfHTMLStringsAndCreateBuffers(inputFiles)
 				.then(prepareImagesForComparison)
 				.then(function (result) {
-					var buffer = result;
-					console.log(buffer);
-
-					/*var originalImageBuffers2 = result[0],
-						reproducedImageBuffers2 = result[1];
-
-						console.log(originalImageBuffers2[0]); */
-
-					// es wird ein Buffer für den Test ausgewählt
-
-
+			
 					var originalImageBuffer = result.images[1].originalImage.buffer;
 					var reproducedImageBuffer = result.images[1].reproducedImage.buffer;
 
 
 					images = [{
 						originalImage: {
-							buffer: originalImageBuffer // originalImageBuffers2[0]
+							buffer: originalImageBuffer 
 						},
 						reproducedImage: {
-							buffer: reproducedImageBuffer // reproducedImageBuffers2[0]
+							buffer: reproducedImageBuffer 
 						}
 					}];
 					done();
-					console.log(images);
 				});
 		});
 
 		it('should create a file matching the reference file', function (done) {
-			console.log(images);
 			compareImages(images)
 				.then(
 					function (compareResult) {
-						console.log(compareResult);
 						let result = compareResult[0].diffImages;
 
 						if (result != undefined && result.length === images.length && result[0].buffer instanceof Buffer) {
@@ -99,7 +86,7 @@ describe('Testing image comparison', function () {
 							try {
 								fs.unlinkSync(path.join(tmpDiffOutputPath, "diffImage0.png"));
 								fs.rmdirSync(tmpDiffOutputPath);
-							} catch (e){ debug(e); }
+							} catch (e) { debug(e); }
 
 							let correctPathInResult = (tmpDiffOutputPath.includes('/erc-checker/diffImages_') || tmpDiffOutputPath.includes('\\erc-checker\\diffImages_'));
 
