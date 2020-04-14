@@ -44,7 +44,7 @@ describe('Testing image comparison', function () {
 
 		try {
 			fs.mkdirSync(path.join(os.tmpdir(), 'erc-checker'));
-		} catch (e) { }
+		} catch (e) { debug(e); }
 
 		before(function (done) {
 			this.timeout(60000);
@@ -58,10 +58,10 @@ describe('Testing image comparison', function () {
 
 					/*var originalImageBuffers2 = result[0],
 						reproducedImageBuffers2 = result[1];
-	
+
 						console.log(originalImageBuffers2[0]); */
 
-					// es wird ein Buffer für den Test ausgewählt 
+					// es wird ein Buffer für den Test ausgewählt
 
 
 					var originalImageBuffer = result.images[1].originalImage.buffer;
@@ -99,7 +99,7 @@ describe('Testing image comparison', function () {
 							try {
 								fs.unlinkSync(path.join(tmpDiffOutputPath, "diffImage0.png"));
 								fs.rmdirSync(tmpDiffOutputPath);
-							} catch (e) { console.log(e) }
+							} catch (e){ debug(e); }
 
 							let correctPathInResult = (tmpDiffOutputPath.includes('/erc-checker/diffImages_') || tmpDiffOutputPath.includes('\\erc-checker\\diffImages_'));
 
@@ -119,7 +119,7 @@ describe('Testing image comparison', function () {
 						}
 					},
 					function (reason) {
-						console.log("Error comparing images.".yellow)
+						debug("Error comparing images.".yellow);
 						done(new Error(reason));
 					}
 				);
