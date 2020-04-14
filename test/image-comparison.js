@@ -29,14 +29,14 @@ const pixelmatch = require('pixelmatch');
 var rewire = require('rewire'); // for testing unexported functions, see https://stackoverflow.com/questions/14874208/how-to-access-and-test-an-internal-non-exports-function-in-a-node-js-module
 var checkerCore = rewire('../lib/checker.js');
 
-runBlinkDiff = checkerCore.__get__('runBlinkDiff');
+compareImages = checkerCore.__get__('compareImages');
 extractImagesOutOfHTMLStringsAndCreateBuffers = checkerCore.__get__('extractImagesOutOfHTMLStringsAndCreateBuffers');
 prepareImagesForComparison = checkerCore.__get__('prepareImagesForComparison');
 
 
 describe('Testing image comparison', function () {
 
-	describe('Comparison via blink-diff', function () {
+	describe('Testing image comparison', function () {
 		var paperA = 'test/TestPapers_2/paper_9_img_A.html';
 		var paperB = 'test/TestPapers_2/paper_9_img_D.html';
 
@@ -62,10 +62,11 @@ describe('Testing image comparison', function () {
 						console.log(originalImageBuffers2[0]); */
 
 					// es wird ein Buffer für den Test ausgewählt 
-					console.log(result.images[1].originalImage.buffer);
+
 
 					var originalImageBuffer = result.images[1].originalImage.buffer;
 					var reproducedImageBuffer = result.images[1].reproducedImage.buffer;
+
 
 					images = [{
 						originalImage: {
@@ -82,7 +83,7 @@ describe('Testing image comparison', function () {
 
 		it('should create a file matching the reference file', function (done) {
 			console.log(images);
-			runBlinkDiff(images)
+			compareImages(images)
 				.then(
 					function (compareResult) {
 						console.log(compareResult);
