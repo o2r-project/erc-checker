@@ -254,7 +254,7 @@ describe('Using ERC-Checker as node-module', function () {
 			}).timeout(30000);
 		});
 	});
-
+	
 	describe('With "saveMetadataJSON" flag set to "true", and "saveFilesOutputPath" given in the config object', function () {
 
 		describe('for a check on two papers containing equal amount of, but differing images, and "createParentDirectories" flag set', function () {
@@ -284,11 +284,14 @@ describe('Using ERC-Checker as node-module', function () {
 							errorReadingOutputFile = e;
 						}
 
+						resMeta = JSON.stringify(resMeta);
+						savedJSONFileContent = JSON.stringify(savedJSONFileContent);
+
 						assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: " + resultMetadata.errors);
 
 						assert.isTrue(outputFileCreated, "Error: Output file was not created or could not be read: " + errorReadingOutputFile);
 
-						assert.deepEqual(resMeta, savedJSONFileContent, "Saved metadata.json file content varries from original check result metadata:");
+						assert.deepStrictEqual(resMeta, savedJSONFileContent, "Saved metadata.json file content varries from original check result metadata:");
 
 						assert.isFalse(errorReadingOutputFile, "Error reading output file: " + errorReadingOutputFile);
 					},
@@ -298,7 +301,7 @@ describe('Using ERC-Checker as node-module', function () {
 			}).timeout(10000);
 		})
 	});
-
+	
 	describe('With "saveDiffHTML" flag set to "true", and "saveFilesOutputPath" given in the config object', function () {
 
 		describe('for a check on two papers containing equal amount of, but differing images, and "createParentDirectories" flag set', function () {
