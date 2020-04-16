@@ -24,7 +24,6 @@ const debug = require('debug')('tester');
 const colors = require('colors');
 
 const PNG = require('pngjs').PNG;
-const pixelmatch = require('pixelmatch');
 
 var rewire = require('rewire'); // for testing unexported functions, see https://stackoverflow.com/questions/14874208/how-to-access-and-test-an-internal-non-exports-function-in-a-node-js-module
 var checkerCore = rewire('../lib/checker.js');
