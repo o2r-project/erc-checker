@@ -53,6 +53,7 @@
   },
   "homepage": "https://github.com/o2r-project/erc-validator#readme",
   "dependencies": {
+    "ajv": "^5.5.2",
     "base64-arraybuffer": "^0.2.0",
     "colors": "^1.4.0",
     "commander": "^4.1.1",
