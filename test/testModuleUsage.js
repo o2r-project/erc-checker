@@ -33,7 +33,7 @@ const checkConfig = {
 	ercID: "",
 	saveMetadataJSON: false,
 	createParentDirectories: false, 	// IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
-	quiet: false, 
+	quiet: false,
 };
 
 describe('Using ERC-Checker as node-module', function () {
@@ -123,26 +123,26 @@ describe('Using ERC-Checker as node-module', function () {
 		it("should find text differences", function () {
 			return checker(config)
 				.then(function (metadata) {
-						assert.isAbove(metadata.numTextDifferrences, 0, "The number of textual differences should be larger than zero.");
-					}, function (error) {
-						assert.ifError(error);
-					}
+					assert.isAbove(metadata.numTextDifferrences, 0, "The number of textual differences should be larger than zero.");
+				}, function (error) {
+					assert.ifError(error);
+				}
 				);
 		}).timeout(20000);
 
 		it("should fail the check", function () {
 			return checker(config)
 				.then(function (metadata) {
-						assert.isFalse(metadata.checkSuccessful, 'The check failed');
-					}
+					assert.isFalse(metadata.checkSuccessful, 'The check failed');
+				}
 				);
 		}).timeout(10000);
 
 		it("should not have any errors", function () {
 			return checker(config)
 				.then(function (metadata) {
-						assert.equal(0, metadata.errors.length, "No errors should have been produced.");
-					}
+					assert.equal(0, metadata.errors.length, "No errors should have been produced.");
+				}
 				);
 		});
 	});
@@ -157,12 +157,12 @@ describe('Using ERC-Checker as node-module', function () {
 
 				return checker(config)
 					.then(function (metadata) {
-							assert.isDefined(metadata, "No resolve metadata");
-							assert.isTrue(metadata.checkSuccessful, "check should not have found differences, yet it did");
-							assert.isUndefined(metadata.errors[0], "There should have been no errors, instead: " + JSON.stringify(metadata.errors));
-						}, function (reason) {
-							assert.ifError(reason);
-						}
+						assert.isDefined(metadata, "No resolve metadata");
+						assert.isTrue(metadata.checkSuccessful, "check should not have found differences, yet it did");
+						assert.isUndefined(metadata.errors[0], "There should have been no errors, instead: " + JSON.stringify(metadata.errors));
+					}, function (reason) {
+						assert.ifError(reason);
+					}
 					);
 			}).timeout(10000);
 		});
@@ -176,18 +176,18 @@ describe('Using ERC-Checker as node-module', function () {
 				return checker(config)
 					.then(function (metadata) {
 
-							assert.isFalse(metadata.checkSuccessful, "Paper contains differences, check should find them and be unsuccessful.");
+						assert.isFalse(metadata.checkSuccessful, "Paper contains differences, check should find them and be unsuccessful.");
 
-							assert.isUndefined(metadata.errors[0], "Encountered Errors should be empty, but contained  at least: " + metadata.errors[0] + " and " + metadata.errors[1] + " and " + metadata.errors[2]);
-							assert.strictEqual(metadata.errors.length, 0, "Encountered Errors should be empty, but contained " + metadata.errors.length + " errors.");
-							assert.strictEqual(metadata.images.length, 2, "Paper contains 9 images, but only " + metadata.images.length + " were compared / featured in result object.");
-							assert.isString(metadata.display.diff, "Resulting Diff HTML is not returned correctly (not a String)");
+						assert.isUndefined(metadata.errors[0], "Encountered Errors should be empty, but contained  at least: " + metadata.errors[0] + " and " + metadata.errors[1] + " and " + metadata.errors[2]);
+						assert.strictEqual(metadata.errors.length, 0, "Encountered Errors should be empty, but contained " + metadata.errors.length + " errors.");
+						assert.strictEqual(metadata.images.length, 2, "Paper contains 9 images, but only " + metadata.images.length + " were compared / featured in result object.");
+						assert.isString(metadata.display.diff, "Resulting Diff HTML is not returned correctly (not a String)");
 
-							assert.strictEqual(metadata.images[0].compareResults.differences, 0, "Image #1 is equal in both test papers, but differences were found.");
-							assert.notStrictEqual(metadata.images[1].compareResults.differences, 0, "Images #2 in test papers are different, yet no differences were found.");
-						}, function (reason) {
-							assert.ifError(reason);
-						}
+						assert.strictEqual(metadata.images[0].compareResults.differences, 0, "Image #1 is equal in both test papers, but differences were found.");
+						assert.notStrictEqual(metadata.images[1].compareResults.differences, 0, "Images #2 in test papers are different, yet no differences were found.");
+					}, function (reason) {
+						assert.ifError(reason);
+					}
 					);
 			}).timeout(10000);
 		});
@@ -201,21 +201,21 @@ describe('Using ERC-Checker as node-module', function () {
 
 				return checker(config)
 					.then(function (metadata) {
-							let i = 1;
-							for (let image of metadata.images) {
-								assert.notStrictEqual(image.compareResults.differences, 0, "Image #" + i + " of 9 in test paper has differences, but were not found.");
-								i++;
-							}
-
-							assert.isFalse(metadata.checkSuccessful, "Paper contains differences, check should find them and be unsuccessful.");
-
-							assert.isUndefined(metadata.errors[0], "Encountered Errors should be empty, but contained  at least: " + metadata.errors[0]);
-							assert.strictEqual(metadata.errors.length, 0, "Encountered Errors should be empty, but contained " + metadata.errors.length + " errors.");
-							assert.strictEqual(metadata.images.length, 9, "Paper contains 9 images, but only " + metadata.images.length + " were compared / featured in result object.");
-							assert.isString(metadata.display.diff, "Resulting Diff HTML is not returned correctly (not a String)");
-						}, function (reason) {
-							assert.ifError(reason);
+						let i = 1;
+						for (let image of metadata.images) {
+							assert.notStrictEqual(image.compareResults.differences, 0, "Image #" + i + " of 9 in test paper has differences, but were not found.");
+							i++;
 						}
+
+						assert.isFalse(metadata.checkSuccessful, "Paper contains differences, check should find them and be unsuccessful.");
+
+						assert.isUndefined(metadata.errors[0], "Encountered Errors should be empty, but contained  at least: " + metadata.errors[0]);
+						assert.strictEqual(metadata.errors.length, 0, "Encountered Errors should be empty, but contained " + metadata.errors.length + " errors.");
+						assert.strictEqual(metadata.images.length, 9, "Paper contains 9 images, but only " + metadata.images.length + " were compared / featured in result object.");
+						assert.isString(metadata.display.diff, "Resulting Diff HTML is not returned correctly (not a String)");
+					}, function (reason) {
+						assert.ifError(reason);
+					}
 					);
 			}).timeout(30000);
 		});
@@ -254,7 +254,7 @@ describe('Using ERC-Checker as node-module', function () {
 			}).timeout(30000);
 		});
 	});
-	
+
 	describe('With "saveMetadataJSON" flag set to "true", and "saveFilesOutputPath" given in the config object', function () {
 
 		describe('for a check on two papers containing equal amount of, but differing images, and "createParentDirectories" flag set', function () {
@@ -268,32 +268,44 @@ describe('Using ERC-Checker as node-module', function () {
 				configSaveMeta.createParentDirectories = true;
 
 				return checker(configSaveMeta)
+					.then(function () {
+						let jsonOutpath = path.join(configSaveMeta.saveFilesOutputPath, "metadata.json");
+
+						try {
+							fs.accessSync(jsonOutpath);
+						}
+						catch (e) {
+							assert.fail('Error reading output file:' + e);
+						}
+					},
+						function (reason) {
+							assert.ifError(reason);
+						});
+			}).timeout(10000);
+		});
+
+		describe('for a check on two papers containing equal amount of, but differing images, and "createParentDirectories" flag set', function () {
+			it('should successfully write a "metadata.json" which is matching a reference file', function () {
+				let configSaveMeta = Object.assign({}, checkConfig);
+				configSaveMeta.pathToOriginalHTML = testStringA;
+				configSaveMeta.pathToReproducedHTML = testStringB;
+				configSaveMeta.saveFilesOutputPath = tmp.dirSync().name;
+				configSaveMeta.saveMetadataJSON = true;
+				configSaveMeta.saveDiffHTML = true;
+				configSaveMeta.createParentDirectories = true;
+
+				return checker(configSaveMeta)
 					.then(function (resultMetadata) {
-						let outputFileCreated = false;
-						let errorReadingOutputFile = false;
 						let jsonOutpath = path.join(configSaveMeta.saveFilesOutputPath, "metadata.json");
 						let savedJSONFileContent;
 						let resMeta = resultMetadata;
 
-						try {
-							fs.accessSync(jsonOutpath);
-							outputFileCreated = true;
-							savedJSONFileContent = JSON.parse(fs.readFileSync(jsonOutpath, 'utf-8'));
-						}
-						catch (e) {
-							errorReadingOutputFile = e;
-						}
+						savedJSONFileContent = JSON.parse(fs.readFileSync(jsonOutpath, 'utf-8'));
 
 						resMeta = JSON.stringify(resMeta);
 						savedJSONFileContent = JSON.stringify(savedJSONFileContent);
 
-						assert.strictEqual(resultMetadata.errors.length, 0, "Check should not have produced Errors, yet it did: " + resultMetadata.errors);
-
-						assert.isTrue(outputFileCreated, "Error: Output file was not created or could not be read: " + errorReadingOutputFile);
-
 						assert.deepStrictEqual(resMeta, savedJSONFileContent, "Saved metadata.json file content varries from original check result metadata:");
-
-						assert.isFalse(errorReadingOutputFile, "Error reading output file: " + errorReadingOutputFile);
 					},
 						function (reason) {
 							assert.ifError(reason);
@@ -301,7 +313,7 @@ describe('Using ERC-Checker as node-module', function () {
 			}).timeout(10000);
 		})
 	});
-	
+
 	describe('With "saveDiffHTML" flag set to "true", and "saveFilesOutputPath" given in the config object', function () {
 
 		describe('for a check on two papers containing equal amount of, but differing images, and "createParentDirectories" flag set', function () {
@@ -393,7 +405,7 @@ describe('Using ERC-Checker as node-module', function () {
 	});
 
 	describe("Running the erc-checker in an environment with a `.ercignore` file and/or with acceptable file endings specified in `config` object, the ComparisonSet", function () {
-		
+
 		it("should only contain files, which have the required file ending", function () {
 			let configTestIgnore = Object.assign({}, checkConfig);
 			configTestIgnore.pathToOriginalHTML = "test_ignore8.htm";
@@ -422,7 +434,7 @@ describe('Using ERC-Checker as node-module', function () {
 			configTestIgnore.pathToReproducedHTML = "test_ignore10.html";
 			configTestIgnore.comparisonSetBaseDir = "test/test_ercignore";
 			configTestIgnore.checkFileTypes = ['html', 'htm', 'mp3'];
-			
+
 			return checker(configTestIgnore)
 				.then(function (resultMetadata) {
 					assert.strictEqual(resultMetadata.errors.length, 0);
