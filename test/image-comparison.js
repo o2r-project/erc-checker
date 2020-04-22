@@ -46,7 +46,6 @@ describe('Testing image comparison', function () {
 		} catch (e) { debug(e); }
 
 		before(function (done) {
-			//this.timeout(60000);
 			let inputFiles = [fs.readFileSync(paperA, 'utf-8'), fs.readFileSync(paperB, 'utf-8')];
 
 			extractImagesOutOfHTMLStringsAndCreateBuffers(inputFiles)
