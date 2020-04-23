@@ -2,3 +2,8 @@
 .vscode
 etc
 test
+docs
+_site
+appveyor.yml
+mkdocs.yml
+requirements-docs.txt

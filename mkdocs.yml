@@ -1,0 +1,27 @@
+site_name: "erc-checker"
+site_author: "o2r team"
+site_description: "Documentation for o2r's erc-checker tool"
+copyright: "Licensed under Creative Commons CC0 1.0 Universal License."
+nav:
+    - Home: index.md
+    - CLI usage: cli.md
+    - npm Module: module.md
+theme:
+    name: readthedocs
+    custom_dir: custom_theme
+docs_dir: docs
+repo_url: https://github.com/o2r-project/erc-checker
+repo_name: GitHub
+edit_uri: tree/master/docs/
+site_url: https://o2r.info/erc-checker/
+site_dir: site
+extra_css: [o2r.css]
+markdown_extensions:
+    - admonition
+    - codehilite:
+        guess_lang: False
+    - toc:
+        permalink: True
+    - def_list
+    - pymdownx.tilde
+    - pymdownx.superfences # need >= 5.0

@@ -278,10 +278,22 @@ npm version {major,minor,bugfix}
 npm publish
 ```
 
+## Documentation
+
+See [https://o2r.info/erc-checker](https://o2r.info/erc-checker).
+
+## Contribute
+
+All help is welcome: asking questions, providing documentation, testing, or even development.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+Please note that this project is released with a [Contributor Code of Conduct](CONDUCT.md).
+By participating in this project you agree to abide by its terms.
+
 ## License
 
-o2r checker is licensed under Apache License, Version 2.0, see file LICENSE.
+o2r checker is licensed under Apache License, Version 2.0, see file `LICENSE`.
 
-Copyright (C) 2018 - o2r project. 
+Copyright (C) 2020 - o2r project. 
 
-![o2r](https://avatars3.githubusercontent.com/u/16774537?v=3&s=200)
+[![o2r](https://avatars3.githubusercontent.com/u/16774537?v=3&s=200)](https://o2r.info)
