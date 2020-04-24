@@ -29,6 +29,9 @@ npm version {major,minor,bugfix}
 npm publish
 ```
 
+Add version tag locally, e.g., `v.1.2.3`, and push to remotes.
+Then create a new release on GitHub.
+
 ## License
 
 o2r checker is licensed under Apache License, Version 2.0, see file `LICENSE`.
