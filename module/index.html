@@ -110,7 +110,7 @@
 This object contains a function that takes two paths to HTML files and optional further parameters, and returns a JavaScript Promise. </p>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
 <p>The checker is executed with a <code>config</code> object (<code>JSON</code>).</p>
-<div class="codehilite"><pre><span></span><code>    <span class="kd">var</span> <span class="nx">config</span> <span class="o">=</span> <span class="p">{</span>
+<div class="highlight"><pre><span></span><code>    <span class="kd">var</span> <span class="nx">config</span> <span class="o">=</span> <span class="p">{</span>
         <span class="nx">directoryMode</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>             <span class="c1">// default: false --- read papers from directories automatically?  (false: paths for both papers MUST be specified; true: path to directory MUST be specified)</span>
         <span class="nx">pathToMainDirectory</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
         <span class="nx">pathToOriginalHTML</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
@@ -131,7 +131,7 @@ This object contains a function that takes two paths to HTML files and optional 
 <p>One of the following configurations <strong>MUST</strong> be made
  - <code>directoryMode = false</code> and <code>pathToOriginalHTML</code> &amp;&amp; <code>pathToReproducedHTML</code> valid paths to HTML files, <em>or</em>
  - <code>directoryMode = true</code> &amp;&amp; <code>pathToMainDirectory</code> valid path to a directory structure as seen below:
-   <div class="codehilite"><pre><span></span><code>   target_directory    
+   <div class="highlight"><pre><span></span><code>   target_directory    
    │
    └───original
    │    │   main.html
@@ -160,7 +160,7 @@ The images <strong>MUST</strong> be <strong>base64</strong>-encoded, and encapsu
 <p>Any errors during execution cause the returned JSPromise to be <strong>rejected</strong>. Errors will be caught and
  - logged out to the console
  - saved in a check metadata JSON object, which is returned as <em>rejection argument</em>:
-   <div class="codehilite"><pre><span></span><code><span class="p">{</span>
+   <div class="highlight"><pre><span></span><code><span class="p">{</span>
    <span class="s2">&quot;checkSuccessful&quot;</span><span class="o">:</span> <span class="p">...</span> <span class="p">,</span>
    <span class="s2">&quot;images&quot;</span><span class="o">:</span> <span class="p">[</span> <span class="p">...</span> <span class="p">],</span>
    <span class="s2">&quot;display&quot;</span><span class="o">:</span> <span class="p">{</span>
@@ -180,7 +180,7 @@ The images <strong>MUST</strong> be <strong>base64</strong>-encoded, and encapsu
 <h2 id="return-value">Return value<a class="headerlink" href="#return-value" title="Permanent link">&para;</a></h2>
 <p>The <code>ercChecker</code> function returns a JSPromise. </p>
 <p>If execution is successful, the Promise will be <strong>resolved</strong>, containing a check metadata JSON object:</p>
-<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
     <span class="s2">&quot;checkSuccessful&quot;</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>
     <span class="s2">&quot;images&quot;</span><span class="o">:</span> <span class="p">[</span> 
         <span class="p">{</span>
@@ -221,7 +221,7 @@ The images <strong>MUST</strong> be <strong>base64</strong>-encoded, and encapsu
 <p>The <code>ercChecker</code> function will return a Promise, which will be resolved on successful execution, or rejected on error.</p>
 <p>Thus, while the Checker will run asynchronously, it can be chained in a controlled fashion.
 It can be used as follows: </p>
-<div class="codehilite"><pre><span></span><code><span class="c1">// use with direct file paths: </span>
+<div class="highlight"><pre><span></span><code><span class="c1">// use with direct file paths: </span>
 <span class="kd">let</span> <span class="nx">config</span> <span class="o">=</span> <span class="p">{</span>
     <span class="nx">directoryMode</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span> 
     <span class="nx">pathToOriginalHTML</span><span class="o">:</span> <span class="s2">&quot;path/to/fileA.html&quot;</span><span class="p">,</span>
@@ -253,7 +253,7 @@ It can be used as follows: </p>
 <span class="c1">// file names:  customNameForDiff.html , metadata.json </span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="c1">// use with directories</span>
+<div class="highlight"><pre><span></span><code><span class="c1">// use with directories</span>
 <span class="kd">let</span> <span class="nx">config</span> <span class="o">=</span> <span class="p">{</span>
     <span class="nx">directoryMode</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span> 
     <span class="nx">pathToMainDirectory</span><span class="o">:</span> <span class="s2">&quot;path/to/directory&quot;</span><span class="p">,</span>
@@ -270,7 +270,7 @@ It can be used as follows: </p>
 <p><strong>Note:</strong> The checker will automatically remove all temporary files on termination. To prevent this, set an environment variable <code>DEV=true</code>.</p>
 <h2 id="debug">Debug<a class="headerlink" href="#debug" title="Permanent link">&para;</a></h2>
 <p>Enable debugging by setting an environment variable <strong>DEBUG</strong>.</p>
-<div class="codehilite"><pre><span></span><code>$  <span class="nv">DEBUG</span><span class="o">=</span>* node yourProject.js
+<div class="highlight"><pre><span></span><code>$  <span class="nv">DEBUG</span><span class="o">=</span>* node yourProject.js
 </code></pre></div>
 
 <p>Available loggers are:</p>
