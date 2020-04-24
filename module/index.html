@@ -109,24 +109,24 @@
 <p>The checker's <code>index.js</code> exports an object called <code>ercChecker</code>.
 This object contains a function that takes two paths to HTML files and optional further parameters, and returns a JavaScript Promise. </p>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
-<p>The checker is executed with a <code>config</code> object (<code>JSON</code>).</p>
-<div class="highlight"><pre><span></span><code>    <span class="kd">var</span> <span class="nx">config</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="nx">directoryMode</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>             <span class="c1">// default: false --- read papers from directories automatically?  (false: paths for both papers MUST be specified; true: path to directory MUST be specified)</span>
-        <span class="nx">pathToMainDirectory</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
-        <span class="nx">pathToOriginalHTML</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
-        <span class="nx">pathToReproducedHTML</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
-        <span class="nx">saveFilesOutputPath</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>        <span class="c1">// necessary if diff-HTML or check metadata should be saved</span>
-        <span class="nx">saveDiffHTML</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>              <span class="c1">// default: false</span>
-        <span class="nx">outFileName</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>                <span class="c1">// choose a name for diff-HTML (defaults to &quot;diffHTML.html&quot;)</span>
-        <span class="nx">saveMetadataJSON</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>          <span class="c1">// default: false</span>
-        <span class="nx">createParentDirectories</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>   <span class="c1">// default: false --- IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails</span>
-        <span class="nx">comparisonSetBaseDir</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>       <span class="c1">// base directory of repository to be checked, used to create a file list (glob)</span>
-        <span class="nx">checkFileTypes</span><span class="o">:</span> <span class="p">[</span><span class="nb">String</span><span class="p">],</span>           <span class="c1">// case insensitive list of file endings to be included; currently defaults to [&quot;htm&quot;, &quot;html&quot;]</span>
-        <span class="nx">quiet</span><span class="o">:</span> <span class="nb">Boolean</span>                      <span class="c1">// default: false</span>
-    <span class="p">};</span>
+<p>The checker is initialised with a <code>config</code> object.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span> <span class="nx">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">directoryMode</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>             <span class="c1">// default: false --- read papers from directories automatically?  (false: paths for both papers MUST be specified; true: path to directory MUST be specified)</span>
+    <span class="nx">pathToMainDirectory</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
+    <span class="nx">pathToOriginalHTML</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
+    <span class="nx">pathToReproducedHTML</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
+    <span class="nx">saveFilesOutputPath</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>        <span class="c1">// necessary if diff-HTML or check metadata should be saved</span>
+    <span class="nx">saveDiffHTML</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>              <span class="c1">// default: false</span>
+    <span class="nx">outFileName</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>                <span class="c1">// choose a name for diff-HTML (defaults to &quot;diffHTML.html&quot;)</span>
+    <span class="nx">saveMetadataJSON</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>          <span class="c1">// default: false</span>
+    <span class="nx">createParentDirectories</span><span class="o">:</span> <span class="nb">Boolean</span><span class="p">,</span>   <span class="c1">// default: false --- IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails</span>
+    <span class="nx">comparisonSetBaseDir</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span>       <span class="c1">// base directory of repository to be checked, used to create a file list (glob)</span>
+    <span class="nx">checkFileTypes</span><span class="o">:</span> <span class="p">[</span><span class="nb">String</span><span class="p">],</span>           <span class="c1">// case insensitive list of file endings to be included; currently defaults to [&quot;htm&quot;, &quot;html&quot;]</span>
+    <span class="nx">quiet</span><span class="o">:</span> <span class="nb">Boolean</span>                      <span class="c1">// default: false</span>
+<span class="p">};</span>
 </code></pre></div>
 
-<p><strong><em>Note:</em></strong> optional parameters may be left out of the config object when not used. In this case, defaults apply.</p>
+<p><strong>Note:</strong> optional parameters may be left out of the config object when not used. In this case, defaults apply.</p>
 <p>In directory mode, individual path parameters will be ignored. Otherwise, main directory path will be ignored.</p>
 <p>One of the following configurations <strong>MUST</strong> be made
  - <code>directoryMode = false</code> and <code>pathToOriginalHTML</code> &amp;&amp; <code>pathToReproducedHTML</code> valid paths to HTML files, <em>or</em>
@@ -144,7 +144,7 @@ This object contains a function that takes two paths to HTML files and optional 
 <p><strong><em>Note</em></strong>: HTML files in directories are NOT REQUIRED to be named "<em>main.html</em>". However, the checker will pick the first <code>.html</code>file found <em>in alphabetical order</em> . </p>
 <p>The tool will compare both HTML files for images only.
 The images <strong>MUST</strong> be <strong>base64</strong>-encoded, and encapsulated in an HTML img tag, as generated automatically when rendering an .Rmd file into HTML format.</p>
-<p>If both HTML papers contain an equal number of images, the checker may write a new HTML file, containing the results of the comparison between all images in the input files, as created by <a href="http://yahoo.github.io/blink-diff/"><code>blink-diff</code></a>, as well as highlighted text differences between both Papers. </p>
+<p>If both HTML papers contain an equal number of images, the checker may write a new HTML file, containing the results of the comparison between all images in the input files, as created by <a href="https://github.com/mapbox/pixelmatch"><code>pixelmatch</code></a>, as well as highlighted text differences between both Papers. </p>
 <p>Further parameters (in order): </p>
 <ul>
 <li><code>saveFilesOutputPath: String</code> : third path for file output; necessary if either parameter <code>saveDiffHTML</code> or <code>saveMetadataJSON</code> is set, otherwise ignored</li>
@@ -206,6 +206,7 @@ The images <strong>MUST</strong> be <strong>base64</strong>-encoded, and encapsu
  <span class="sb">```</span>
 
 <span class="sb">prepResult codes (for images of same index in paper):</span>
+
 <span class="sb">- 0: images do not differ in size</span>
 <span class="sb">- 1: images differed in size -- resized for comparison</span>
 <span class="sb">- 2: images differed in size -- not resized for comparison</span>
@@ -269,19 +270,24 @@ It can be used as follows: </p>
 
 <p><strong>Note:</strong> The checker will automatically remove all temporary files on termination. To prevent this, set an environment variable <code>DEV=true</code>.</p>
 <h2 id="debug">Debug<a class="headerlink" href="#debug" title="Permanent link">&para;</a></h2>
-<p>Enable debugging by setting an environment variable <strong>DEBUG</strong>.</p>
-<div class="highlight"><pre><span></span><code>$  <span class="nv">DEBUG</span><span class="o">=</span>* node yourProject.js
+<p>The checker uses the <a href="https://www.npmjs.com/package/debug"><code>debug</code></a> package for logging.
+You can enable all or specific logging messages via the environment variable <strong>DEBUG</strong>.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># activates all loggers</span>
+<span class="nv">DEBUG</span><span class="o">=</span>* node yourProject.js
+
+<span class="c1"># activates all check-related loggers</span>
+<span class="nv">DEBUG</span><span class="o">=</span><span class="s2">&quot;checker:*&quot;</span> node yourProject.js
 </code></pre></div>
 
 <p>Available loggers are:</p>
 <ul>
-<li>index:checkRequestHandling *</li>
-<li>index:ERROR *</li>
-<li>checker:general *</li>
-<li>checker:slice</li>
-<li>checker:compare</li>
-<li>checker:reassemble</li>
-<li>checker:ERROR *</li>
+<li><code>index:checkRequestHandling</code> *</li>
+<li><code>index:ERROR</code> *</li>
+<li><code>checker:general</code> *</li>
+<li><code>checker:slice</code></li>
+<li><code>checker:compare</code></li>
+<li><code>checker:reassemble</code></li>
+<li><code>checker:ERROR</code> *</li>
 <li><code>tester</code> (for debugging tests)</li>
 </ul>
 <p>* active by default when used via CLI</p>
