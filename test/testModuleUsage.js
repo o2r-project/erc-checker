@@ -255,6 +255,30 @@ describe('Using ERC-Checker as node-module', function () {
 		});
 	});
 
+	describe('For a check on two papers containing equal amount of, but differing images, and "createParentDirectories" flag set', function () {
+		it('should successfully write a "diffHTML.html" file to the directory specified as Absolute Path which includes the diff image and the diff text highlighted.', function () {
+			let configSaveMeta = Object.assign({}, checkConfig);
+			configSaveMeta.pathToOriginalHTML = testStringA;
+			configSaveMeta.pathToReproducedHTML = testStringB;
+			configSaveMeta.saveFilesOutputPath = tmp.dirSync().name;
+			configSaveMeta.saveDiffHTML = true;
+			configSaveMeta.saveMetadataJSON = true;
+			configSaveMeta.createParentDirectories = true;
+
+			return checker(configSaveMeta)
+				.then(function () {
+					let htmlOutpath = path.join(configSaveMeta.saveFilesOutputPath, 'diffHTML.html');
+					let savedHTMLFileContent = fs.readFileSync(htmlOutpath, 'utf-8');
+					let referenceHTMLFileContent = fs.readFileSync('./test/TestPapers_TextDiff/htmlDiffTest.html', 'utf-8')
+
+					assert.deepStrictEqual(referenceHTMLFileContent, savedHTMLFileContent, 'Saved html file varries from original check result html!');
+				},
+					function (reason) {
+						assert.ifError(reason);
+					});
+		}).timeout(10000);
+	});
+
 	describe('With "saveMetadataJSON" flag set to "true", and "saveFilesOutputPath" given in the config object', function () {
 
 		describe('for a check on two papers containing equal amount of, but differing images, and "createParentDirectories" flag set', function () {
@@ -269,7 +293,7 @@ describe('Using ERC-Checker as node-module', function () {
 
 				return checker(configSaveMeta)
 					.then(function () {
-						let jsonOutpath = path.join(configSaveMeta.saveFilesOutputPath, "metadata.json");
+						let jsonOutpath = path.join(configSaveMeta.saveFilesOutputPath, 'metadata.json');
 
 						try {
 							fs.accessSync(jsonOutpath);
@@ -285,7 +309,7 @@ describe('Using ERC-Checker as node-module', function () {
 		});
 
 		describe('for a check on two papers containing equal amount of, but differing images, and "createParentDirectories" flag set', function () {
-			it('should successfully write a "metadata.json" which is matching a reference file', function () {
+			it('should successfully write a "metadata.json" which is matching to the original check result metadata.', function () {
 				let configSaveMeta = Object.assign({}, checkConfig);
 				configSaveMeta.pathToOriginalHTML = testStringA;
 				configSaveMeta.pathToReproducedHTML = testStringB;
@@ -296,7 +320,7 @@ describe('Using ERC-Checker as node-module', function () {
 
 				return checker(configSaveMeta)
 					.then(function (resultMetadata) {
-						let jsonOutpath = path.join(configSaveMeta.saveFilesOutputPath, "metadata.json");
+						let jsonOutpath = path.join(configSaveMeta.saveFilesOutputPath, 'metadata.json');
 						let savedJSONFileContent;
 						let resMeta = resultMetadata;
 
@@ -305,7 +329,7 @@ describe('Using ERC-Checker as node-module', function () {
 						resMeta = JSON.stringify(resMeta);
 						savedJSONFileContent = JSON.stringify(savedJSONFileContent);
 
-						assert.deepStrictEqual(resMeta, savedJSONFileContent, "Saved metadata.json file content varries from original check result metadata:");
+						assert.deepStrictEqual(resMeta, savedJSONFileContent, "Saved metadata.json file content varries from original check result metadata.");
 					},
 						function (reason) {
 							assert.ifError(reason);
