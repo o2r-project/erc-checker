@@ -149,7 +149,6 @@ If execution is successful, the Promise will be __resolved__, containing a check
     	"images": [	
     		{
     			"imageIndex": Number,
-    			"resizeOperationCode": Number, // represents status code, see below
     			"compareResults":	{
     				"differences": Number,
     				"dimension": Number
@@ -168,11 +167,6 @@ If execution is successful, the Promise will be __resolved__, containing a check
         "errors": [] 
     }
  ```
-
-prepResult codes (for images of same index in paper):
-- 0: images do not differ in size
-- 1: images differed in size -- resized for comparison
-- 2: images differed in size -- not resized for comparison
 
 ##### Development
 For debugging purposes: When running the checker with a NodeJS environment variable `DEV` set true, the result AND reject metadata will include an absolute path to the temp-directory used during the check.
