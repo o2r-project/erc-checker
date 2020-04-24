@@ -5,29 +5,26 @@ This object contains a function that takes two paths to HTML files and optional 
 
 ## Features
 
-The checker is executed with a `config` object (`JSON`).
+The checker is initialised with a `config` object.
 
 ```javascript
-
-    var config = {
-    	directoryMode: Boolean, 			// default: false --- read papers from directories automatically?  (false: paths for both papers MUST be specified; true: path to directory MUST be specified)
-    	pathToMainDirectory: String,
-    	pathToOriginalHTML: String,
-    	pathToReproducedHTML: String,
-    	saveFilesOutputPath: String,		// necessary if diff-HTML or check metadata should be saved
-    	saveDiffHTML: Boolean,              // default: false
-    	outFileName: String,                // choose a name for diff-HTML (defaults to "diffHTML.html")
-    	saveMetadataJSON: Boolean,          // default: false
-    	createParentDirectories: Boolean, 	// default: false --- IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
-    	comparisonSetBaseDir: String,       // base directory of repository to be checked, used to create a file list (glob)
-        checkFileTypes: [String],			// case insensitive list of file endings to be included; currently defaults to ["htm", "html"]
-    	quiet: Boolean                      // default: false
-    };
-
+var config = {
+    directoryMode: Boolean, 			// default: false --- read papers from directories automatically?  (false: paths for both papers MUST be specified; true: path to directory MUST be specified)
+    pathToMainDirectory: String,
+    pathToOriginalHTML: String,
+    pathToReproducedHTML: String,
+    saveFilesOutputPath: String,		// necessary if diff-HTML or check metadata should be saved
+    saveDiffHTML: Boolean,              // default: false
+    outFileName: String,                // choose a name for diff-HTML (defaults to "diffHTML.html")
+    saveMetadataJSON: Boolean,          // default: false
+    createParentDirectories: Boolean, 	// default: false --- IF outputPath does not yet exist, this flag MUST be set true; otherwise, the check fails
+    comparisonSetBaseDir: String,       // base directory of repository to be checked, used to create a file list (glob)
+    checkFileTypes: [String],			// case insensitive list of file endings to be included; currently defaults to ["htm", "html"]
+    quiet: Boolean                      // default: false
+};
 ```
 
-
-___Note:___ optional parameters may be left out of the config object when not used. In this case, defaults apply.
+**Note:** optional parameters may be left out of the config object when not used. In this case, defaults apply.
 
 In directory mode, individual path parameters will be ignored. Otherwise, main directory path will be ignored.
  
@@ -52,7 +49,7 @@ One of the following configurations __MUST__ be made
 The tool will compare both HTML files for images only.
 The images __MUST__ be __base64__-encoded, and encapsulated in an HTML img tag, as generated automatically when rendering an .Rmd file into HTML format.
 
-If both HTML papers contain an equal number of images, the checker may write a new HTML file, containing the results of the comparison between all images in the input files, as created by [`blink-diff`](http://yahoo.github.io/blink-diff/), as well as highlighted text differences between both Papers. 
+If both HTML papers contain an equal number of images, the checker may write a new HTML file, containing the results of the comparison between all images in the input files, as created by [`pixelmatch`](https://github.com/mapbox/pixelmatch), as well as highlighted text differences between both Papers. 
 
 Further parameters (in order): 
 
@@ -124,6 +121,7 @@ If execution is successful, the Promise will be __resolved__, containing a check
  ```
 
 prepResult codes (for images of same index in paper):
+
 - 0: images do not differ in size
 - 1: images differed in size -- resized for comparison
 - 2: images differed in size -- not resized for comparison
@@ -189,26 +187,30 @@ checker(config)
 // in this example, no files will be written, and Debug loggers are silenced
 ```
 
-
-__Note:__ The checker will automatically remove all temporary files on termination. To prevent this, set an environment variable `DEV=true`.
+**Note:** The checker will automatically remove all temporary files on termination. To prevent this, set an environment variable `DEV=true`.
 
 ## Debug
 
-Enable debugging by setting an environment variable **DEBUG**.
+The checker uses the [`debug`](https://www.npmjs.com/package/debug) package for logging.
+You can enable all or specific logging messages via the environment variable **DEBUG**.
 
 ```bash
-$  DEBUG=* node yourProject.js
+# activates all loggers
+DEBUG=* node yourProject.js
+
+# activates all check-related loggers
+DEBUG="checker:*" node yourProject.js
 ```
  
 Available loggers are:
 
-* index:checkRequestHandling *
-* index:ERROR *
-* checker:general *
-* checker:slice
-* checker:compare
-* checker:reassemble
-* checker:ERROR *
-* `tester` (for debugging tests)
+- `index:checkRequestHandling` *
+- `index:ERROR` *
+- `checker:general` *
+- `checker:slice`
+- `checker:compare`
+- `checker:reassemble`
+- `checker:ERROR` *
+- `tester` (for debugging tests)
 
 \* active by default when used via CLI
