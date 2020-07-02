@@ -1,6 +1,6 @@
 # erc-checker
 
-[![Build Status](https://travis-ci.org/o2r-project/erc-checker.svg?branch=master)](https://travis-ci.org/o2r-project/erc-checker) [![Build status](https://ci.appveyor.com/api/projects/status/xbla7j4wpbwauk7p/branch/master?svg=true)](https://ci.appveyor.com/project/nuest/erc-checker-r035a/branch/master) [![npm](https://img.shields.io/npm/v/erc-checker.svg)](https://www.npmjs.com/package/erc-checker)
+[![Build Status](https://travis-ci.org/o2r-project/erc-checker.svg?branch=master)](https://travis-ci.org/o2r-project/erc-checker) [![Build status](https://ci.appveyor.com/api/projects/status/xbla7j4wpbwauk7p/branch/master?svg=true)](https://ci.appveyor.com/project/nuest/erc-checker-r035a/branch/master) [![npm](https://img.shields.io/npm/v/erc-checker.svg)](https://www.npmjs.com/package/erc-checker) [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2203843.svg)](https://doi.org/10.5281/zenodo.2203843)
 
 A JavaScript library and CLI tool for [ERC](https://github.com/o2r-project/erc-spec) result checking.  
 
@@ -31,6 +31,12 @@ npm publish
 
 Add version tag locally, e.g., `v.1.2.3`, and push to remotes.
 Then create a new release on GitHub.
+
+## How to cite
+
+To cite this software please use
+
+> _Nüst, Daniel, 2018. Reproducibility Service for Executable Research Compendia: Technical Specifications and Reference Implementation. Zenodo. doi:[10.5281/zenodo.2203843](https://doi.org/10.5281/zenodo.2203843)_
 
 ## License
 
