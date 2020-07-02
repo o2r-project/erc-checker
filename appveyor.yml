@@ -13,12 +13,11 @@ environment:
   DEBUG: "*"
 
 platform:
-  - x64 # dependency 'sharp' is not available for x86
+  - x64
 
 install:
   - ps: Install-Product node $env:nodejs_version $env:platform
   - npm install -g npm@latest
-  - npm install sharp@latest --save 
   - npm install
 
 test_script:
