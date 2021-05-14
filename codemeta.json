@@ -3,7 +3,7 @@
     "@type": "SoftwareSourceCode",
     "license": "https://spdx.org/licenses/Apache-2.0",
     "codeRepository": "git+https://github.com/o2r-project/erc-checker.git",
-    "contIntegration": "https://travis-ci.org/o2r-project/erc-checker",
+    "contIntegration": "https://github.com/o2r-project/erc-checker/actions",
     "dateCreated": "2019-08-16",
     "datePublished": "2018-08-05",
     "dateModified": "2020-04-24",
