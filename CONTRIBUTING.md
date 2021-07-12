@@ -52,7 +52,7 @@ npm test
 
 ## Contribute documentation
 
-Documentation is build based on Markdown files in the `/docs` directory and rendered into static HTML pages with [mkdocs]() using Travis CI (see `.travis.yml`).
+Documentation is build based on Markdown files in the `/docs` directory and rendered into static HTML pages with [mkdocs]() using a Github Action (see `.github/workflows/site_build.yml`).
 
 **View docs locally** using Python 3:
 
@@ -80,8 +80,7 @@ mkdocs build --clean --verbose
 
 ## Online documentation
 
-The online documentation is automatically built by Travis CI, see file `.travis.yml`.
-For background on the personal access token see [https://github.com/o2r-project/erc-spec#automated-builds](https://github.com/o2r-project/erc-spec#automated-builds).
+The online documentation is automatically built by a Github Action, see file `.github/workflows/site_build.yml`.
 
 ## Development hints
 
